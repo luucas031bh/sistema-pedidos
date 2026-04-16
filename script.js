@@ -828,45 +828,56 @@ async function salvarPedido() {
         Utils.mostrarNotificacao(CONFIG.MENSAGENS.camposObrigatorios, 'error');
         return;
     }
+ // ========== Salvar Pedido ==========
+async function salvarPedido() {
+    // Validar campos obrigatórios
+    if (!validarFormulario()) {
+        Utils.mostrarNotificacao(CONFIG.MENSAGENS.camposObrigatorios, 'error');
+        return;
+    }
+
     // Coletar dados do formulário
     if (estadoApp.salvando) return;
     estadoApp.salvando = true;
+
     const dadosPedido = coletarDadosFormulario();
-    
+
     // Verificar URL do Apps Script
     if (!CONFIG.APPS_SCRIPT_URL || CONFIG.APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycby9LFyzYkXW_Zo9i_u3jdGfRweu5UaDvf4PsGWyTh8UB0hXGEls2l_oELjJSDkpZwDoAQ/exec') {
         console.error('URL do Apps Script não configurada');
         Utils.mostrarNotificacao('Configure a URL do Google Apps Script no arquivo config.js', 'error');
+        estadoApp.salvando = false;
         return;
     }
-    
+
     // Mostrar loading
     mostrarLoading(CONFIG.MENSAGENS.salvandoPedido);
-    
+
     try {
         const formData = new URLSearchParams();
-formData.append("acao", "salvarPedido");
-formData.append("dados", JSON.stringify(dadosPedido));
+        formData.append("acao", "salvarPedido");
+        formData.append("dados", JSON.stringify(dadosPedido));
 
-const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
-    method: 'POST',
-    body: formData
-});
-        
+        const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: formData
+        });
+
         const resultado = await response.json();
-        
         esconderLoading();
-        
+
         if (resultado.sucesso) {
             Utils.mostrarNotificacao(CONFIG.MENSAGENS.pedidoSalvo, 'success');
+            limparFormulario();
         } else {
             Utils.mostrarNotificacao(CONFIG.MENSAGENS.erroPedido, 'error');
         }
-   } catch (error) {
+
+        estadoApp.salvando = false;
+    } catch (error) {
         console.error('Erro ao salvar pedido:', error);
         esconderLoading();
         Utils.mostrarNotificacao(CONFIG.MENSAGENS.erroPedido, 'error');
-    } finally {
         estadoApp.salvando = false;
     }
 }
