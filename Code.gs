@@ -52,30 +52,22 @@ function doOptions(e) {
 // ========== FUNÇÃO PRINCIPAL POST ==========
 function doPost(e) {
   try {
-    // Tratamento para garantir a leitura do JSON mesmo vindo de origens diferentes
-    let dados;
-    if (e.postData && e.postData.contents) {
-      dados = JSON.parse(e.postData.contents);
-    } else {
-      return retornarJSON({ sucesso: false, erro: 'Nenhum dado recebido' });
-    }
+    // Lê o texto que enviamos e transforma em objeto JSON
+    const dados = JSON.parse(e.postData.contents);
+    const acao = e.parameter.acao; // Pega o "salvarPedido" que colocamos na URL
 
-    const acao = dados.acao;
-    
-    switch(acao) {
-      case 'salvarPedido':
-        return retornarJSON(salvarPedido(dados));
-      case 'atualizarPedido':
-        return retornarJSON(atualizarPedido(dados));
-      case 'atualizarStatus':
-        return retornarJSON(atualizarStatus(dados.id, dados.status));
-      case 'excluirPedido':
-        return retornarJSON(excluirPedido(dados.id));
-      default:
-        return retornarJSON({ sucesso: false, erro: 'Ação POST não encontrada' });
+    if (acao === "salvarPedido") {
+      const resultado = salvarPedido(dados); // Chama sua função de salvar
+      return ContentService.createTextOutput(JSON.stringify(resultado))
+        .setMimeType(ContentService.MimeType.JSON);
     }
-  } catch (error) {
-    return retornarJSON({ sucesso: false, erro: error.toString() });
+    
+    // ... outras ações ...
+  } catch (erro) {
+    return ContentService.createTextOutput(JSON.stringify({
+      sucesso: false,
+      erro: "Erro no Script: " + erro.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
   }
 }
 
