@@ -825,12 +825,13 @@ async function carregarDadosIniciais() {
 // ========== Salvar Pedido ==========
 async function salvarPedido() {
     // Validar campos obrigatórios
-     if (!validarFormulario()) {
+    if (!validarFormulario()) {
         Utils.mostrarNotificacao(CONFIG.MENSAGENS.camposObrigatorios, 'error');
         return;
     }
-    
     // Coletar dados do formulário
+    if (estadoApp.salvando) return;
+    estadoApp.salvando = true;
     const dadosPedido = coletarDadosFormulario();
     
     // Verificar URL do Apps Script
