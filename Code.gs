@@ -31,16 +31,19 @@ function doGet(e) {
       case 'obterDados':
         return retornarJSON(obterDados());
       case 'buscarPedido':
-        return retornarJSON(buscarPedido(e.parameter.termo));
+        const termo = e.parameter.termo;
+        return retornarJSON(buscarPedido(termo));
       case 'listarPedidos':
-        return retornarJSON(listarPedidos(e.parameter.filtro));
+        const filtro = e.parameter.filtro;
+        return retornarJSON(listarPedidos(filtro));
       case 'obterDashboard':
         return retornarJSON(obterDashboard());
       default:
-        return retornarJSON({ sucesso: false, erro: 'Ação GET não encontrada' });
+        return retornarJSON({ erro: 'Ação não encontrada' }, 400);
     }
   } catch (error) {
-    return retornarJSON({ sucesso: false, erro: error.toString() });
+    console.error('Erro no doGet:', error);
+    return retornarJSON({ erro: 'Erro interno do servidor' }, 500);
   }
 }
 
@@ -52,30 +55,37 @@ function doOptions(e) {
 // ========== FUNÇÃO PRINCIPAL POST ==========
 function doPost(e) {
   try {
-    // Lê o texto que enviamos e transforma em objeto JSON
     const dados = JSON.parse(e.postData.contents);
-    const acao = e.parameter.acao; // Pega o "salvarPedido" que colocamos na URL
-
-    if (acao === "salvarPedido") {
-      const resultado = salvarPedido(dados); // Chama sua função de salvar
-      return ContentService.createTextOutput(JSON.stringify(resultado))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
+    const acao = dados.acao;
     
-    // ... outras ações ...
-  } catch (erro) {
-    return ContentService.createTextOutput(JSON.stringify({
-      sucesso: false,
-      erro: "Erro no Script: " + erro.toString()
-    })).setMimeType(ContentService.MimeType.JSON);
+    switch(acao) {
+      case 'salvarPedido':
+        return retornarJSON(salvarPedido(dados));
+      case 'atualizarPedido':
+        return retornarJSON(atualizarPedido(dados));
+      case 'atualizarStatus':
+        return retornarJSON(atualizarStatus(dados.id, dados.status));
+      case 'excluirPedido':
+        return retornarJSON(excluirPedido(dados.id));
+      default:
+        return retornarJSON({ erro: 'Ação não encontrada' }, 400);
+    }
+  } catch (error) {
+    console.error('Erro no doPost:', error);
+    return retornarJSON({ erro: 'Erro interno do servidor' }, 500);
   }
 }
 
 // ========== FUNÇÕES DE UTILIDADE ==========
 function retornarJSON(dados, codigo = 200) {
- return ContentService
+  return ContentService
     .createTextOutput(JSON.stringify(dados))
-    .setMimeType(ContentService.MimeType.JSON);
+    .setMimeType(ContentService.MimeType.JSON)
+    .setHeaders({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    });
 }
 
 function obterPlanilha() {
@@ -517,36 +527,39 @@ function salvarPedido(dados) {
     
     // Verificar se ID já existe
     if (dados.id && pedidoExiste(dados.id)) {
-      return { sucesso: false, erro: 'ID já existe.' };
+      return { sucesso: false, erro: 'ID já existe. Use atualizarPedido() para modificar.' };
     }
     
-    // Preparar dados com verificações de segurança (evita erro de 'undefined')
+    // Preparar dados para inserção
     const dadosLinha = [
-      dados.id || "",
-      dados.cliente ? dados.cliente.nome : "",
-      dados.cliente ? dados.cliente.telefone : "",
-      dados.datas ? dados.datas.pedido : "",
-      dados.datas ? dados.datas.entrega : "",
-      dados.totalPecas || 0,
-      JSON.stringify(dados.produtos || []),
-      dados.observacoes || "",
-      dados.financeiro ? dados.financeiro.totalPedido : 0,
-      dados.financeiro ? dados.financeiro.valorEntrada : 0,
-      dados.financeiro ? dados.financeiro.restante : 0,
-      'Em Análise', 
+      dados.id,
+      dados.cliente.nome,
+      dados.cliente.telefone,
+      dados.datas.pedido,
+      dados.datas.entrega,
+      dados.totalPecas,
+      JSON.stringify(dados.produtos),
+      dados.observacoes,
+      dados.financeiro.totalPedido,
+      dados.financeiro.valorEntrada,
+      dados.financeiro.restante,
+      'Em Análise', // Status padrão
       new Date().toISOString(),
       new Date().toISOString()
     ];
     
     // Inserir nova linha
-    aba.appendRow(dadosLinha);
+    const ultimaLinha = aba.getLastRow();
+    aba.getRange(ultimaLinha + 1, 1, 1, dadosLinha.length).setValues([dadosLinha]);
     
-    // Atualizar dashboard sem travar o salvamento principal
-    try { atualizarDashboard(); } catch(e) { console.error("Erro dash: " + e); }
+    // Atualizar dashboard
+    atualizarDashboard();
     
+    console.log(`Pedido ${dados.id} salvo com sucesso!`);
     return { sucesso: true, mensagem: 'Pedido salvo com sucesso!' };
     
   } catch (error) {
+    console.error('Erro ao salvar pedido:', error);
     return { sucesso: false, erro: error.toString() };
   }
 }
