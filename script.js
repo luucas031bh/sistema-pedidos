@@ -2,12 +2,13 @@
 
 // ========== Estado Global ==========
 let estadoApp = {
-    produtos: [],
-    custosMalhas: [],
-    custosMaoObra: [],
-    custosEstampas: [],
-    localidadesEstampas: [],
-    produtoAtualId: 1
+    produtos : [ ],
+    custosMalhas : [ ],
+    custosMaoObra : [ ],
+    custosEstampas : [ ],
+    localidadesEstampas : [ ],
+    produtoAtualId : 1,
+    salvando : false
 };
 
 // ========== Inicialização ==========
@@ -824,7 +825,7 @@ async function carregarDadosIniciais() {
 // ========== Salvar Pedido ==========
 async function salvarPedido() {
     // Validar campos obrigatórios
-    if (!validarFormulario()) {
+     if (!validarFormulario()) {
         Utils.mostrarNotificacao(CONFIG.MENSAGENS.camposObrigatorios, 'error');
         return;
     }
@@ -861,10 +862,12 @@ const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
         } else {
             Utils.mostrarNotificacao(CONFIG.MENSAGENS.erroPedido, 'error');
         }
-    } catch (error) {
+   } catch (error) {
         console.error('Erro ao salvar pedido:', error);
         esconderLoading();
         Utils.mostrarNotificacao(CONFIG.MENSAGENS.erroPedido, 'error');
+    } finally {
+        estadoApp.salvando = false;
     }
 }
 
@@ -895,7 +898,17 @@ function coletarDadosFormulario() {
             pedido: document.getElementById('dataPedido').value,
             entrega: document.getElementById('dataEntrega').value
         },
-        totalPecas: document.getElementById('totalPecas').value,
+          totalPecas: (() => {
+            let total = 0;
+            estadoApp.produtos.forEach(p => {
+                const tamanhosBody = document.getElementById(`tamanhosBody-${p.id}`);
+                if (tamanhosBody) {
+                    const inputs = tamanhosBody.querySelectorAll('input[type="number"]');
+                    inputs.forEach(input => total += parseInt(input.value) || 0);
+                }
+            });
+            return total;
+        })(),
         produtos: [],
         observacoes: document.getElementById('observacoes').value,
         financeiro: {
