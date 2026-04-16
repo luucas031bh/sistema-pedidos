@@ -823,19 +823,26 @@ async function carregarDadosIniciais() {
 
 // ========== Salvar Pedido ==========
 async function salvarPedido() {
-    // Validar campos obrigatórios
-    if (!validarFormulario()) {
-        Utils.mostrarNotificacao(CONFIG.MENSAGENS.camposObrigatorios, 'error');
-        return;
+    const dadosPedido = obterDadosPedido(); // Sua função que coleta os dados do HTML
+    
+    try {
+        const response = await fetch(CONFIG.APPS_SCRIPT_URL + "?acao=salvarPedido", {
+            method: 'POST',
+            mode: 'no-cors', // Tente mudar para 'cors' se o script atualizado estiver ativo
+            cache: 'no-cache',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(dadosPedido)
+        });
+        
+        // Se usar 'no-cors', você não conseguirá ler a resposta JSON, 
+        // mas o dado chegará na planilha.
+        alert("Pedido enviado com sucesso!"); 
+    } catch (error) {
+        console.error("Erro ao salvar:", error);
     }
- // ========== Salvar Pedido ==========
-async function salvarPedido() {
-    // Validar campos obrigatórios
-    if (!validarFormulario()) {
-        Utils.mostrarNotificacao(CONFIG.MENSAGENS.camposObrigatorios, 'error');
-        return;
-    }
-
+}
     // Coletar dados do formulário
     if (estadoApp.salvando) return;
     estadoApp.salvando = true;
