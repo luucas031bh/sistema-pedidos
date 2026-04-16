@@ -801,7 +801,7 @@ function calcularResumoFinanceiro() {
 // ========== Carregar Dados Iniciais ==========
 async function carregarDadosIniciais() {
     // Verificar se URL do Apps Script está configurada
-    if (!CONFIG.APPS_SCRIPT_URL || CONFIG.APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbxoBz24IBnD255ntV38rTXe3DoYjlmDTql5oRq_Hqgc32vcqrWWUPytQZq5S3D_7zMj/exec') {
+    if (!CONFIG.APPS_SCRIPT_URL || CONFIG.APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycby9LFyzYkXW_Zo9i_u3jdGfRweu5UaDvf4PsGWyTh8UB0hXGEls2l_oELjJSDkpZwDoAQ/exec') {
         console.warn('⚠️ URL do Google Apps Script não configurada');
         return;
     }
@@ -833,7 +833,7 @@ async function salvarPedido() {
     const dadosPedido = coletarDadosFormulario();
     
     // Verificar URL do Apps Script
-    if (!CONFIG.APPS_SCRIPT_URL || CONFIG.APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbxoBz24IBnD255ntV38rTXe3DoYjlmDTql5oRq_Hqgc32vcqrWWUPytQZq5S3D_7zMj/exec') {
+    if (!CONFIG.APPS_SCRIPT_URL || CONFIG.APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycby9LFyzYkXW_Zo9i_u3jdGfRweu5UaDvf4PsGWyTh8UB0hXGEls2l_oELjJSDkpZwDoAQ/exec') {
         console.error('URL do Apps Script não configurada');
         Utils.mostrarNotificacao('Configure a URL do Google Apps Script no arquivo config.js', 'error');
         return;
