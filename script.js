@@ -87,7 +87,6 @@ function configurarEventListeners() {
         valorEntradaInput.addEventListener('input', calcularResumoFinanceiro);
     }
 }
-
 // ========== ID Automático ==========
 function atualizarID() {
     const telefone = document.getElementById('telefone').value;
