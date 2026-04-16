@@ -54,45 +54,25 @@ function doOptions(e) {
 
 // ========== FUNÇÃO PRINCIPAL POST ==========
 function doPost(e) {
-  // Configuração de CORS para o Google Apps Script
-  const headers = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type"
-  };
-
   try {
-    let payload;
+    const dados = JSON.parse(e.postData.contents);
+    const acao = dados.acao;
     
-    // Tenta obter dados do postData (JSON enviado no body)
-    if (e.postData && e.postData.contents) {
-      payload = JSON.parse(e.postData.contents);
-    } 
-    // Fallback: Tenta obter do parameter (caso envie via form ou URL)
-    else if (e.parameter.dados) {
-      payload = JSON.parse(e.parameter.dados);
+    switch(acao) {
+      case 'salvarPedido':
+        return retornarJSON(salvarPedido(dados));
+      case 'atualizarPedido':
+        return retornarJSON(atualizarPedido(dados));
+      case 'atualizarStatus':
+        return retornarJSON(atualizarStatus(dados.id, dados.status));
+      case 'excluirPedido':
+        return retornarJSON(excluirPedido(dados.id));
+      default:
+        return retornarJSON({ erro: 'Ação não encontrada' }, 400);
     }
-
-    const acao = e.parameter.acao || payload.acao;
-    const dados = payload.dados || payload;
-
-    let resultado;
-    if (acao === 'salvarPedido') {
-      resultado = salvarPedido(dados);
-    } else if (acao === 'buscarPedido') {
-      resultado = buscarPedido(dados.termo || dados);
-    } else {
-      resultado = { sucesso: false, erro: 'Ação não encontrada: ' + acao };
-    }
-
-    return ContentService.createTextOutput(JSON.stringify(resultado))
-      .setMimeType(ContentService.MimeType.JSON);
-
   } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({ 
-      sucesso: false, 
-      erro: "Erro no Servidor: " + error.message 
-    })).setMimeType(ContentService.MimeType.JSON);
+    console.error('Erro no doPost:', error);
+    return retornarJSON({ erro: 'Erro interno do servidor' }, 500);
   }
 }
 
