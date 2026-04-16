@@ -31,19 +31,16 @@ function doGet(e) {
       case 'obterDados':
         return retornarJSON(obterDados());
       case 'buscarPedido':
-        const termo = e.parameter.termo;
-        return retornarJSON(buscarPedido(termo));
+        return retornarJSON(buscarPedido(e.parameter.termo));
       case 'listarPedidos':
-        const filtro = e.parameter.filtro;
-        return retornarJSON(listarPedidos(filtro));
+        return retornarJSON(listarPedidos(e.parameter.filtro));
       case 'obterDashboard':
         return retornarJSON(obterDashboard());
       default:
-        return retornarJSON({ erro: 'Ação não encontrada' }, 400);
+        return retornarJSON({ sucesso: false, erro: 'Ação GET não encontrada' });
     }
   } catch (error) {
-    console.error('Erro no doGet:', error);
-    return retornarJSON({ erro: 'Erro interno do servidor' }, 500);
+    return retornarJSON({ sucesso: false, erro: error.toString() });
   }
 }
 
@@ -55,7 +52,14 @@ function doOptions(e) {
 // ========== FUNÇÃO PRINCIPAL POST ==========
 function doPost(e) {
   try {
-    const dados = JSON.parse(e.postData.contents);
+    // Tratamento para garantir a leitura do JSON mesmo vindo de origens diferentes
+    let dados;
+    if (e.postData && e.postData.contents) {
+      dados = JSON.parse(e.postData.contents);
+    } else {
+      return retornarJSON({ sucesso: false, erro: 'Nenhum dado recebido' });
+    }
+
     const acao = dados.acao;
     
     switch(acao) {
@@ -68,24 +72,18 @@ function doPost(e) {
       case 'excluirPedido':
         return retornarJSON(excluirPedido(dados.id));
       default:
-        return retornarJSON({ erro: 'Ação não encontrada' }, 400);
+        return retornarJSON({ sucesso: false, erro: 'Ação POST não encontrada' });
     }
   } catch (error) {
-    console.error('Erro no doPost:', error);
-    return retornarJSON({ erro: 'Erro interno do servidor' }, 500);
+    return retornarJSON({ sucesso: false, erro: error.toString() });
   }
 }
 
 // ========== FUNÇÕES DE UTILIDADE ==========
 function retornarJSON(dados, codigo = 200) {
-  return ContentService
+ return ContentService
     .createTextOutput(JSON.stringify(dados))
-    .setMimeType(ContentService.MimeType.JSON)
-    .setHeaders({
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
-    });
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 function obterPlanilha() {
@@ -527,39 +525,36 @@ function salvarPedido(dados) {
     
     // Verificar se ID já existe
     if (dados.id && pedidoExiste(dados.id)) {
-      return { sucesso: false, erro: 'ID já existe. Use atualizarPedido() para modificar.' };
+      return { sucesso: false, erro: 'ID já existe.' };
     }
     
-    // Preparar dados para inserção
+    // Preparar dados com verificações de segurança (evita erro de 'undefined')
     const dadosLinha = [
-      dados.id,
-      dados.cliente.nome,
-      dados.cliente.telefone,
-      dados.datas.pedido,
-      dados.datas.entrega,
-      dados.totalPecas,
-      JSON.stringify(dados.produtos),
-      dados.observacoes,
-      dados.financeiro.totalPedido,
-      dados.financeiro.valorEntrada,
-      dados.financeiro.restante,
-      'Em Análise', // Status padrão
+      dados.id || "",
+      dados.cliente ? dados.cliente.nome : "",
+      dados.cliente ? dados.cliente.telefone : "",
+      dados.datas ? dados.datas.pedido : "",
+      dados.datas ? dados.datas.entrega : "",
+      dados.totalPecas || 0,
+      JSON.stringify(dados.produtos || []),
+      dados.observacoes || "",
+      dados.financeiro ? dados.financeiro.totalPedido : 0,
+      dados.financeiro ? dados.financeiro.valorEntrada : 0,
+      dados.financeiro ? dados.financeiro.restante : 0,
+      'Em Análise', 
       new Date().toISOString(),
       new Date().toISOString()
     ];
     
     // Inserir nova linha
-    const ultimaLinha = aba.getLastRow();
-    aba.getRange(ultimaLinha + 1, 1, 1, dadosLinha.length).setValues([dadosLinha]);
+    aba.appendRow(dadosLinha);
     
-    // Atualizar dashboard
-    atualizarDashboard();
+    // Atualizar dashboard sem travar o salvamento principal
+    try { atualizarDashboard(); } catch(e) { console.error("Erro dash: " + e); }
     
-    console.log(`Pedido ${dados.id} salvo com sucesso!`);
     return { sucesso: true, mensagem: 'Pedido salvo com sucesso!' };
     
   } catch (error) {
-    console.error('Erro ao salvar pedido:', error);
     return { sucesso: false, erro: error.toString() };
   }
 }
