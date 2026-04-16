@@ -823,22 +823,47 @@ async function carregarDadosIniciais() {
 
 // ========== Salvar Pedido ==========
 async function salvarPedido() {
-    // Validar campos obrigatórios
+    // 1. Validar campos obrigatórios
     if (!validarFormulario()) {
         Utils.mostrarNotificacao(CONFIG.MENSAGENS.camposObrigatorios, 'error');
         return;
     }
     
-    // Coletar dados do formulário
+    // 2. Coletar dados do formulário
     const dadosPedido = coletarDadosFormulario();
     
-    // Verificar URL do Apps Script
-    if (!CONFIG.APPS_SCRIPT_URL || CONFIG.APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycby9LFyzYkXW_Zo9i_u3jdGfRweu5UaDvf4PsGWyTh8UB0hXGEls2l_oELjJSDkpZwDoAQ/exec') {
-        console.error('URL do Apps Script não configurada');
-        Utils.mostrarNotificacao('Configure a URL do Google Apps Script no arquivo config.js', 'error');
-        return;
+    // 3. Mostrar Loading
+    mostrarLoading(CONFIG.MENSAGENS.salvandoPedido);
+
+    try {
+        // MUDANÇA AQUI: Enviamos a ação pela URL e os dados como texto puro
+        const urlComAcao = `${CONFIG.APPS_SCRIPT_URL}?acao=salvarPedido`;
+        
+        const response = await fetch(urlComAcao, {
+            method: 'POST',
+            mode: 'cors', // Agora o CORS vai permitir porque o Content-Type é simples
+            headers: {
+                'Content-Type': 'text/plain;charset=utf-8',
+            },
+            body: JSON.stringify(dadosPedido)
+        });
+
+        const resultado = await response.json();
+
+        if (resultado.sucesso) {
+            Utils.mostrarNotificacao(CONFIG.MENSAGENS.pedidoSalvo, 'success');
+            // Opcional: limparFormulario();
+        } else {
+            throw new Error(resultado.erro || 'Erro desconhecido no servidor');
+        }
+
+    } catch (error) {
+        console.error('❌ Erro ao salvar:', error);
+        Utils.mostrarNotificacao('Erro ao salvar no banco: ' + error.message, 'error');
+    } finally {
+        esconderLoading();
     }
-    
+}
     // Mostrar loading
     mostrarLoading(CONFIG.MENSAGENS.salvandoPedido);
     
