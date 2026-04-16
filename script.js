@@ -900,9 +900,9 @@ function coletarDadosFormulario() {
             entrega: document.getElementById('dataEntrega').value
         },
           totalPecas: (() => {
-            let total = 0;
-            estadoApp.produtos.forEach(p => {
-                const tamanhosBody = document.getElementById(`tamanhosBody-${p.id}`);
+    let total = 0;
+    estadoApp.produtos.forEach(p => {
+        const tamanhosBody = document.getElementById(`tamanhosBody-${p.id}`);
                 if (tamanhosBody) {
                     const inputs = tamanhosBody.querySelectorAll('input[type="number"]');
                     inputs.forEach(input => total += parseInt(input.value) || 0);
