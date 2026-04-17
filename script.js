@@ -843,10 +843,11 @@ async function salvarPedido() {
     mostrarLoading(CONFIG.MENSAGENS.salvandoPedido);
     
     try {
-        const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
+        await fetch(CONFIG.APPS_SCRIPT_URL, {
+    method: 'POST',
+    body: formData,
+    mode: 'no-cors'
+});
             },
             body: JSON.stringify({
                 action: 'salvarPedido',
@@ -854,16 +855,10 @@ async function salvarPedido() {
             })
         });
         
-        const resultado = await response.json();
         
         esconderLoading();
         
-        if (resultado.sucesso) {
-            Utils.mostrarNotificacao(CONFIG.MENSAGENS.pedidoSalvo, 'success');
-        } else {
-            Utils.mostrarNotificacao(CONFIG.MENSAGENS.erroPedido, 'error');
-        }
-    } catch (error) {
+            } catch (error) {
         console.error('Erro ao salvar pedido:', error);
         esconderLoading();
         Utils.mostrarNotificacao(CONFIG.MENSAGENS.erroPedido, 'error');
