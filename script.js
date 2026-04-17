@@ -807,7 +807,7 @@ async function carregarDadosIniciais() {
     }
     
     try {
-        const response = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=obterDados`);
+        const response = await fetch(`${CONFIG.APPS_SCRIPT_URL}?acao=obterDados`);
         const dados = await response.json();
         
         if (dados.custosMalhas) estadoApp.custosMalhas = dados.custosMalhas;
@@ -843,17 +843,14 @@ async function salvarPedido() {
     mostrarLoading(CONFIG.MENSAGENS.salvandoPedido);
     
     try {
-        await fetch(CONFIG.APPS_SCRIPT_URL, {
+        const formData = new URLSearchParams();
+formData.append("acao", "salvarPedido");
+formData.append("dados", JSON.stringify(dadosPedido));
+
+await fetch(CONFIG.APPS_SCRIPT_URL, {
     method: 'POST',
-    body: formData,
-    mode: 'no-cors'
+    body: formData
 });
-            },
-            body: JSON.stringify({
-                action: 'salvarPedido',
-                dados: dadosPedido
-            })
-        });
         
         
         esconderLoading();
@@ -1021,7 +1018,7 @@ async function buscarPedido() {
     mostrarLoading(CONFIG.MENSAGENS.buscandoPedido);
     
     try {
-        const response = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=buscarPedido&termo=${encodeURIComponent(termoBusca)}`);
+        const response = await fetch(`${CONFIG.APPS_SCRIPT_URL}?acao=buscarPedido&termo=${encodeURIComponent(termoBusca)}`);
         const resultado = await response.json();
         
         esconderLoading();
