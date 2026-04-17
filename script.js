@@ -828,47 +828,51 @@ async function salvarPedido() {
         Utils.mostrarNotificacao(CONFIG.MENSAGENS.camposObrigatorios, 'error');
         return;
     }
-
+    
     // Coletar dados do formulário
     const dadosPedido = coletarDadosFormulario();
-
+    
     // Verificar URL do Apps Script
-    if (!CONFIG.APPS_SCRIPT_URL || CONFIG.APPS_SCRIPT_URL === '') {
+    if (!CONFIG.APPS_SCRIPT_URL || CONFIG.APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycby9LFyzYkXW_Zo9i_u3jdGfRweu5UaDvf4PsGWyTh8UB0hXGEls2l_oELjJSDkpZwDoAQ/exec') {
         console.error('URL do Apps Script não configurada');
         Utils.mostrarNotificacao('Configure a URL do Google Apps Script no arquivo config.js', 'error');
         return;
     }
-
+    
     // Mostrar loading
     mostrarLoading(CONFIG.MENSAGENS.salvandoPedido);
-
+    
     try {
-        const formData = new URLSearchParams();
-        formData.append("action", "salvarPedido");
-        formData.append("dados", JSON.stringify(dadosPedido));
+    const formData = new URLSearchParams();
+    formData.append("acao", "salvarPedido");
+    formData.append("dados", JSON.stringify(dadosPedido));
 
-        const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
-            method: 'POST',
-            body: formData
-        });
+    const formData = new URLSearchParams();
+formData.append("acao", "salvarPedido");
+formData.append("dados", JSON.stringify(dadosPedido));
 
-        const resultado = await response.json();
+await fetch(CONFIG.APPS_SCRIPT_URL, {
+    method: 'POST',
+    body: formData
+});
 
-        esconderLoading();
+    esconderLoading();
 
-        if (resultado.sucesso) {
-            Utils.mostrarNotificacao('Pedido salvo com sucesso!', 'success');
-        } else {
-            Utils.mostrarNotificacao('Erro ao salvar pedido', 'error');
-            console.error(resultado);
-        }
-
-    } catch (error) {
-        console.error('Erro ao salvar pedido:', error);
-        esconderLoading();
-        Utils.mostrarNotificacao(CONFIG.MENSAGENS.erroPedido, 'error');
-    }
+} catch (error) {
+    console.error('Erro ao salvar pedido:', error);
+    esconderLoading();
+    Utils.mostrarNotificacao(CONFIG.MENSAGENS.erroPedido, 'error');
 }
+    }
+
+function validarFormulario() {
+    const nome = document.getElementById('nomeCliente').value;
+    const telefone = document.getElementById('telefone').value;
+    const dataPedido = document.getElementById('dataPedido').value;
+    
+    if (!Utils.validarCampoObrigatorio(nome)) return false;
+    if (!Utils.validarTelefone(telefone)) return false;
+    if (!dataPedido) return false;
     
     // Validar pelo menos um produto
     if (estadoApp.produtos.length === 0) return false;
