@@ -864,7 +864,6 @@ await fetch(CONFIG.APPS_SCRIPT_URL, {
     Utils.mostrarNotificacao(CONFIG.MENSAGENS.erroPedido, 'error');
 }
     }
-}
 
 function validarFormulario() {
     const nome = document.getElementById('nomeCliente').value;
