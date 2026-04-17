@@ -847,10 +847,14 @@ async function salvarPedido() {
     formData.append("acao", "salvarPedido");
     formData.append("dados", JSON.stringify(dadosPedido));
 
-    await fetch(CONFIG.APPS_SCRIPT_URL, {
-        method: 'POST',
-        body: formData
-    });
+    const formData = new URLSearchParams();
+formData.append("acao", "salvarPedido");
+formData.append("dados", JSON.stringify(dadosPedido));
+
+await fetch(CONFIG.APPS_SCRIPT_URL, {
+    method: 'POST',
+    body: formData
+});
 
     esconderLoading();
 
