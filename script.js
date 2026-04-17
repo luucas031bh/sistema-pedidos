@@ -801,13 +801,13 @@ function calcularResumoFinanceiro() {
 // ========== Carregar Dados Iniciais ==========
 async function carregarDadosIniciais() {
     // Verificar se URL do Apps Script está configurada
-    if (!CONFIG.APPS_SCRIPT_URL || CONFIG.APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycby9LFyzYkXW_Zo9i_u3jdGfRweu5UaDvf4PsGWyTh8UB0hXGEls2l_oELjJSDkpZwDoAQ/exec') {
+    if (!CONFIG.APPS_SCRIPT_URL || CONFIG.APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbxoBz24IBnD255ntV38rTXe3DoYjlmDTql5oRq_Hqgc32vcqrWWUPytQZq5S3D_7zMj/exec') {
         console.warn('⚠️ URL do Google Apps Script não configurada');
         return;
     }
     
     try {
-        const response = await fetch(`${CONFIG.APPS_SCRIPT_URL}?acao=obterDados`);
+        const response = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=obterDados`);
         const dados = await response.json();
         
         if (dados.custosMalhas) estadoApp.custosMalhas = dados.custosMalhas;
@@ -833,7 +833,7 @@ async function salvarPedido() {
     const dadosPedido = coletarDadosFormulario();
     
     // Verificar URL do Apps Script
-    if (!CONFIG.APPS_SCRIPT_URL || CONFIG.APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycby9LFyzYkXW_Zo9i_u3jdGfRweu5UaDvf4PsGWyTh8UB0hXGEls2l_oELjJSDkpZwDoAQ/exec') {
+    if (!CONFIG.APPS_SCRIPT_URL || CONFIG.APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbxoBz24IBnD255ntV38rTXe3DoYjlmDTql5oRq_Hqgc32vcqrWWUPytQZq5S3D_7zMj/exec') {
         console.error('URL do Apps Script não configurada');
         Utils.mostrarNotificacao('Configure a URL do Google Apps Script no arquivo config.js', 'error');
         return;
@@ -843,27 +843,30 @@ async function salvarPedido() {
     mostrarLoading(CONFIG.MENSAGENS.salvandoPedido);
     
     try {
-    const formData = new URLSearchParams();
-    formData.append("acao", "salvarPedido");
-    formData.append("dados", JSON.stringify(dadosPedido));
-
-    const formData = new URLSearchParams();
+        const formData = new URLSearchParams();
 formData.append("acao", "salvarPedido");
 formData.append("dados", JSON.stringify(dadosPedido));
 
-await fetch(CONFIG.APPS_SCRIPT_URL, {
+const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
     method: 'POST',
     body: formData
 });
-
-    esconderLoading();
-
-} catch (error) {
-    console.error('Erro ao salvar pedido:', error);
-    esconderLoading();
-    Utils.mostrarNotificacao(CONFIG.MENSAGENS.erroPedido, 'error');
-}
+        
+        const resultado = await response.json();
+        
+        esconderLoading();
+        
+        if (resultado.sucesso) {
+            Utils.mostrarNotificacao(CONFIG.MENSAGENS.pedidoSalvo, 'success');
+        } else {
+            Utils.mostrarNotificacao(CONFIG.MENSAGENS.erroPedido, 'error');
+        }
+    } catch (error) {
+        console.error('Erro ao salvar pedido:', error);
+        esconderLoading();
+        Utils.mostrarNotificacao(CONFIG.MENSAGENS.erroPedido, 'error');
     }
+}
 
 function validarFormulario() {
     const nome = document.getElementById('nomeCliente').value;
@@ -1013,7 +1016,7 @@ async function buscarPedido() {
         return;
     }
     
-    if (!CONFIG.APPS_SCRIPT_URL || CONFIG.APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycby9LFyzYkXW_Zo9i_u3jdGfRweu5UaDvf4PsGWyTh8UB0hXGEls2l_oELjJSDkpZwDoAQ/exec') {
+    if (!CONFIG.APPS_SCRIPT_URL || CONFIG.APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbxoBz24IBnD255ntV38rTXe3DoYjlmDTql5oRq_Hqgc32vcqrWWUPytQZq5S3D_7zMj/exec') {
         Utils.mostrarNotificacao('Configure a URL do Google Apps Script', 'error');
         return;
     }
@@ -1021,7 +1024,7 @@ async function buscarPedido() {
     mostrarLoading(CONFIG.MENSAGENS.buscandoPedido);
     
     try {
-        const response = await fetch(`${CONFIG.APPS_SCRIPT_URL}?acao=buscarPedido&termo=${encodeURIComponent(termoBusca)}`);
+        const response = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=buscarPedido&termo=${encodeURIComponent(termoBusca)}`);
         const resultado = await response.json();
         
         esconderLoading();
