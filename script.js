@@ -322,10 +322,14 @@ async function salvarPedido() {
     mostrarLoading('Salvando pedido...');
     try {
         const dados = coletarDadosFormulario();
+        const body = new URLSearchParams();
+        body.append('action', 'salvarPedido');
+        body.append('acao', 'salvarPedido');
+        body.append('dados', JSON.stringify(dados));
+
         const resposta = await fetch(CONFIG.APPS_SCRIPT_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'salvarPedido', acao: 'salvarPedido', dados })
+            body
         });
         const resultado = await resposta.json();
         if (!resultado.sucesso) throw new Error(resultado.erro || 'Falha ao salvar');
