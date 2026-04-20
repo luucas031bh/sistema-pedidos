@@ -51,8 +51,9 @@ function doPost(e) {
     let acao = '';
     let dados = {};
 
-    if (e && e.parameter && (e.parameter.action || e.parameter.acao)) {
-      acao = e.parameter.action || e.parameter.acao;
+    if (e && e.parameter) {
+      // Prioriza requests form-urlencoded (evita preflight no navegador).
+      acao = e.parameter.action || e.parameter.acao || '';
       if (e.parameter.dados) {
         try {
           dados = JSON.parse(e.parameter.dados);
@@ -60,11 +61,15 @@ function doPost(e) {
           dados = e.parameter.dados;
         }
       }
-    } else if (e && e.postData && e.postData.contents) {
-      const payload = JSON.parse(e.postData.contents);
+    }
+
+    if (!acao && e && e.postData && e.postData.contents) {
+      const payload = JSON.parse(e.postData.contents || '{}');
       acao = payload.action || payload.acao || '';
-      dados = payload.dados || payload;
-    } else {
+      dados = payload.dados || dados || payload;
+    }
+
+    if (!acao) {
       return resposta({ sucesso: false, erro: 'Nenhum dado recebido' });
     }
 
