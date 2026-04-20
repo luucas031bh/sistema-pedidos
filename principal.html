@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Principal - Adonay Confecção</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1 class="empresa-nome">PAINEL PRINCIPAL</h1>
+            <div class="relogio" id="relogio">Carregando...</div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="card">
+            <h2 class="card-title">Indicadores</h2>
+            <div class="form-row">
+                <div class="form-group"><label class="form-label">Total de Pedidos</label><div class="form-input" id="kpiTotal">0</div></div>
+                <div class="form-group"><label class="form-label">Pedidos Hoje</label><div class="form-input" id="kpiHoje">0</div></div>
+                <div class="form-group"><label class="form-label">Pedidos Semana</label><div class="form-input" id="kpiSemana">0</div></div>
+                <div class="form-group"><label class="form-label">Valor Total</label><div class="form-input" id="kpiValor">R$ 0,00</div></div>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="flex-between mb-2">
+                <h2 class="card-title">Fila de Pedidos</h2>
+                <button type="button" id="btnAtualizarPainel" class="btn btn-info">🔄 Atualizar</button>
+            </div>
+            <div class="tabela-dinamica">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Cliente</th>
+                            <th>Telefone</th>
+                            <th>Data Entrega</th>
+                            <th>Status</th>
+                            <th>Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody id="painelFilaBody">
+                        <tr><td colspan="6">Carregando dados...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="card text-center">
+            <a href="index.html" class="btn btn-primary">➕ Novo Pedido</a>
+        </section>
+    </main>
+
+    <script src="config.js"></script>
+    <script src="utils.js"></script>
+    <script src="principal.js"></script>
+</body>
+</html>

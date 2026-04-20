@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="description" content="Sistema de Pedidos Adonay Confecção">
+    <meta name="author" content="Adonay Confecção">
+    <meta name="theme-color" content="#1a1a1a">
+    
+    <title>Adonay Confecção - Sistema de Pedidos</title>
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👕</text></svg>">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="print.css">
+    
+    <!-- Preload Scripts -->
+    <link rel="preload" href="config.js" as="script">
+    <link rel="preload" href="utils.js" as="script">
+    <link rel="preload" href="script.js" as="script">
+</head>
+<body>
+    <!-- ========== CABEÇALHO ========== -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="empresa-nome">ADONAY CONFECÇÃO</h1>
+            
+            <div class="empresa-info">
+                <p>CNPJ: 42.522.845/0001-97</p>
+                <p>Rua Geraldo Teixeira da Costa, São Benedito, Santa Luzia - MG</p>
+            </div>
+            
+            <div class="empresa-contatos">
+                <span class="contato-item">💬 (31) 3950-3089</span>
+                <span class="contato-item">📷 @adonayconfeccao</span>
+                <span class="contato-item">☎ (31) 3950-3089</span>
+            </div>
+            
+            <div class="relogio" id="relogio">
+                <span>Carregando...</span>
+            </div>
+        </div>
+    </header>
+    
+    <!-- ========== CONTAINER PRINCIPAL ========== -->
+    <main class="container">
+        <section class="card">
+            <div class="flex-between">
+                <h2 class="card-title">🏠 Cadastro de Pedidos</h2>
+                <a class="btn btn-info" href="principal.html">📊 Ir para Painel Principal</a>
+            </div>
+        </section>
+        
+        <!-- ========== FORMULÁRIO DE PEDIDO ========== -->
+        <form id="formPedido" onsubmit="event.preventDefault();">
+            
+            <!-- DADOS DO CLIENTE -->
+            <section class="card">
+                <h2 class="card-title">👤 Dados do Cliente</h2>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nomeCliente" class="form-label required">Nome do Cliente</label>
+                        <input 
+                            type="text" 
+                            id="nomeCliente" 
+                            class="form-input" 
+                            placeholder="Digite o nome completo"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="telefone" class="form-label required">Telefone</label>
+                        <input 
+                            type="tel" 
+                            id="telefone" 
+                            class="form-input" 
+                            placeholder="(XX) X XXXX-XXXX"
+                            maxlength="16"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="idPedido" class="form-label">ID do Pedido</label>
+                        <input 
+                            type="text" 
+                            id="idPedido" 
+                            class="form-input" 
+                            placeholder="Gerado automaticamente"
+                            disabled
+                        >
+                    </div>
+                </div>
+            </section>
+            
+            <!-- DATAS -->
+            <section class="card">
+                <h2 class="card-title">📅 Datas</h2>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="dataPedido" class="form-label required">Data do Pedido</label>
+                        <input 
+                            type="date" 
+                            id="dataPedido" 
+                            class="form-input"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="dataEntrega" class="form-label required">Data de Entrega</label>
+                        <input 
+                            type="date" 
+                            id="dataEntrega" 
+                            class="form-input"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="totalPecas" class="form-label">Total de Peças</label>
+                        <input 
+                            type="number" 
+                            id="totalPecas" 
+                            class="form-input" 
+                            value="0"
+                            disabled
+                        >
+                    </div>
+                </div>
+            </section>
+            
+            <!-- PRODUTOS -->
+            <section class="card">
+                <div class="flex-between mb-2">
+                    <h2 class="card-title">📦 Produtos</h2>
+                    <button type="button" id="btnAdicionarProduto" class="btn btn-primary">
+                        ➕ Adicionar Produto
+                    </button>
+                </div>
+                
+                <div id="produtosContainer">
+                    <!-- Os produtos serão adicionados dinamicamente aqui -->
+                </div>
+            </section>
+            
+            <!-- OBSERVAÇÕES -->
+            <section class="card">
+                <h2 class="card-title">📝 Observações</h2>
+                
+                <div class="form-group">
+                    <label for="observacoes" class="form-label">Observações Gerais do Pedido</label>
+                    <textarea 
+                        id="observacoes" 
+                        class="form-textarea" 
+                        placeholder="Digite observações sobre o pedido, especificações especiais, prazo diferenciado, etc."
+                        rows="4"
+                    ></textarea>
+                </div>
+            </section>
+
+            <!-- OPERAÇÃO E VALIDAÇÕES -->
+            <section class="card">
+                <h2 class="card-title">🧭 Operação e Validações</h2>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="statusOperacional" class="form-label required">Status Operacional</label>
+                        <select id="statusOperacional" class="form-select" required></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="responsavelAtual" class="form-label">Responsável Atual</label>
+                        <select id="responsavelAtual" class="form-select">
+                            <option value="">Selecione...</option>
+                            <option value="Esposa">Esposa</option>
+                            <option value="Lucas">Lucas</option>
+                            <option value="Terceiro">Terceiro</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="checkbox-grid">
+                    <label class="checkbox-item"><input type="checkbox" id="entradaConfirmada"> Entrada 50% confirmada</label>
+                    <label class="checkbox-item"><input type="checkbox" id="arteAprovada"> Arte aprovada</label>
+                    <label class="checkbox-item"><input type="checkbox" id="precisaCompra"> Precisa de compra</label>
+                    <label class="checkbox-item"><input type="checkbox" id="precisaTerceirizacao"> Precisa de terceirização</label>
+                </div>
+
+                <div class="form-row mt-2">
+                    <div class="form-group">
+                        <label for="motivoTravamento" class="form-label">Motivo de Travamento</label>
+                        <textarea
+                            id="motivoTravamento"
+                            class="form-textarea"
+                            placeholder="Se o pedido estiver travado, descreva o motivo"
+                            rows="2"
+                        ></textarea>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- RESUMO FINANCEIRO -->
+            <section class="card resumo-financeiro">
+                <h2 class="card-title">💰 Resumo Financeiro</h2>
+                
+                
+                <div class="resumo-total" id="resumoTotalPedidoDestaque">
+                    <div>💵 TOTAL: <span id="resumoTotalPedido">R$ 0,00</span></div>
+                </div>
+                
+                <div class="form-row mt-2">
+                    <div class="form-group">
+                        <label for="valorEntrada" class="form-label">💵 Valor da Entrada (R$)</label>
+                        <input 
+                            type="number" 
+                            id="valorEntrada" 
+                            class="form-input" 
+                            placeholder="0.00"
+                            min="0"
+                            step="0.01"
+                            onchange="calcularResumoFinanceiro()"
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">📋 Restante a Pagar</label>
+                        <div class="form-input" style="background-color: var(--cor-terciaria); font-weight: bold; color: var(--dourado-secundario);">
+                            <span id="resumoRestante">R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- BOTÕES DE AÇÃO -->
+            <section class="card">
+                <div class="btn-group">
+                    <button type="button" id="btnBuscar" class="btn btn-info">
+                        🔍 Buscar Pedido
+                    </button>
+                    
+                    <button type="button" id="btnSalvar" class="btn btn-success">
+                        💾 Salvar Pedido
+                    </button>
+                    
+                    <button type="button" id="btnWhatsApp" class="btn btn-primary">
+                        📱 Enviar para WhatsApp
+                    </button>
+                    
+                    <button type="button" id="btnImprimir" class="btn btn-secondary">
+                        🖨️ Imprimir Pedido
+                    </button>
+                </div>
+            </section>
+            
+        </form>
+
+        <!-- FILA VISUAL ÚNICA -->
+        <section class="card">
+            <div class="flex-between mb-2">
+                <h2 class="card-title">📊 Fila Visual Única</h2>
+                <button type="button" id="btnAtualizarFila" class="btn btn-info">🔄 Atualizar Fila</button>
+            </div>
+
+            <div class="tabela-dinamica">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Cliente</th>
+                            <th>Status</th>
+                            <th>Responsável</th>
+                            <th>Prazo</th>
+                            <th>Dias Restantes</th>
+                            <th>Urgência</th>
+                            <th>Pendências</th>
+                        </tr>
+                    </thead>
+                    <tbody id="filaPedidosBody">
+                        <tr>
+                            <td colspan="8">Carregando fila...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    
+    <!-- ========== RODAPÉ (para impressão) ========== -->
+    <footer class="print-footer hidden">
+        <p>Adonay Confecção - CNPJ: 42.522.845/0001-97 - (31) 3950-3089</p>
+        <div class="assinatura-area">
+            <div class="linha-assinatura"></div>
+            <p class="label-assinatura">Assinatura do Cliente</p>
+        </div>
+    </footer>
+    
+    <!-- ========== SCRIPTS ========== -->
+    <script src="config.js"></script>
+    <script src="utils.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
+
