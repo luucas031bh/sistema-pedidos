@@ -4,6 +4,13 @@ document.addEventListener('DOMContentLoaded', () => {
     atualizarRelogioHome();
     setInterval(atualizarRelogioHome, 1000);
     document.getElementById('btnAtualizarHome')?.addEventListener('click', carregarHome);
+    document.getElementById('btnBuscarPedidoHome')?.addEventListener('click', executarBuscaPedidoHome);
+    document.getElementById('inputBuscaIdBusca')?.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') {
+            ev.preventDefault();
+            executarBuscaPedidoHome();
+        }
+    });
     carregarHome();
     window.setTimeout(() => {
         homePodeRecarregarVisibilidade = true;
@@ -121,6 +128,115 @@ function escapeHtmlHome(texto) {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
+}
+
+/** Telefone completo → últimos 4 dígitos; senão texto para nome/ID. */
+function termoBuscaHomeParaApi(valorBruto) {
+    const t = String(valorBruto || '').trim();
+    if (!t) return '';
+    const soDigitos = t.replace(/\D/g, '');
+    if (soDigitos.length >= 4) return soDigitos.slice(-4);
+    return t;
+}
+
+function formatarDataHoraPedidoHome(val) {
+    if (val == null || val === '') return '—';
+    if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}/.test(val)) {
+        const m = val.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+    }
+    const d = val instanceof Date ? val : new Date(val);
+    if (Number.isNaN(d.getTime())) return '—';
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+}
+
+function mostrarMsgBuscaHome(texto, tipo) {
+    const el = document.getElementById('homeBuscaMensagem');
+    if (!el) return;
+    el.textContent = texto || '';
+    el.classList.remove('hidden', 'home-busca-msg--erro', 'home-busca-msg--ok');
+    if (!texto) {
+        el.classList.add('hidden');
+        return;
+    }
+    if (tipo === 'erro') el.classList.add('home-busca-msg--erro');
+    else el.classList.add('home-busca-msg--ok');
+}
+
+async function executarBuscaPedidoHome() {
+    const input = document.getElementById('inputBuscaIdBusca');
+    const wrap = document.getElementById('homeBuscaResultados');
+    if (!input || !wrap) return;
+
+    const termo = termoBuscaHomeParaApi(input.value);
+    if (!termo) {
+        mostrarMsgBuscaHome('Informe os 4 últimos dígitos do telefone, nome ou ID do pedido.', 'erro');
+        wrap.classList.add('hidden');
+        wrap.innerHTML = '';
+        return;
+    }
+
+    if (window.location.protocol === 'file:') {
+        mostrarMsgBuscaHome('Abra via servidor local (localhost) para buscar pedidos.', 'erro');
+        return;
+    }
+
+    mostrarMsgBuscaHome('Buscando...', 'ok');
+    wrap.classList.add('hidden');
+    wrap.innerHTML = '';
+
+    try {
+        const url = `${CONFIG.APPS_SCRIPT_URL}?action=buscarPedidos&acao=buscarPedidos&termo=${encodeURIComponent(termo)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!res.ok || data.sucesso === false) {
+            mostrarMsgBuscaHome(data.erro || `Erro HTTP ${res.status}`, 'erro');
+            return;
+        }
+        const lista = data.pedidos || [];
+        if (lista.length === 0) {
+            mostrarMsgBuscaHome('Nenhum pedido encontrado para esse termo.', 'erro');
+            return;
+        }
+        if (lista.length === 1) {
+            mostrarMsgBuscaHome('Abrindo pedido...', 'ok');
+            window.location.href = `index.html?id=${encodeURIComponent(lista[0].id || '')}`;
+            return;
+        }
+        mostrarMsgBuscaHome(`${lista.length} pedidos encontrados. Escolha qual abrir:`, 'ok');
+        wrap.classList.remove('hidden');
+        wrap.innerHTML = `
+            <div class="tabela-dinamica home-busca-tabela">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Data do pedido</th>
+                            <th>ID</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${lista.map((p) => {
+                            const id = p.id || '';
+                            const nome = escapeHtmlHome(p.cliente?.nome || '—');
+                            const dp = formatarDataHoraPedidoHome(p.datas?.pedido || p.dataCriacao);
+                            const idEsc = encodeURIComponent(id);
+                            return `
+                                <tr>
+                                    <td>${nome}</td>
+                                    <td>${escapeHtmlHome(dp)}</td>
+                                    <td class="home-busca-id-cell">${escapeHtmlHome(String(id))}</td>
+                                    <td><a class="btn btn-small btn-primary" href="index.html?id=${idEsc}">Abrir</a></td>
+                                </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>`;
+    } catch (err) {
+        console.error(err);
+        mostrarMsgBuscaHome('Falha na busca (rede ou resposta inválida).', 'erro');
+    }
 }
 
 function renderizarKpisHome(abertos) {

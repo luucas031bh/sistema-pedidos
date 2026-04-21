@@ -400,5 +400,210 @@
         font-size: 10pt;
         color: black !important;
     }
+
+    /* Impressão exclusiva OS / GP */
+    body.imprimindo-doc-os .faixa-somente-leitura,
+    body.imprimindo-doc-os .btn-voltar-principal,
+    body.imprimindo-doc-os .header,
+    body.imprimindo-doc-os main.container,
+    body.imprimindo-doc-os .print-footer,
+    body.imprimindo-doc-gp .faixa-somente-leitura,
+    body.imprimindo-doc-gp .btn-voltar-principal,
+    body.imprimindo-doc-gp .header,
+    body.imprimindo-doc-gp main.container,
+    body.imprimindo-doc-gp .print-footer {
+        display: none !important;
+    }
+
+    body.imprimindo-doc-os * {
+        visibility: hidden;
+    }
+    body.imprimindo-doc-os #printOsMount,
+    body.imprimindo-doc-os #printOsMount * {
+        visibility: visible;
+    }
+    body.imprimindo-doc-os #printOsMount {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 10mm;
+        box-sizing: border-box;
+    }
+
+    body.imprimindo-doc-gp * {
+        visibility: hidden;
+    }
+    body.imprimindo-doc-gp #printGpMount,
+    body.imprimindo-doc-gp #printGpMount * {
+        visibility: visible;
+    }
+    body.imprimindo-doc-gp #printGpMount {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 10mm;
+        box-sizing: border-box;
+    }
+
+    .gp-doc,
+    .os-doc {
+        font-size: 10pt;
+        line-height: 1.3;
+        color: #000 !important;
+        background: #fff !important;
+    }
+
+    .gp-header {
+        text-align: center;
+        border-bottom: 2px solid #000;
+        padding-bottom: 8px;
+        margin-bottom: 10px;
+    }
+    .gp-marca {
+        font-size: 16pt;
+        font-weight: bold;
+    }
+    .gp-meta {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-top: 4px;
+    }
+    .gp-datas {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+    }
+    .gp-entrega {
+        background: #d1fae5 !important;
+        padding: 6px 10px;
+        border: 1px solid #000;
+    }
+    .gp-cliente {
+        margin-bottom: 10px;
+        border: 1px solid #000;
+        padding: 8px;
+    }
+    .gp-tabela {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+    }
+    .gp-tabela th,
+    .gp-tabela td {
+        border: 1px solid #000;
+        padding: 4px 6px;
+        text-align: left;
+    }
+    .gp-tabela .gp-num {
+        text-align: center;
+    }
+    .gp-tabela .gp-moeda {
+        text-align: right;
+    }
+    .gp-desc {
+        max-width: 180px;
+    }
+    .gp-financeiro {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        margin: 10px 0;
+        font-size: 11pt;
+    }
+    .gp-mockup {
+        min-height: 120px;
+        border: 1px dashed #666;
+        margin: 12px 0;
+        text-align: center;
+        padding: 8px;
+    }
+    .gp-mockup-img {
+        max-width: 100%;
+        max-height: 280px;
+        object-fit: contain;
+    }
+    .gp-rodape {
+        text-align: center;
+        font-weight: bold;
+        font-size: 14pt;
+        margin-top: 12px;
+    }
+
+    .os-titulo {
+        text-align: center;
+        font-size: 14pt;
+        margin: 0 0 12px;
+    }
+    .os-topo {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #000;
+        padding-bottom: 6px;
+    }
+    .os-cliente {
+        border: 1px solid #000;
+        padding: 8px;
+        margin-bottom: 12px;
+    }
+    .os-cliente h2 {
+        font-size: 11pt;
+        margin: 0 0 6px;
+    }
+    .os-modelo {
+        margin-bottom: 14px;
+        page-break-inside: avoid;
+    }
+    .os-modelo-tit {
+        font-size: 11pt;
+        margin: 0 0 6px;
+    }
+    .os-tab-tam {
+        border-collapse: collapse;
+        width: 100%;
+        max-width: 320px;
+        margin-bottom: 8px;
+    }
+    .os-tab-tam th,
+    .os-tab-tam td {
+        border: 1px solid #000;
+        padding: 4px 8px;
+    }
+    .os-num {
+        text-align: center;
+    }
+    .os-info {
+        font-size: 9pt;
+        border-left: 3px solid #333;
+        padding-left: 8px;
+    }
+    .os-total-pecas {
+        margin-top: 12px;
+        font-size: 12pt;
+        border-top: 2px solid #000;
+        padding-top: 8px;
+    }
+    .os-mockup {
+        margin-top: 12px;
+        text-align: center;
+        border: 1px dashed #666;
+        padding: 8px;
+    }
+    .os-mockup-img {
+        max-width: 100%;
+        max-height: 260px;
+        object-fit: contain;
+    }
 }
 
+.print-doc-root {
+    display: none;
+}

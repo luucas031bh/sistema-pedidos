@@ -37,6 +37,23 @@
             </div>
         </section>
 
+        <section class="card home-busca-pedido">
+            <h2 class="card-title">Buscar pedido salvo</h2>
+            <p class="home-busca-ajuda">Use os <strong>últimos 4 dígitos</strong> do telefone cadastrado (como no sistema antigo). Você pode colar o número completo — extraímos os 4 finais.</p>
+            <div class="form-row home-busca-linha">
+                <div class="form-group flex-grow">
+                    <label class="form-label" for="inputBuscaIdBusca">Final do telefone (4 dígitos)</label>
+                    <input type="text" id="inputBuscaIdBusca" class="form-input" inputmode="numeric" maxlength="16" placeholder="Ex.: 2490 ou (31) 98603-2490" autocomplete="off">
+                </div>
+                <div class="form-group home-busca-acoes">
+                    <span class="form-label home-busca-label-spacer">&nbsp;</span>
+                    <button type="button" id="btnBuscarPedidoHome" class="btn btn-secondary">Buscar pedido</button>
+                </div>
+            </div>
+            <p id="homeBuscaMensagem" class="home-busca-msg hidden" role="status"></p>
+            <div id="homeBuscaResultados" class="home-busca-resultados hidden"></div>
+        </section>
+
         <section class="card">
             <h2 class="card-title">Indicadores (pedidos em aberto)</h2>
             <div class="form-row home-kpi-grid">

@@ -4,7 +4,8 @@ const estadoApp = {
     produtoAtualId: 1,
     pedidoEmEdicao: null,
     modoEdicao: false,
-    idEdicao: null
+    idEdicao: null,
+    somenteLeitura: false
 };
 
 document.addEventListener('DOMContentLoaded', () => inicializarApp());
@@ -19,6 +20,7 @@ async function inicializarApp() {
     const idUrl = (new URLSearchParams(window.location.search).get('id') || '').trim();
     if (!idUrl) adicionarProduto();
     await carregarPedidoViaURL();
+    atualizarSecaoImpressaoPedido();
     const container = document.getElementById('produtosContainer');
     if (container && !container.children.length) adicionarProduto();
 }
@@ -367,6 +369,13 @@ function garantirOpcaoStatusIndex(valorPlanilha) {
     }
 }
 
+function pedidoSomenteLeituraPorStatus(pedido) {
+    const s = String(pedido?.statusOperacional || '').trim().toLowerCase();
+    if (s === 'entregue' || s === 'finalizado') return true;
+    if (s === 'cancelado') return true;
+    return false;
+}
+
 function aplicarUIModoEdicao() {
     document.body.classList.add('modo-edicao-index');
     document.getElementById('secaoStatusEdicao')?.classList.remove('hidden');
@@ -377,6 +386,39 @@ function aplicarUIModoEdicao() {
     configurarBotaoVoltarPrincipal();
 }
 
+function aplicarUIModoVisualizacao() {
+    document.body.classList.add('modo-edicao-index');
+    document.getElementById('secaoStatusEdicao')?.classList.remove('hidden');
+    const titulo = document.getElementById('tituloPrincipalIndex');
+    if (titulo) titulo.textContent = 'Visualizar pedido';
+    configurarBotaoVoltarPrincipal();
+}
+
+function aplicarSomenteLeituraIndex() {
+    estadoApp.somenteLeitura = true;
+    document.body.classList.add('pedido-somente-leitura');
+    document.getElementById('faixaSomenteLeitura')?.classList.remove('hidden');
+    document.querySelectorAll('#formPedido input, #formPedido select, #formPedido textarea').forEach((el) => {
+        el.disabled = true;
+    });
+}
+
+function desativarSomenteLeituraIndex() {
+    estadoApp.somenteLeitura = false;
+    document.body.classList.remove('pedido-somente-leitura');
+    document.getElementById('faixaSomenteLeitura')?.classList.add('hidden');
+    document.querySelectorAll('#formPedido input, #formPedido select, #formPedido textarea').forEach((el) => {
+        el.disabled = false;
+    });
+    ['idPedido', 'idBusca', 'totalPecas'].forEach((id) => {
+        const n = document.getElementById(id);
+        if (n) n.disabled = true;
+    });
+    document.querySelectorAll('[id^="precoUnitario-"], [id^="valorTotalProduto-"]').forEach((el) => {
+        el.disabled = true;
+    });
+}
+
 function desativarUIModoEdicaoIndex() {
     document.body.classList.remove('modo-edicao-index');
     document.getElementById('secaoStatusEdicao')?.classList.add('hidden');
@@ -384,7 +426,16 @@ function desativarUIModoEdicaoIndex() {
     if (titulo) titulo.textContent = '🏠 Cadastro de Pedidos';
     const btn = document.getElementById('btnSalvar');
     if (btn && btn.dataset.labelNovo) btn.textContent = btn.dataset.labelNovo;
+    desativarSomenteLeituraIndex();
     configurarBotaoVoltarPrincipal();
+}
+
+function atualizarSecaoImpressaoPedido() {
+    const sec = document.getElementById('secaoImpressaoPedido');
+    if (!sec) return;
+    const id = (document.getElementById('idPedido')?.value || '').trim();
+    const pedidoPersistidoOuCarregado = Boolean(estadoApp.modoEdicao && estadoApp.idEdicao);
+    sec.classList.toggle('hidden', !id || !pedidoPersistidoOuCarregado);
 }
 
 function sincronizarBotoesRemocaoProdutosIndex() {
@@ -527,6 +578,10 @@ function preencherFormularioCompleto(pedido) {
 }
 
 async function salvarPedido() {
+    if (estadoApp.somenteLeitura) {
+        Utils.mostrarNotificacao('Este pedido não pode ser alterado.', 'error');
+        return;
+    }
     if (!validarFormulario()) return Utils.mostrarNotificacao('Preencha corretamente os campos obrigatórios.', 'error');
     if (!CONFIG.APPS_SCRIPT_URL) return Utils.mostrarNotificacao('Configure a URL do Apps Script em config.js.', 'error');
     if (window.location.protocol === 'file:') {
@@ -564,6 +619,7 @@ async function salvarPedido() {
             }
             if (resultado.aviso) Utils.mostrarNotificacao(resultado.aviso, 'info');
             Utils.mostrarNotificacao('Alterações salvas com sucesso!', 'success');
+            atualizarSecaoImpressaoPedido();
             return;
         }
 
@@ -578,8 +634,19 @@ async function salvarPedido() {
         });
         const resultado = await resposta.json();
         if (!resultado.sucesso) throw new Error(resultado.erro || 'Falha ao salvar');
-        estadoApp.pedidoEmEdicao = resultado.id || dados.id;
+        if (resultado.id != null && String(resultado.id).trim() !== '') {
+            const idSrv = String(resultado.id);
+            document.getElementById('idPedido').value = idSrv;
+            estadoApp.pedidoEmEdicao = idSrv;
+            estadoApp.modoEdicao = true;
+            estadoApp.idEdicao = idSrv;
+            const elIb = document.getElementById('idBusca');
+            if (elIb && !elIb.value) elIb.value = Utils.obterIdBusca(document.getElementById('telefone').value);
+        } else {
+            estadoApp.pedidoEmEdicao = resultado.id || dados.id;
+        }
         Utils.mostrarNotificacao('Pedido salvo com sucesso!', 'success');
+        atualizarSecaoImpressaoPedido();
     } catch (erro) {
         console.error(erro);
         Utils.mostrarNotificacao(estadoApp.modoEdicao ? 'Erro ao salvar alterações.' : 'Erro ao salvar pedido.', 'error');
@@ -724,11 +791,13 @@ function limparFormulario() {
     estadoApp.pedidoEmEdicao = null;
     estadoApp.modoEdicao = false;
     estadoApp.idEdicao = null;
+    estadoApp.somenteLeitura = false;
     document.getElementById('resumoTotalPedido').textContent = 'R$ 0,00';
     document.getElementById('resumoRestante').textContent = 'R$ 0,00';
     desativarUIModoEdicaoIndex();
     configurarValoresPadraoFormulario();
     adicionarProduto();
+    atualizarSecaoImpressaoPedido();
 }
 
 async function carregarPedidoViaURL() {
@@ -742,7 +811,13 @@ async function carregarPedidoViaURL() {
         const resultado = await resposta.json();
         if (!resultado.sucesso || !resultado.pedido) throw new Error('Pedido não encontrado');
         preencherFormularioCompleto(resultado.pedido);
-        aplicarUIModoEdicao();
+        estadoApp.somenteLeitura = pedidoSomenteLeituraPorStatus(resultado.pedido);
+        if (estadoApp.somenteLeitura) {
+            aplicarUIModoVisualizacao();
+            aplicarSomenteLeituraIndex();
+        } else {
+            aplicarUIModoEdicao();
+        }
     } catch (erro) {
         console.error(erro);
         Utils.mostrarNotificacao('Não foi possível carregar o pedido da fila.', 'error');

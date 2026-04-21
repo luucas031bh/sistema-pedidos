@@ -22,6 +22,9 @@
     <link rel="preload" href="script.js" as="script">
 </head>
 <body>
+    <div id="faixaSomenteLeitura" class="faixa-somente-leitura hidden" role="status">
+        Pedido encerrado (entregue ou cancelado) — apenas visualização. Impressão disponível abaixo.
+    </div>
     <a href="home.html" id="btnVoltarPrincipal" class="btn-voltar-principal hidden" title="Voltar à fila (HOME)">Voltar à HOME</a>
     <!-- ========== CABEÇALHO ========== -->
     <header class="header">
@@ -53,6 +56,25 @@
                 <div class="flex flex-wrap gap-1">
                     <a class="btn btn-info" href="home.html">Fila visual (HOME)</a>
                 </div>
+            </div>
+        </section>
+
+        <section class="card hidden" id="secaoImpressaoPedido">
+            <h2 class="card-title">Impressão</h2>
+            <p class="impressao-ajuda">Imagem opcional para mockup (não é salva no sistema; só aparece na impressão).</p>
+            <div class="form-row impressao-mockup-linha">
+                <div class="form-group">
+                    <label class="form-label" for="inputMockupOs">Imagem — Ordem de serviço</label>
+                    <input type="file" id="inputMockupOs" class="form-input" accept="image/*">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="inputMockupGp">Imagem — Guia de pedido</label>
+                    <input type="file" id="inputMockupGp" class="form-input" accept="image/*">
+                </div>
+            </div>
+            <div class="btn-group flex-wrap">
+                <button type="button" id="btnImprimirOs" class="btn btn-secondary">Imprimir ordem de serviço (OS)</button>
+                <button type="button" id="btnImprimirGp" class="btn btn-secondary">Imprimir guia de pedido (GP)</button>
             </div>
         </section>
         
@@ -273,9 +295,13 @@
     </footer>
     
     <!-- ========== SCRIPTS ========== -->
+    <div id="printOsMount" class="print-doc-root" aria-hidden="true"></div>
+    <div id="printGpMount" class="print-doc-root" aria-hidden="true"></div>
+
     <script src="config.js"></script>
     <script src="utils.js"></script>
     <script src="script.js"></script>
+    <script src="print-os-gp.js"></script>
 </body>
 </html>
 

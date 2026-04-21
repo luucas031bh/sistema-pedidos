@@ -120,6 +120,7 @@ function doGet(e) {
 
     if (acao === 'online') return resposta({ status: 'online' });
     if (acao === 'buscarPedido') return resposta(buscarPedido((e.parameter && e.parameter.termo) || ''));
+    if (acao === 'buscarPedidos') return resposta(buscarPedidos((e.parameter && e.parameter.termo) || ''));
     if (acao === 'obterDados') return resposta(obterDados());
     if (acao === 'listarPedidos' || acao === 'obterFila') return resposta(listarPedidos((e.parameter && e.parameter.filtro) || ''));
     if (acao === 'getStats') return resposta({ sucesso: true, stats: getStats() });
@@ -227,6 +228,15 @@ function doPost(e) {
 
     if (acao === 'salvarPedido') return resposta(salvarPedido(dados));
     if (acao === 'buscarPedido') return resposta(buscarPedido(dados.termo || dados.id || ''));
+    if (acao === 'buscarPedidos') {
+      var termoBusca = '';
+      if (dados.termo !== undefined && dados.termo !== null && String(dados.termo).trim() !== '') {
+        termoBusca = dados.termo;
+      } else if (e.parameter && e.parameter.termo) {
+        termoBusca = e.parameter.termo;
+      }
+      return resposta(buscarPedidos(termoBusca));
+    }
     if (acao === 'obterDados') return resposta(obterDados());
     if (acao === 'listarPedidos' || acao === 'obterFila') return resposta(listarPedidos(dados.filtro || ''));
 
@@ -394,6 +404,66 @@ function buscarPedido(termo) {
       }
     }
     return { sucesso: false, erro: 'Pedido não encontrado' };
+  } catch (erro) {
+    return { sucesso: false, erro: erro.toString() };
+  }
+}
+
+/**
+ * Lista todos os pedidos que coincidem com o termo.
+ * - 4 dígitos: todas as linhas cuja coluna ID BUSCA coincide.
+ * - Caso contrário: todas as linhas cujo ID corresponde (idsCorrespondem), senão nome (substring) ou telefone completo.
+ */
+function buscarPedidos(termo) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.ABAS.PEDIDOS);
+    if (!sheet) return { sucesso: false, erro: 'Aba PEDIDOS não encontrada' };
+    const dados = sheet.getDataRange().getValues();
+    if (dados.length <= 1) return { sucesso: true, pedidos: [] };
+
+    var temCosturaBusca = planilhaPedidosTemColunaCostura(sheet);
+    var idxIdBusca = temCosturaBusca ? 27 : 26;
+    var termoStr = String(termo || '').trim();
+    if (!termoStr) return { sucesso: false, erro: 'Informe um termo de busca' };
+
+    var resultados = [];
+    var termoSoDigitos = normalizarTelefone(termoStr);
+    var termoId = normalizarId(termoStr);
+    var i;
+
+    if (termoSoDigitos.length === 4) {
+      for (i = 1; i < dados.length; i++) {
+        var rowIb = dados[i];
+        var celIb = rowIb.length > idxIdBusca ? rowIb[idxIdBusca] : '';
+        if (normalizarIdBuscaPlanilha(celIb) === termoSoDigitos) {
+          resultados.push(linhaParaPedido(rowIb, temCosturaBusca));
+        }
+      }
+      return { sucesso: true, pedidos: resultados };
+    }
+
+    for (i = 1; i < dados.length; i++) {
+      if (idsCorrespondem(dados[i][0], termoId)) {
+        resultados.push(linhaParaPedido(dados[i], temCosturaBusca));
+      }
+    }
+    if (resultados.length > 0) {
+      return { sucesso: true, pedidos: resultados };
+    }
+
+    var termoLower = termoStr.toLowerCase();
+    var termoTelefoneFull = termoSoDigitos;
+    for (i = 1; i < dados.length; i++) {
+      var row = dados[i];
+      var rowNome = String(row[1] || '').toLowerCase();
+      var rowTelefone = normalizarTelefone(row[2]);
+      var matchNome = termoLower.length > 0 && rowNome.indexOf(termoLower) !== -1;
+      var matchFone = termoTelefoneFull.length >= 10 && rowTelefone === termoTelefoneFull;
+      if (matchNome || matchFone) {
+        resultados.push(linhaParaPedido(row, temCosturaBusca));
+      }
+    }
+    return { sucesso: true, pedidos: resultados };
   } catch (erro) {
     return { sucesso: false, erro: erro.toString() };
   }
