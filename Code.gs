@@ -93,7 +93,7 @@ function salvarPedido(dados) {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.ABAS.PEDIDOS);
     if (!sheet) return { sucesso: false, erro: 'Aba PEDIDOS não encontrada' };
 
-    const idPedido = dados.id || gerarId();
+    const idPedido = normalizarId(dados.id || gerarId());
     const nomeCliente = (dados.cliente && dados.cliente.nome) || '';
     const telefone = (dados.cliente && dados.cliente.telefone) || '';
     const dataPedido = (dados.datas && dados.datas.pedido) || '';
@@ -112,7 +112,7 @@ function salvarPedido(dados) {
     const dadosPlanilha = sheet.getDataRange().getValues();
     const colunas = Math.max((dadosPlanilha[0] || []).length, 26);
     for (var i = 1; i < dadosPlanilha.length; i++) {
-      if (dadosPlanilha[i][0] === idPedido) {
+      if (normalizarId(dadosPlanilha[i][0]) === idPedido) {
         const linhaAtual = dadosPlanilha[i];
         sheet.getRange(i + 1, 1, 1, colunas).setValues([[
           idPedido, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
@@ -148,9 +148,14 @@ function buscarPedido(termo) {
     const dados = sheet.getDataRange().getValues();
     if (dados.length <= 1) return { sucesso: false, erro: 'Nenhum pedido cadastrado' };
 
+    const termoId = normalizarId(termo);
     for (var i = 1; i < dados.length; i++) {
       const row = dados[i];
-      if (row[0] == termo || row[1].toString().toLowerCase().indexOf(String(termo).toLowerCase()) !== -1 || row[2] == termo) {
+      const rowId = normalizarId(row[0]);
+      const rowNome = String(row[1] || '').toLowerCase();
+      const rowTelefone = normalizarId(row[2]);
+      const termoStr = String(termo || '').toLowerCase();
+      if (rowId === termoId || rowNome.indexOf(termoStr) !== -1 || rowTelefone === termoId) {
         return {
           sucesso: true,
           pedido: {
@@ -197,8 +202,9 @@ function listarPedidos(filtro) {
     const data = sheet.getDataRange().getValues();
     data.shift();
 
-    const pedidos = data.map(function(row) {
-      return {
+    const pedidosPorId = {};
+    data.forEach(function(row) {
+      const pedido = {
         id: row[0],
         cliente: { nome: row[1], telefone: row[2] },
         datas: { pedido: row[3], entrega: row[4] },
@@ -226,6 +232,19 @@ function listarPedidos(filtro) {
         dataCriacao: row[12],
         dataModificacao: row[13]
       };
+      const chaveId = normalizarId(pedido.id);
+      const existente = pedidosPorId[chaveId];
+      if (!existente) {
+        pedidosPorId[chaveId] = pedido;
+        return;
+      }
+      const dataAtual = obterTimestampSeguro(pedido.dataModificacao || pedido.dataCriacao);
+      const dataExistente = obterTimestampSeguro(existente.dataModificacao || existente.dataCriacao);
+      if (dataAtual >= dataExistente) pedidosPorId[chaveId] = pedido;
+    });
+
+    const pedidos = Object.keys(pedidosPorId).map(function(chave) {
+      return pedidosPorId[chave];
     }).filter(function(pedido) {
       return !filtro || pedido.statusOperacional === filtro;
     });
@@ -265,6 +284,17 @@ function asBoolean(valor) {
     return normalizado === 'true' || normalizado === 'sim' || normalizado === '1' || normalizado === 'x';
   }
   return false;
+}
+
+function normalizarId(valor) {
+  return String(valor === null || valor === undefined ? '' : valor).trim();
+}
+
+function obterTimestampSeguro(valorData) {
+  if (!valorData) return 0;
+  var data = valorData instanceof Date ? valorData : new Date(valorData);
+  var timestamp = data.getTime();
+  return Number.isNaN(timestamp) ? 0 : timestamp;
 }
 
 function normalizarStatusProducao(statusProducao) {
