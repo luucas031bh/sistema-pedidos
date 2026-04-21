@@ -9,8 +9,13 @@ document.addEventListener('DOMContentLoaded', () => {
     carregarPedidoPorId();
 });
 
+function obterBotaoSalvarEdicao() {
+    return document.getElementById('btnSalvarEdicao')
+        || document.querySelector('#formEdicaoPedido button[type="submit"]');
+}
+
 function definirSalvarEdicaoHabilitado(habilitado) {
-    const btn = document.getElementById('btnSalvarEdicao');
+    const btn = obterBotaoSalvarEdicao();
     if (btn) btn.disabled = !habilitado;
 }
 
@@ -52,9 +57,14 @@ async function carregarPedidoPorId() {
         const resultado = await resposta.json();
         if (!resultado.sucesso || !resultado.pedido) throw new Error('Pedido não encontrado');
         pedidoOriginal = resultado.pedido;
-        preencherResumoEdicao(pedidoOriginal);
-        preencherFormularioEdicao(pedidoOriginal);
         definirSalvarEdicaoHabilitado(true);
+        try {
+            preencherResumoEdicao(pedidoOriginal);
+            preencherFormularioEdicao(pedidoOriginal);
+        } catch (preencherErro) {
+            console.error(preencherErro);
+            Utils.mostrarNotificacao('Pedido carregado, mas houve erro ao preencher o formulário. Você ainda pode salvar.', 'info');
+        }
     } catch (erro) {
         console.error(erro);
         pedidoOriginal = null;
