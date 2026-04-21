@@ -175,6 +175,8 @@ async function salvarEdicaoPedido() {
         body.append('action', 'salvarPedido');
         body.append('acao', 'salvarPedido');
         body.append('dados', JSON.stringify(dados));
+        body.append('modoEdicao', 'true');
+        body.append('idEdicao', String(pedidoOriginal.id ?? dados.id ?? ''));
 
         const resposta = await fetch(CONFIG.APPS_SCRIPT_URL, { method: 'POST', body });
         const resultado = await resposta.json();

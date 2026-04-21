@@ -177,6 +177,17 @@ function doPost(e) {
 
     dados = normalizarDadosObjeto(dados);
 
+    if (e && e.parameter) {
+      var modoEd = e.parameter.modoEdicao;
+      if (modoEd === 'true' || modoEd === true) {
+        dados.atualizacao = true;
+      }
+      var idEdParam = e.parameter.idEdicao;
+      if (idEdParam != null && normalizarId(idEdParam)) {
+        dados.id = normalizarId(dados.id) || normalizarId(idEdParam);
+      }
+    }
+
     if (!acao) {
       return resposta({ sucesso: false, erro: 'Nenhum dado recebido' });
     }
