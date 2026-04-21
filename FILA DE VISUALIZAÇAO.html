@@ -1,192 +1,69 @@
-
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fila de Produção - Adonay</title>
-
-<style>
-:root {
-  --bg: #0f1115;
-  --card: #1a1d24;
-  --text: #e6e6e6;
-  --sub: #9aa0a6;
-
-  --red: #ff4d4d;
-  --yellow: #ffc107;
-  --green: #4caf50;
-}
-
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-}
-
-/* HEADER */
-.header {
-  padding: 15px;
-  border-bottom: 1px solid #2a2f3a;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.logo {
-  font-weight: bold;
-  font-size: 18px;
-}
-
-.datetime {
-  font-size: 14px;
-  color: var(--sub);
-}
-
-/* CONTAINER */
-.container {
-  padding: 10px;
-  max-width: 900px;
-  margin: auto;
-}
-
-/* CARD */
-.card {
-  background: var(--card);
-  border-radius: 10px;
-  padding: 12px;
-  margin-bottom: 10px;
-  border-left: 5px solid gray;
-}
-
-/* STATUS COLORS */
-.atrasado { border-color: var(--red); }
-.urgente { border-color: var(--yellow); }
-.normal { border-color: var(--green); }
-
-/* TEXT */
-.id {
-  font-size: 12px;
-  color: var(--sub);
-}
-
-.cliente {
-  font-size: 16px;
-  font-weight: bold;
-}
-
-.info {
-  font-size: 14px;
-  margin-top: 4px;
-}
-
-.status {
-  font-size: 13px;
-  margin-top: 6px;
-  color: var(--sub);
-}
-
-/* RESPONSIVO */
-@media (max-width: 600px) {
-  .cliente {
-    font-size: 15px;
-  }
-}
-</style>
-</head>
-
-<body>
-
-<div class="header">
-  <div class="logo">ADONAY CONFECÇÃO</div>
-  <div class="datetime" id="datetime"></div>
-</div>
-
-<div class="container" id="listaPedidos"></div>
-
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycby9LFyzYkXW_Zo9i_u3jdGfRweu5UaDvf4PsGWyTh8UB0hXGEls2l_oELjJSDkpZwDoAQ/exec";
+const API = "https://script.google.com/macros/s/AKfycby9LFyzYkXW_Zo9i_u3jdGfRweu5UaDvf4PsGWyTh8UB0hXGEls2l_oELjJSDkpZwDoAQ/exec?action=listarPedidos";
 
-// Atualizar hora
-function atualizarDataHora() {
-  const agora = new Date();
-  document.getElementById("datetime").innerText =
-    agora.toLocaleDateString() + " " + agora.toLocaleTimeString();
-}
-setInterval(atualizarDataHora, 1000);
-atualizarDataHora();
-
-// Calcular dias restantes
-function diasRestantes(dataEntrega) {
-  const hoje = new Date();
-  const entrega = new Date(dataEntrega);
-  return Math.ceil((entrega - hoje) / (1000 * 60 * 60 * 24));
+function diasRestantes(data){
+  if(!data) return 999;
+  return Math.ceil((new Date(data) - new Date()) / 86400000);
 }
 
-// Definir classe de urgência
-function getClasse(dias) {
-  if (dias < 0) return "atrasado";
-  if (dias <= 2) return "urgente";
+function classe(d){
+  if(d < 0) return "atrasado";
+  if(d <= 2) return "urgente";
   return "normal";
 }
 
-// Renderizar pedidos
-function renderizar(pedidos) {
-  const container = document.getElementById("listaPedidos");
-  container.innerHTML = "";
-
-  pedidos.forEach(p => {
-    const dias = diasRestantes(p.datas.entrega);
-    const classe = getClasse(dias);
-
-    const card = document.createElement("div");
-    card.className = "card " + classe;
-
-    card.innerHTML = `
-      <div class="id">${p.id}</div>
-      <div class="cliente">${p.cliente.nome}</div>
-
-      <div class="info">
-        ${p.totalPecas} peças
-      </div>
-
-      <div class="info">
-        Entrega: ${new Date(p.datas.entrega).toLocaleDateString()}
-      </div>
-
-      <div class="status">
-        ${p.statusOperacional} • ${dias} dias
-      </div>
-    `;
-
-    container.appendChild(card);
-  });
+function formatarData(data){
+  if(!data) return "-";
+  return new Date(data).toLocaleDateString("pt-BR");
 }
 
-// Buscar dados
-async function carregarPedidos() {
-  try {
-    const res = await fetch(API_URL);
+async function carregar(){
+  try{
+    const res = await fetch(API, {
+      method: "GET",
+      mode: "cors",
+      redirect: "follow"
+    });
+
     const data = await res.json();
 
-    if (data.sucesso) {
-      // ordenar por prazo
-      data.pedidos.sort((a, b) => {
-        return diasRestantes(a.datas.entrega) - diasRestantes(b.datas.entrega);
-      });
+    const lista = document.getElementById("lista");
+    lista.innerHTML = "";
 
-      renderizar(data.pedidos);
-    }
-  } catch (e) {
+    let pedidos = data.pedidos.filter(p => p.cliente.nome);
+
+    pedidos.sort((a,b)=>{
+      return diasRestantes(a.datas.entrega) - diasRestantes(b.datas.entrega);
+    });
+
+    pedidos.forEach(p=>{
+      const dias = diasRestantes(p.datas.entrega);
+      const c = classe(dias);
+
+      lista.innerHTML += `
+        <div class="card ${c}">
+          <div class="id">${p.id}</div>
+          <div class="cliente">${p.cliente.nome}</div>
+
+          <div class="info">${p.totalPecas} peças</div>
+
+          <div class="info">
+            Entrega: ${formatarData(p.datas.entrega)}
+          </div>
+
+          <div class="info">
+            ${p.statusOperacional} • ${dias} dias
+          </div>
+        </div>
+      `;
+    });
+
+  }catch(e){
+    document.getElementById("lista").innerHTML =
+      "Erro ao carregar pedidos";
     console.error(e);
   }
 }
 
-// Atualiza a cada 10s
-setInterval(carregarPedidos, 10000);
-carregarPedidos();
+carregar();
 </script>
-
-</body>
-</html>
