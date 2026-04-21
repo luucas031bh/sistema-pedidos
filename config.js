@@ -10,7 +10,7 @@ const CONFIG = {
     // [ ] Colar o Code.gs atualizado no projeto Google Apps Script
     // [ ] Implantação > Gerenciar implantações > Editar > Versão: Nova versão > Implantar
     // [ ] Copiar a URL /exec desta implantação e colar em APPS_SCRIPT_URL abaixo
-    // [ ] Publicar no host do site: editar-pedido.js, script.js, home.js, config.js, utils.js (o que mudou)
+    // [ ] Publicar no host do site: script.js, home.js, config.js, utils.js, index.html, editar-pedido.html (o que mudou)
     // [ ] Hard refresh no navegador; na planilha, remover linhas duplicadas com o mesmo ID se existirem
     //
     // INSTRUÇÕES:

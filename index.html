@@ -49,7 +49,7 @@
     <main class="container">
         <section class="card">
             <div class="flex-between flex-wrap gap-1">
-                <h2 class="card-title">🏠 Cadastro de Pedidos</h2>
+                <h2 class="card-title" id="tituloPrincipalIndex">🏠 Cadastro de Pedidos</h2>
                 <div class="flex flex-wrap gap-1">
                     <a class="btn btn-info" href="home.html">Fila visual (HOME)</a>
                 </div>
@@ -198,6 +198,26 @@
                     </div>
                 </div>
             </section>
+
+            <!-- Status operacional / produção (visível só em modo edição) -->
+            <section class="card hidden" id="secaoStatusEdicao">
+                <h2 class="card-title">📋 Status do pedido</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="statusOperacionalIndex">Status operacional</label>
+                        <select class="form-select" id="statusOperacionalIndex"></select>
+                    </div>
+                </div>
+                <h3 class="card-subtitle mt-2">Status de produção</h3>
+                <div class="checkbox-grid">
+                    <label class="checkbox-item"><input type="checkbox" id="statusArteIndex"> ARTE</label>
+                    <label class="checkbox-item"><input type="checkbox" id="statusOSIndex"> OS</label>
+                    <label class="checkbox-item"><input type="checkbox" id="statusCorteIndex"> CORTE</label>
+                    <label class="checkbox-item"><input type="checkbox" id="statusCosturaIndex"> COSTURA</label>
+                    <label class="checkbox-item"><input type="checkbox" id="statusEstampaOkIndex"> ESTAMPA OK</label>
+                    <label class="checkbox-item"><input type="checkbox" id="statusProntoEnvioIndex"> PRONTO ENVIO</label>
+                </div>
+            </section>
             
             <!-- RESUMO FINANCEIRO -->
             <section class="card resumo-financeiro">
@@ -234,7 +254,7 @@
             <!-- BOTÕES DE AÇÃO -->
             <section class="card">
                 <div class="btn-group">
-                    <button type="button" id="btnSalvar" class="btn btn-success">
+                    <button type="button" id="btnSalvar" class="btn btn-success" data-label-novo="💾 Salvar Pedido" data-label-edicao="💾 Salvar alterações">
                         💾 Salvar Pedido
                     </button>
                 </div>

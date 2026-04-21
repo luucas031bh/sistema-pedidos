@@ -1,5 +1,11 @@
 // Sistema Adonay Confecção - Integração Google Sheets
-const estadoApp = { produtos: [], produtoAtualId: 1, pedidoEmEdicao: null };
+const estadoApp = {
+    produtos: [],
+    produtoAtualId: 1,
+    pedidoEmEdicao: null,
+    modoEdicao: false,
+    idEdicao: null
+};
 
 document.addEventListener('DOMContentLoaded', () => inicializarApp());
 
@@ -8,9 +14,13 @@ async function inicializarApp() {
     setInterval(atualizarRelogio, 1000);
     configurarBotaoVoltarPrincipal();
     configurarValoresPadraoFormulario();
+    popularOpcoesStatusOperacionalIndex();
     configurarEventListeners();
-    adicionarProduto();
+    const idUrl = (new URLSearchParams(window.location.search).get('id') || '').trim();
+    if (!idUrl) adicionarProduto();
     await carregarPedidoViaURL();
+    const container = document.getElementById('produtosContainer');
+    if (container && !container.children.length) adicionarProduto();
 }
 
 function atualizarRelogio() {
@@ -46,7 +56,8 @@ function configurarBotaoVoltarPrincipal() {
     const btn = document.getElementById('btnVoltarPrincipal');
     if (!btn) return;
     const params = new URLSearchParams(window.location.search);
-    if (params.get('id')) btn.classList.remove('hidden');
+    if (params.get('id') || estadoApp.modoEdicao) btn.classList.remove('hidden');
+    else btn.classList.add('hidden');
 }
 
 function atualizarID() {
@@ -318,6 +329,203 @@ function calcularResumoFinanceiro() {
     document.getElementById('resumoRestante').textContent = Utils.formatarMoeda(restante);
 }
 
+function normalizarDataInput(data) {
+    if (!data) return '';
+    if (typeof data === 'string') {
+        const match = data.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (match) return `${match[1]}-${match[2]}-${match[3]}`;
+    }
+    const d = data instanceof Date ? data : new Date(data);
+    if (Number.isNaN(d.getTime())) return '';
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function escapeAttrIndex(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+function escapeHtmlIndex(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function popularOpcoesStatusOperacionalIndex() {
+    const select = document.getElementById('statusOperacionalIndex');
+    if (!select || select.options.length > 0) return;
+    select.innerHTML = CONFIG.STATUS_PEDIDO.map((status) => `<option value="${escapeAttrIndex(status)}">${escapeHtmlIndex(status)}</option>`).join('');
+}
+
+function garantirOpcaoStatusIndex(valorPlanilha) {
+    const select = document.getElementById('statusOperacionalIndex');
+    if (!select || !valorPlanilha) return;
+    const v = String(valorPlanilha);
+    const existe = Array.from(select.options).some((opt) => opt.value === v);
+    if (!existe) {
+        const opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = `${v} (planilha)`;
+        select.appendChild(opt);
+    }
+}
+
+function aplicarUIModoEdicao() {
+    document.body.classList.add('modo-edicao-index');
+    document.getElementById('secaoStatusEdicao')?.classList.remove('hidden');
+    const titulo = document.getElementById('tituloPrincipalIndex');
+    if (titulo) titulo.textContent = '✏️ Editar pedido';
+    const btn = document.getElementById('btnSalvar');
+    if (btn && btn.dataset.labelEdicao) btn.textContent = btn.dataset.labelEdicao;
+    configurarBotaoVoltarPrincipal();
+}
+
+function desativarUIModoEdicaoIndex() {
+    document.body.classList.remove('modo-edicao-index');
+    document.getElementById('secaoStatusEdicao')?.classList.add('hidden');
+    const titulo = document.getElementById('tituloPrincipalIndex');
+    if (titulo) titulo.textContent = '🏠 Cadastro de Pedidos';
+    const btn = document.getElementById('btnSalvar');
+    if (btn && btn.dataset.labelNovo) btn.textContent = btn.dataset.labelNovo;
+    configurarBotaoVoltarPrincipal();
+}
+
+function sincronizarBotoesRemocaoProdutosIndex() {
+    const nodes = document.querySelectorAll('.produto-container');
+    nodes.forEach((el) => {
+        const produtoId = parseInt(el.getAttribute('data-produto-id'), 10);
+        const header = el.querySelector('.produto-header');
+        let btn = el.querySelector('.btn-remover-produto');
+        if (nodes.length > 1) {
+            if (!btn && header) {
+                header.insertAdjacentHTML(
+                    'beforeend',
+                    `<button type="button" class="btn-remover-produto" onclick="removerProduto(${produtoId})">🗑️ Remover</button>`
+                );
+            }
+        } else if (btn) btn.remove();
+    });
+}
+
+function reconstruirLinhasTamanhos(produtoId, linhas) {
+    const tbody = document.getElementById(`tamanhosBody-${produtoId}`);
+    if (!tbody) return;
+    const opcoes = CONFIG.TAMANHOS.map((tam) => `<option value="${tam}">${tam}</option>`).join('');
+    const dados = Array.isArray(linhas) && linhas.length ? linhas : [{ tamanho: '', quantidade: 0 }];
+    tbody.innerHTML = '';
+    dados.forEach((linha) => {
+        tbody.insertAdjacentHTML(
+            'beforeend',
+            `<tr><td><select class="form-select" onchange="calcularTotalPecas()"><option value="">Selecione...</option>${opcoes}</select></td><td><input type="number" class="form-input" min="0" value="0" onchange="calcularTotalPecas();calcularCustosProduto(${produtoId})"></td><td><button type="button" class="btn btn-small btn-danger" onclick="removerLinhaTamanho(this)">❌</button></td></tr>`
+        );
+        const tr = tbody.lastElementChild;
+        const sel = tr.querySelector('select');
+        const inp = tr.querySelector('input[type="number"]');
+        if (linha.tamanho) sel.value = linha.tamanho;
+        inp.value = String(linha.quantidade ?? 0);
+    });
+}
+
+function reconstruirLinhasEstampas(produtoId, linhas) {
+    const tbody = document.getElementById(`estampasBody-${produtoId}`);
+    if (!tbody) return;
+    const tipos = CONFIG.TIPOS_ESTAMPAS.map((tipo) => `<option value="${tipo}">${tipo}</option>`).join('');
+    const cores = CONFIG.QUANTIDADES_CORES_SILK.map((cor) => `<option value="${cor}">${cor}</option>`).join('');
+    const dados = Array.isArray(linhas) && linhas.length ? linhas : [{ tipo: '', localidade: '', quantidadeCores: '' }];
+    tbody.innerHTML = '';
+    dados.forEach((linha) => {
+        tbody.insertAdjacentHTML(
+            'beforeend',
+            `<tr><td><select class="form-select" onchange="atualizarLocalidadesEstampa(this);calcularCustosProduto(${produtoId})"><option value="">Selecione...</option>${tipos}</select></td><td><select class="form-select" disabled onchange="calcularCustosProduto(${produtoId})"><option value="">Selecione o tipo primeiro...</option></select></td><td><select class="form-select quantidade-cores" disabled style="display:none;" onchange="calcularCustosProduto(${produtoId})"><option value="">Selecione...</option>${cores}</select></td><td><button type="button" class="btn btn-small btn-danger" onclick="removerLinhaEstampa(this,${produtoId})">❌</button></td></tr>`
+        );
+        const tr = tbody.lastElementChild;
+        const selectTipo = tr.querySelectorAll('select')[0];
+        if (linha.tipo) {
+            selectTipo.value = linha.tipo;
+            atualizarLocalidadesEstampa(selectTipo);
+            const selectLoc = tr.querySelectorAll('select')[1];
+            if (linha.localidade && selectLoc) selectLoc.value = linha.localidade;
+            if (linha.tipo === 'Silk Screen' && linha.quantidadeCores != null && linha.quantidadeCores !== '') {
+                const sc = tr.querySelector('.quantidade-cores');
+                if (sc) sc.value = String(linha.quantidadeCores);
+            }
+        }
+    });
+}
+
+function preencherFormularioCompleto(pedido) {
+    const container = document.getElementById('produtosContainer');
+    if (container) container.innerHTML = '';
+    estadoApp.produtos = [];
+    estadoApp.produtoAtualId = 1;
+
+    estadoApp.pedidoEmEdicao = pedido.id;
+    estadoApp.modoEdicao = true;
+    estadoApp.idEdicao = pedido.id != null ? String(pedido.id) : '';
+
+    document.getElementById('idPedido').value = pedido.id || '';
+    const elIb = document.getElementById('idBusca');
+    if (elIb) elIb.value = pedido.idBusca || Utils.obterIdBusca(pedido.cliente?.telefone || '');
+    document.getElementById('nomeCliente').value = pedido.cliente?.nome || '';
+    document.getElementById('telefone').value = pedido.cliente?.telefone || '';
+    document.getElementById('dataPedido').value = normalizarDataInput(pedido.datas?.pedido);
+    document.getElementById('dataEntrega').value = normalizarDataInput(pedido.datas?.entrega);
+    document.getElementById('totalPecas').value = pedido.totalPecas || 0;
+    document.getElementById('observacoes').value = pedido.observacoes || '';
+    document.getElementById('resumoTotalPedido').textContent = Utils.formatarMoeda(pedido.financeiro?.totalPedido || 0);
+    document.getElementById('valorEntrada').value = pedido.financeiro?.valorEntrada ?? 0;
+    document.getElementById('resumoRestante').textContent = Utils.formatarMoeda(pedido.financeiro?.restante || 0);
+    const resp = document.getElementById('responsavelAtual');
+    if (resp) resp.value = pedido.responsavelAtual || 'ISABELA SIRAY';
+    const tag = document.getElementById('tagPedido');
+    if (tag) tag.value = pedido.tagPedido || 'PEDIDO';
+
+    popularOpcoesStatusOperacionalIndex();
+    const statusAtual = pedido.statusOperacional || CONFIG.STATUS_PEDIDO[0];
+    garantirOpcaoStatusIndex(statusAtual);
+    const selStatus = document.getElementById('statusOperacionalIndex');
+    if (selStatus) selStatus.value = statusAtual;
+
+    const sp = pedido.statusProducao || {};
+    const mapChk = [
+        ['statusArteIndex', 'arte'],
+        ['statusOSIndex', 'os'],
+        ['statusCorteIndex', 'corte'],
+        ['statusCosturaIndex', 'costura'],
+        ['statusEstampaOkIndex', 'estampa'],
+        ['statusProntoEnvioIndex', 'prontoParaEnvio']
+    ];
+    mapChk.forEach(([id, key]) => {
+        const el = document.getElementById(id);
+        if (el) el.checked = !!sp[key];
+    });
+
+    const listaProdutos = Array.isArray(pedido.produtos) && pedido.produtos.length ? pedido.produtos : [{}];
+    listaProdutos.forEach((p) => {
+        adicionarProduto();
+        const pid = estadoApp.produtos[estadoApp.produtos.length - 1].id;
+        const tipoPecaEl = document.getElementById(`tipoPeca-${pid}`);
+        if (tipoPecaEl && p.tipoPeca) tipoPecaEl.value = p.tipoPeca;
+        atualizarDetalhesPeca(pid);
+        const detEl = document.getElementById(`detalhesPeca-${pid}`);
+        const det = p.detalhesPeca || p.detalhePeca || '';
+        if (detEl && det) detEl.value = det;
+        const tm = document.getElementById(`tipoMalha-${pid}`);
+        if (tm && p.tipoMalha) tm.value = p.tipoMalha;
+        const cm = document.getElementById(`corMalha-${pid}`);
+        if (cm) cm.value = p.corMalha || '';
+        reconstruirLinhasTamanhos(pid, p.tamanhos);
+        reconstruirLinhasEstampas(pid, p.estampas);
+        const margem = document.getElementById(`margemLucro-${pid}`);
+        if (margem) {
+            const m = p.margemLucro;
+            margem.value = m != null && m !== '' ? String(m) : String(CONFIG.CALCULOS.margemLucroPadrao);
+        }
+        calcularCustosProduto(pid);
+    });
+
+    sincronizarBotoesRemocaoProdutosIndex();
+    calcularTotalPecas();
+    calcularResumoFinanceiro();
+}
+
 async function salvarPedido() {
     if (!validarFormulario()) return Utils.mostrarNotificacao('Preencha corretamente os campos obrigatórios.', 'error');
     if (!CONFIG.APPS_SCRIPT_URL) return Utils.mostrarNotificacao('Configure a URL do Apps Script em config.js.', 'error');
@@ -326,9 +534,39 @@ async function salvarPedido() {
         return;
     }
 
-    mostrarLoading('Salvando pedido...');
+    mostrarLoading(estadoApp.modoEdicao ? 'Salvando alterações...' : 'Salvando pedido...');
     try {
         const dados = coletarDadosFormulario();
+
+        if (estadoApp.modoEdicao && estadoApp.idEdicao) {
+            const payload = {
+                action: 'salvarPedido',
+                acao: 'salvarPedido',
+                dados,
+                modoEdicao: 'true',
+                idEdicao: String(estadoApp.idEdicao)
+            };
+            const resposta = await fetch(CONFIG.APPS_SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            });
+            const resultado = await resposta.json();
+            if (!resultado.sucesso) throw new Error(resultado.erro || 'Falha ao salvar');
+            if (resultado.operacao === 'criado') {
+                Utils.mostrarNotificacao('Atenção: foi criado um novo registro em vez de atualizar. Verifique o ID na planilha.', 'error');
+                return;
+            }
+            estadoApp.pedidoEmEdicao = resultado.id != null ? String(resultado.id) : estadoApp.idEdicao;
+            if (resultado.id != null) {
+                estadoApp.idEdicao = String(resultado.id);
+                document.getElementById('idPedido').value = estadoApp.idEdicao;
+            }
+            if (resultado.aviso) Utils.mostrarNotificacao(resultado.aviso, 'info');
+            Utils.mostrarNotificacao('Alterações salvas com sucesso!', 'success');
+            return;
+        }
+
         const body = new URLSearchParams();
         body.append('action', 'salvarPedido');
         body.append('acao', 'salvarPedido');
@@ -344,7 +582,7 @@ async function salvarPedido() {
         Utils.mostrarNotificacao('Pedido salvo com sucesso!', 'success');
     } catch (erro) {
         console.error(erro);
-        Utils.mostrarNotificacao('Erro ao salvar pedido.', 'error');
+        Utils.mostrarNotificacao(estadoApp.modoEdicao ? 'Erro ao salvar alterações.' : 'Erro ao salvar pedido.', 'error');
     } finally {
         esconderLoading();
     }
@@ -360,16 +598,41 @@ function validarFormulario() {
 function coletarDadosFormulario() {
     const totalPedido = Utils.limparMoeda(document.getElementById('resumoTotalPedido').textContent);
     const valorEntrada = parseFloat(document.getElementById('valorEntrada').value || '0');
-    return {
-        id: document.getElementById('idPedido').value || Utils.gerarID(document.getElementById('telefone').value),
-        idBusca: Utils.obterIdBusca(document.getElementById('telefone').value),
-        cliente: { nome: document.getElementById('nomeCliente').value, telefone: document.getElementById('telefone').value },
+    const tel = document.getElementById('telefone').value;
+    const base = {
+        id: document.getElementById('idPedido').value || Utils.gerarID(tel),
+        idBusca: Utils.obterIdBusca(tel),
+        cliente: { nome: document.getElementById('nomeCliente').value, telefone: tel },
         datas: { pedido: document.getElementById('dataPedido').value, entrega: document.getElementById('dataEntrega').value },
         totalPecas: parseInt(document.getElementById('totalPecas').value || '0', 10),
         observacoes: document.getElementById('observacoes').value,
-        statusOperacional: 'PENDENTE',
         responsavelAtual: document.getElementById('responsavelAtual')?.value || 'ISABELA SIRAY',
         tagPedido: document.getElementById('tagPedido')?.value || 'PEDIDO',
+        financeiro: { totalPedido, valorEntrada, restante: totalPedido - valorEntrada },
+        produtos: estadoApp.produtos.map((p) => coletarProduto(p.id))
+    };
+
+    if (estadoApp.modoEdicao && estadoApp.idEdicao) {
+        return {
+            ...base,
+            id: String(estadoApp.idEdicao),
+            idBusca: document.getElementById('idBusca')?.value || Utils.obterIdBusca(tel) || base.idBusca,
+            atualizacao: true,
+            statusOperacional: document.getElementById('statusOperacionalIndex')?.value || CONFIG.STATUS_PEDIDO[0],
+            statusProducao: {
+                arte: document.getElementById('statusArteIndex')?.checked || false,
+                os: document.getElementById('statusOSIndex')?.checked || false,
+                corte: document.getElementById('statusCorteIndex')?.checked || false,
+                costura: document.getElementById('statusCosturaIndex')?.checked || false,
+                estampa: document.getElementById('statusEstampaOkIndex')?.checked || false,
+                prontoParaEnvio: document.getElementById('statusProntoEnvioIndex')?.checked || false
+            }
+        };
+    }
+
+    return {
+        ...base,
+        statusOperacional: 'PENDENTE',
         statusProducao: {
             arte: false,
             os: false,
@@ -377,9 +640,7 @@ function coletarDadosFormulario() {
             costura: false,
             estampa: false,
             prontoParaEnvio: false
-        },
-        financeiro: { totalPedido, valorEntrada, restante: totalPedido - valorEntrada },
-        produtos: estadoApp.produtos.map((p) => coletarProduto(p.id))
+        }
     };
 }
 
@@ -442,9 +703,8 @@ async function buscarPedido() {
         const resposta = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=buscarPedido&acao=buscarPedido&termo=${encodeURIComponent(termo)}`);
         const resultado = await resposta.json();
         if (!resultado.sucesso || !resultado.pedido) throw new Error('Pedido não encontrado');
-        preencherFormulario(resultado.pedido);
         fecharModalBusca();
-        window.open(`editar-pedido.html?id=${encodeURIComponent(resultado.pedido.id)}`, '_blank', 'noopener,noreferrer');
+        window.open(`index.html?id=${encodeURIComponent(resultado.pedido.id)}`, '_blank', 'noopener,noreferrer');
         Utils.mostrarNotificacao('Abrindo pedido para edição.', 'success');
     } catch (erro) {
         console.error(erro);
@@ -452,25 +712,6 @@ async function buscarPedido() {
     } finally {
         esconderLoading();
     }
-}
-
-function preencherFormulario(pedido) {
-    limparFormulario();
-    estadoApp.pedidoEmEdicao = pedido.id;
-    document.getElementById('idPedido').value = pedido.id || '';
-    const elIb = document.getElementById('idBusca');
-    if (elIb) elIb.value = pedido.idBusca || Utils.obterIdBusca(pedido.cliente?.telefone || '');
-    document.getElementById('nomeCliente').value = pedido.cliente?.nome || '';
-    document.getElementById('telefone').value = pedido.cliente?.telefone || '';
-    document.getElementById('dataPedido').value = pedido.datas?.pedido || '';
-    document.getElementById('dataEntrega').value = pedido.datas?.entrega || '';
-    document.getElementById('totalPecas').value = pedido.totalPecas || 0;
-    document.getElementById('observacoes').value = pedido.observacoes || '';
-    document.getElementById('resumoTotalPedido').textContent = Utils.formatarMoeda(pedido.financeiro?.totalPedido || 0);
-    document.getElementById('valorEntrada').value = pedido.financeiro?.valorEntrada || 0;
-    document.getElementById('resumoRestante').textContent = Utils.formatarMoeda(pedido.financeiro?.restante || 0);
-    document.getElementById('responsavelAtual').value = pedido.responsavelAtual || 'ISABELA SIRAY';
-    document.getElementById('tagPedido').value = pedido.tagPedido || 'PEDIDO';
 }
 
 function limparFormulario() {
@@ -481,8 +722,11 @@ function limparFormulario() {
     estadoApp.produtos = [];
     estadoApp.produtoAtualId = 1;
     estadoApp.pedidoEmEdicao = null;
+    estadoApp.modoEdicao = false;
+    estadoApp.idEdicao = null;
     document.getElementById('resumoTotalPedido').textContent = 'R$ 0,00';
     document.getElementById('resumoRestante').textContent = 'R$ 0,00';
+    desativarUIModoEdicaoIndex();
     configurarValoresPadraoFormulario();
     adicionarProduto();
 }
@@ -497,10 +741,13 @@ async function carregarPedidoViaURL() {
         const resposta = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=buscarPedido&acao=buscarPedido&termo=${encodeURIComponent(id)}`);
         const resultado = await resposta.json();
         if (!resultado.sucesso || !resultado.pedido) throw new Error('Pedido não encontrado');
-        preencherFormulario(resultado.pedido);
+        preencherFormularioCompleto(resultado.pedido);
+        aplicarUIModoEdicao();
     } catch (erro) {
         console.error(erro);
         Utils.mostrarNotificacao('Não foi possível carregar o pedido da fila.', 'error');
+        const container = document.getElementById('produtosContainer');
+        if (container && !container.children.length) adicionarProduto();
     } finally {
         esconderLoading();
     }

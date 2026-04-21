@@ -151,7 +151,7 @@ function renderizarFilaHome(abertos) {
         return;
     }
     tbody.innerHTML = abertos.map((pedido) => {
-        const link = `editar-pedido.html?id=${encodeURIComponent(pedido.id || '')}`;
+        const link = `index.html?id=${encodeURIComponent(pedido.id || '')}`;
         const resumo = obterResumoProdutoPedidoHome(pedido);
         const tipoRes = resumirTipoPeca(resumo.tipoPeca, resumo.detalhePeca);
         const nome = escapeHtmlHome(pedido.cliente?.nome || '-');
