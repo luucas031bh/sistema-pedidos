@@ -124,7 +124,7 @@ function adicionarProduto() {
         </tbody></table></div>
         <button type="button" class="btn btn-small btn-secondary mt-1" onclick="adicionarLinhaTamanho(${produtoId})">➕ Adicionar Tamanho</button>
 
-        <div class="card-subtitle">🎨 Estampas</div>
+        <div class="card-subtitle">🎨 Tipos de Estampa</div>
         <div class="tabela-dinamica"><table><tbody id="estampasBody-${produtoId}">
           <tr>
             <td><select class="form-select" onchange="atualizarLocalidadesEstampa(this);calcularCustosProduto(${produtoId})"><option value="">Selecione...</option>${estampas}</select></td>
@@ -443,7 +443,8 @@ async function buscarPedido() {
         if (!resultado.sucesso || !resultado.pedido) throw new Error('Pedido não encontrado');
         preencherFormulario(resultado.pedido);
         fecharModalBusca();
-        Utils.mostrarNotificacao('Pedido carregado.', 'success');
+        window.open(`editar-pedido.html?id=${encodeURIComponent(resultado.pedido.id)}`, '_blank', 'noopener,noreferrer');
+        Utils.mostrarNotificacao('Abrindo pedido para edição.', 'success');
     } catch (erro) {
         console.error(erro);
         Utils.mostrarNotificacao('Não foi possível localizar o pedido.', 'error');
@@ -514,7 +515,7 @@ function renderizarFila(fila) {
         return;
     }
     tbody.innerHTML = fila.map((pedido) => {
-        const linkPedido = `index.html?id=${encodeURIComponent(pedido.id || '')}`;
+        const linkPedido = `editar-pedido.html?id=${encodeURIComponent(pedido.id || '')}`;
         const resumo = obterResumoProdutoPedido(pedido);
         return `
             <tr>

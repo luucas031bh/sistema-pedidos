@@ -45,7 +45,7 @@ function renderizarFilaPainel(pedidos) {
     }
 
     tbody.innerHTML = pedidos.map((pedido) => {
-        const linkPedido = `index.html?id=${encodeURIComponent(pedido.id || '')}`;
+        const linkPedido = `editar-pedido.html?id=${encodeURIComponent(pedido.id || '')}`;
         const resumo = obterResumoProdutoPedido(pedido);
         return `
             <tr>

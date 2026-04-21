@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Pedido - Adonay Confecção</title>
+    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👕</text></svg>">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <a href="principal.html" class="btn-voltar-principal" title="Voltar ao painel principal">Voltar ao principal</a>
+
+    <header class="header">
+        <div class="header-content">
+            <h1 class="empresa-nome">EDIÇÃO DE PEDIDO</h1>
+            <div class="relogio" id="relogio">Carregando...</div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="card">
+            <h2 class="card-title">Resumo do Pedido</h2>
+            <div class="form-row">
+                <div class="form-group"><label class="form-label">ID</label><div class="form-input" id="resumoId">-</div></div>
+                <div class="form-group"><label class="form-label">Cliente</label><div class="form-input" id="resumoCliente">-</div></div>
+                <div class="form-group"><label class="form-label">Valor Total</label><div class="form-input" id="resumoValor">R$ 0,00</div></div>
+            </div>
+            <div id="resumoProdutos" class="mt-2"></div>
+        </section>
+
+        <section class="card">
+            <h2 class="card-title">Editar Informações</h2>
+            <form id="formEdicaoPedido" onsubmit="event.preventDefault(); salvarEdicaoPedido();">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label required" for="nomeClienteEdicao">Nome do Cliente</label>
+                        <input class="form-input" id="nomeClienteEdicao" type="text" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label required" for="telefoneEdicao">Telefone</label>
+                        <input class="form-input" id="telefoneEdicao" type="tel" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label required" for="dataEntregaEdicao">Data Entrega</label>
+                        <input class="form-input" id="dataEntregaEdicao" type="date" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="dataPedidoEdicao">Data Pedido</label>
+                        <input class="form-input" id="dataPedidoEdicao" type="date">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="totalPecasEdicao">Total de Peças</label>
+                        <input class="form-input" id="totalPecasEdicao" type="number" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="statusOperacionalEdicao">Status Operacional</label>
+                        <select class="form-select" id="statusOperacionalEdicao"></select>
+                    </div>
+                </div>
+
+                <h3 class="card-subtitle">Resumo de Produto (1º item)</h3>
+                <div class="form-row">
+                    <div class="form-group"><label class="form-label" for="tipoPecaEdicao">Tipo de Peça</label><input class="form-input" id="tipoPecaEdicao" type="text"></div>
+                    <div class="form-group"><label class="form-label" for="tipoMalhaEdicao">Tipo de Malha</label><input class="form-input" id="tipoMalhaEdicao" type="text"></div>
+                    <div class="form-group"><label class="form-label" for="corMalhaEdicao">Cor da Malha</label><input class="form-input" id="corMalhaEdicao" type="text"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label class="form-label" for="detalhePecaEdicao">Detalhe da Peça</label><input class="form-input" id="detalhePecaEdicao" type="text"></div>
+                    <div class="form-group"><label class="form-label" for="tipoEstampaEdicao">Tipo de Estampa</label><input class="form-input" id="tipoEstampaEdicao" type="text" placeholder="Ex.: Silk Screen, DTF"></div>
+                </div>
+
+                <div class="form-group mt-2">
+                    <label class="form-label" for="observacoesEdicao">Observações</label>
+                    <textarea class="form-textarea" id="observacoesEdicao" rows="3"></textarea>
+                </div>
+
+                <h3 class="card-subtitle mt-2">Status de Produção</h3>
+                <div class="checkbox-grid">
+                    <label class="checkbox-item"><input type="checkbox" id="statusArteEdicao"> ARTE</label>
+                    <label class="checkbox-item"><input type="checkbox" id="statusOSEdicao"> OS</label>
+                    <label class="checkbox-item"><input type="checkbox" id="statusCorteEdicao"> CORTE</label>
+                    <label class="checkbox-item"><input type="checkbox" id="statusEstampaOkEdicao"> ESTAMPA OK</label>
+                    <label class="checkbox-item"><input type="checkbox" id="statusProntoEnvioEdicao"> PRONTO ENVIO</label>
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-success">Salvar Edição</button>
+                    <a class="btn btn-secondary" href="principal.html">Voltar</a>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <script src="config.js"></script>
+    <script src="utils.js"></script>
+    <script src="editar-pedido.js"></script>
+</body>
+</html>
