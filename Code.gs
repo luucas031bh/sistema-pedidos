@@ -51,7 +51,8 @@ function expandirCabecalhoPedidos() {
   var lastCol = sheet.getLastColumn();
   var preenchidos = 0;
   if (lastCol < 15) {
-    sheet.getRange(1, 15, 1, 14 + extras.length).setValues([extras]);
+    // getRange(row, col, numRows, numColumns): o 4º parâmetro é a QUANTIDADE de colunas, não o índice da última coluna.
+    sheet.getRange(1, 15, 1, extras.length).setValues([extras]);
     preenchidos = extras.length;
   } else {
     var i;
