@@ -623,14 +623,14 @@ async function salvarPedido() {
             return;
         }
 
-        const body = new URLSearchParams();
-        body.append('action', 'salvarPedido');
-        body.append('acao', 'salvarPedido');
-        body.append('dados', JSON.stringify(dados));
-
         const resposta = await fetch(CONFIG.APPS_SCRIPT_URL, {
             method: 'POST',
-            body
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+                action: 'salvarPedido',
+                acao: 'salvarPedido',
+                dados
+            })
         });
         const resultado = await resposta.json();
         if (!resultado.sucesso) throw new Error(resultado.erro || 'Falha ao salvar');
@@ -642,6 +642,7 @@ async function salvarPedido() {
             estadoApp.idEdicao = idSrv;
             const elIb = document.getElementById('idBusca');
             if (elIb && !elIb.value) elIb.value = Utils.obterIdBusca(document.getElementById('telefone').value);
+            aplicarUIModoEdicao();
         } else {
             estadoApp.pedidoEmEdicao = resultado.id || dados.id;
         }
@@ -660,6 +661,17 @@ function validarFormulario() {
     if (!Utils.validarTelefone(document.getElementById('telefone').value)) return false;
     if (!Utils.validarCampoObrigatorio(document.getElementById('dataEntrega').value)) return false;
     return estadoApp.produtos.length > 0;
+}
+
+function obterStatusProducaoDoFormulario() {
+    return {
+        arte: Boolean(document.getElementById('statusArteIndex')?.checked),
+        os: Boolean(document.getElementById('statusOSIndex')?.checked),
+        corte: Boolean(document.getElementById('statusCorteIndex')?.checked),
+        costura: Boolean(document.getElementById('statusCosturaIndex')?.checked),
+        estampa: Boolean(document.getElementById('statusEstampaOkIndex')?.checked),
+        prontoParaEnvio: Boolean(document.getElementById('statusProntoEnvioIndex')?.checked)
+    };
 }
 
 function coletarDadosFormulario() {
@@ -686,14 +698,7 @@ function coletarDadosFormulario() {
             idBusca: document.getElementById('idBusca')?.value || Utils.obterIdBusca(tel) || base.idBusca,
             atualizacao: true,
             statusOperacional: document.getElementById('statusOperacionalIndex')?.value || CONFIG.STATUS_PEDIDO[0],
-            statusProducao: {
-                arte: document.getElementById('statusArteIndex')?.checked || false,
-                os: document.getElementById('statusOSIndex')?.checked || false,
-                corte: document.getElementById('statusCorteIndex')?.checked || false,
-                costura: document.getElementById('statusCosturaIndex')?.checked || false,
-                estampa: document.getElementById('statusEstampaOkIndex')?.checked || false,
-                prontoParaEnvio: document.getElementById('statusProntoEnvioIndex')?.checked || false
-            }
+            statusProducao: obterStatusProducaoDoFormulario()
         };
     }
 

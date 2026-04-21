@@ -251,6 +251,18 @@ body {
     height: 16px;
 }
 
+.fieldset-status-producao {
+    border: none;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+}
+
+.fieldset-status-producao legend {
+    padding: 0;
+    margin-bottom: var(--espacamento-sm);
+}
+
 /* ========== Tabelas Dinâmicas ========== */
 .tabela-dinamica {
     width: 100%;
@@ -833,6 +845,11 @@ body {
 
 .home-busca-tabela table {
     width: 100%;
+    table-layout: auto;
+}
+
+.home-busca-tabela th {
+    white-space: nowrap;
 }
 
 .home-busca-id-cell {

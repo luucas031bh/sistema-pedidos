@@ -226,15 +226,17 @@
                         <select class="form-select" id="statusOperacionalIndex"></select>
                     </div>
                 </div>
-                <h3 class="card-subtitle mt-2">Status de produção</h3>
-                <div class="checkbox-grid">
-                    <label class="checkbox-item"><input type="checkbox" id="statusArteIndex"> ARTE</label>
-                    <label class="checkbox-item"><input type="checkbox" id="statusOSIndex"> OS</label>
-                    <label class="checkbox-item"><input type="checkbox" id="statusCorteIndex"> CORTE</label>
-                    <label class="checkbox-item"><input type="checkbox" id="statusCosturaIndex"> COSTURA</label>
-                    <label class="checkbox-item"><input type="checkbox" id="statusEstampaOkIndex"> ESTAMPA OK</label>
-                    <label class="checkbox-item"><input type="checkbox" id="statusProntoEnvioIndex"> PRONTO ENVIO</label>
-                </div>
+                <fieldset class="fieldset-status-producao">
+                    <legend class="card-subtitle mt-2">Status de produção</legend>
+                    <div class="checkbox-grid checkbox-grid--status-producao" role="group" aria-label="Etapas de produção">
+                        <label class="checkbox-item" for="statusArteIndex"><input type="checkbox" id="statusArteIndex"> ARTE</label>
+                        <label class="checkbox-item" for="statusOSIndex"><input type="checkbox" id="statusOSIndex"> OS</label>
+                        <label class="checkbox-item" for="statusCorteIndex"><input type="checkbox" id="statusCorteIndex"> CORTE</label>
+                        <label class="checkbox-item" for="statusCosturaIndex"><input type="checkbox" id="statusCosturaIndex"> COSTURA</label>
+                        <label class="checkbox-item" for="statusEstampaOkIndex"><input type="checkbox" id="statusEstampaOkIndex"> ESTAMPA OK</label>
+                        <label class="checkbox-item" for="statusProntoEnvioIndex"><input type="checkbox" id="statusProntoEnvioIndex"> PRONTO ENVIO</label>
+                    </div>
+                </fieldset>
             </section>
             
             <!-- RESUMO FINANCEIRO -->

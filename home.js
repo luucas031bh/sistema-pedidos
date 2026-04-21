@@ -150,23 +150,57 @@ function formatarDataHoraPedidoHome(val) {
     return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
 }
 
+function normalizarDigitosHome(v) {
+    return String(v == null ? '' : v).replace(/\D/g, '');
+}
+
+function ultimos4Normalizados(strDigitos) {
+    const d = normalizarDigitosHome(strDigitos);
+    if (d.length >= 4) return d.slice(-4);
+    return (`0000${d}`).slice(-4);
+}
+
+/** Match por últimos 4 dígitos: idBusca, telefone (número ou string), Utils.obterIdBusca, segmentos do ID. */
+function pedidoMatchTermo4Digitos(p, soDigitos) {
+    if (soDigitos.length !== 4) return false;
+    const ib = ultimos4Normalizados(p.idBusca);
+    if (ib === soDigitos) return true;
+
+    const tel = normalizarDigitosHome(p.cliente && p.cliente.telefone);
+    if (tel.length >= 4 && tel.slice(-4) === soDigitos) return true;
+
+    if (typeof Utils !== 'undefined' && Utils.obterIdBusca) {
+        const chave = Utils.obterIdBusca(String(p.cliente?.telefone != null ? p.cliente.telefone : ''));
+        if (String(chave) === soDigitos) return true;
+    }
+
+    const idStr = String(p.id != null ? p.id : '');
+    const partes = idStr.split(/[-_]/);
+    let i;
+    for (i = 0; i < partes.length; i++) {
+        const seg = normalizarDigitosHome(partes[i]);
+        if (seg.length >= 4 && seg.slice(-4) === soDigitos) return true;
+        if (seg === soDigitos || partes[i] === soDigitos) return true;
+    }
+    return false;
+}
+
+function obterIdBuscaExibicaoPedido(p) {
+    if (p.idBusca != null && String(p.idBusca).trim() !== '') return String(p.idBusca).trim();
+    if (typeof Utils !== 'undefined' && Utils.obterIdBusca) {
+        return Utils.obterIdBusca(String(p.cliente?.telefone || ''));
+    }
+    const t = normalizarDigitosHome(p.cliente?.telefone);
+    return t.length >= 4 ? t.slice(-4) : '—';
+}
+
 /** Se o Apps Script implantado ainda não tiver buscarPedidos, filtra após listarPedidos. */
 function filtrarPedidosPorTermoLocal(pedidos, termoApi) {
     const t = String(termoApi || '').trim();
     const soDigitos = t.replace(/\D/g, '');
     const lista = Array.isArray(pedidos) ? pedidos : [];
     if (soDigitos.length === 4) {
-        return lista.filter((p) => {
-            const ib = String(p.idBusca != null ? p.idBusca : '').replace(/\D/g, '');
-            const last4IdBusca = ib.length >= 4 ? ib.slice(-4) : (`0000${ib}`).slice(-4);
-            if (last4IdBusca === soDigitos) return true;
-            const tel = String(p.cliente?.telefone || '').replace(/\D/g, '');
-            if (tel.length >= 4 && tel.slice(-4) === soDigitos) return true;
-            if (typeof Utils !== 'undefined' && Utils.obterIdBusca) {
-                if (Utils.obterIdBusca(p.cliente?.telefone || '') === soDigitos) return true;
-            }
-            return false;
-        });
+        return lista.filter((p) => pedidoMatchTermo4Digitos(p, soDigitos));
     }
     const termoLower = t.toLowerCase();
     const telFull = soDigitos;
@@ -238,12 +272,11 @@ async function executarBuscaPedidoHome() {
             mostrarMsgBuscaHome('Nenhum pedido encontrado para esse termo.', 'erro');
             return;
         }
-        if (lista.length === 1) {
-            mostrarMsgBuscaHome('Abrindo pedido...', 'ok');
-            window.location.href = `index.html?id=${encodeURIComponent(lista[0].id || '')}`;
-            return;
-        }
-        mostrarMsgBuscaHome(`${lista.length} pedidos encontrados. Escolha qual abrir:`, 'ok');
+        const msgLista =
+            lista.length === 1
+                ? '1 pedido encontrado. Clique em Abrir para abrir a página do pedido.'
+                : `${lista.length} pedidos encontrados. Escolha qual abrir:`;
+        mostrarMsgBuscaHome(msgLista, 'ok');
         wrap.classList.remove('hidden');
         wrap.innerHTML = `
             <div class="tabela-dinamica home-busca-tabela">
@@ -252,7 +285,8 @@ async function executarBuscaPedidoHome() {
                         <tr>
                             <th>Cliente</th>
                             <th>Data do pedido</th>
-                            <th>ID</th>
+                            <th>ID Busca</th>
+                            <th>ID pedido</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -261,11 +295,13 @@ async function executarBuscaPedidoHome() {
                             const id = p.id || '';
                             const nome = escapeHtmlHome(p.cliente?.nome || '—');
                             const dp = formatarDataHoraPedidoHome(p.datas?.pedido || p.dataCriacao);
+                            const idBuscaEx = escapeHtmlHome(obterIdBuscaExibicaoPedido(p));
                             const idEsc = encodeURIComponent(id);
                             return `
                                 <tr>
                                     <td>${nome}</td>
                                     <td>${escapeHtmlHome(dp)}</td>
+                                    <td>${idBuscaEx}</td>
                                     <td class="home-busca-id-cell">${escapeHtmlHome(String(id))}</td>
                                     <td><a class="btn btn-small btn-primary" href="index.html?id=${idEsc}">Abrir</a></td>
                                 </tr>`;
