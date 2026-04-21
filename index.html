@@ -171,46 +171,17 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="statusOperacional" class="form-label required">Status Operacional</label>
-                        <select id="statusOperacional" class="form-select" required></select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="responsavelAtual" class="form-label">Responsável Atual</label>
+                        <label for="responsavelAtual" class="form-label required">Vendedor</label>
                         <select id="responsavelAtual" class="form-select">
-                            <option value="">Selecione...</option>
-                            <option value="Esposa">Esposa</option>
-                            <option value="Lucas">Lucas</option>
-                            <option value="Terceiro">Terceiro</option>
+                            <option value="ISABELA SIRAY">ISABELA SIRAY</option>
                         </select>
                     </div>
-                </div>
-
-                <div class="checkbox-grid">
-                    <label class="checkbox-item"><input type="checkbox" id="entradaConfirmada"> Entrada 50% confirmada</label>
-                    <label class="checkbox-item"><input type="checkbox" id="arteAprovada"> Arte aprovada</label>
-                    <label class="checkbox-item"><input type="checkbox" id="precisaCompra"> Precisa de compra</label>
-                    <label class="checkbox-item"><input type="checkbox" id="precisaTerceirizacao"> Precisa de terceirização</label>
-                </div>
-
-                <h3 class="card-subtitle mt-2">Status de Produção</h3>
-                <div class="checkbox-grid">
-                    <label class="checkbox-item"><input type="checkbox" id="statusArte"> ARTE</label>
-                    <label class="checkbox-item"><input type="checkbox" id="statusOS"> OS</label>
-                    <label class="checkbox-item"><input type="checkbox" id="statusCorte"> CORTE</label>
-                    <label class="checkbox-item"><input type="checkbox" id="statusEstampa"> ESTAMPA OK</label>
-                    <label class="checkbox-item"><input type="checkbox" id="statusProntoEnvio"> PRONTO PARA ENVIO</label>
-                </div>
-
-                <div class="form-row mt-2">
                     <div class="form-group">
-                        <label for="motivoTravamento" class="form-label">Motivo de Travamento</label>
-                        <textarea
-                            id="motivoTravamento"
-                            class="form-textarea"
-                            placeholder="Se o pedido estiver travado, descreva o motivo"
-                            rows="2"
-                        ></textarea>
+                        <label for="tagPedido" class="form-label required">Tag</label>
+                        <select id="tagPedido" class="form-select">
+                            <option value="PEDIDO">PEDIDO</option>
+                            <option value="ORÇAMENTO">ORÇAMENTO</option>
+                        </select>
                     </div>
                 </div>
             </section>
@@ -250,61 +221,13 @@
             <!-- BOTÕES DE AÇÃO -->
             <section class="card">
                 <div class="btn-group">
-                    <button type="button" id="btnBuscar" class="btn btn-info">
-                        🔍 Buscar Pedido
-                    </button>
-                    
                     <button type="button" id="btnSalvar" class="btn btn-success">
                         💾 Salvar Pedido
-                    </button>
-                    
-                    <button type="button" id="btnWhatsApp" class="btn btn-primary">
-                        📱 Enviar para WhatsApp
-                    </button>
-                    
-                    <button type="button" id="btnImprimir" class="btn btn-secondary">
-                        🖨️ Imprimir Pedido
                     </button>
                 </div>
             </section>
             
         </form>
-
-        <!-- FILA VISUAL ÚNICA -->
-        <section class="card">
-            <div class="flex-between mb-2">
-                <h2 class="card-title">📊 Fila Visual Única</h2>
-                <button type="button" id="btnAtualizarFila" class="btn btn-info">🔄 Atualizar Fila</button>
-            </div>
-
-            <div class="tabela-dinamica">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Cliente</th>
-                            <th>ID</th>
-                            <th>Data Entrega</th>
-                            <th>Total Peças</th>
-                            <th>Tipo Peça</th>
-                            <th>Tipo Malha</th>
-                            <th>Cor Malha</th>
-                            <th>Detalhe Peça</th>
-                            <th>Tipo de Estampa</th>
-                            <th>ARTE</th>
-                            <th>OS</th>
-                            <th>CORTE</th>
-                            <th>ESTAMPA OK</th>
-                            <th>PRONTO ENVIO</th>
-                        </tr>
-                    </thead>
-                    <tbody id="filaPedidosBody">
-                        <tr>
-                            <td colspan="14">Carregando fila...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
     </main>
     
     <!-- ========== RODAPÉ (para impressão) ========== -->

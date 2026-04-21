@@ -24,7 +24,8 @@ function criarTodasAbas() {
       'Total Peças', 'Produtos', 'Observações', 'Valor Total', 'Entrada',
       'Restante', 'Status', 'Data Criação', 'Data Modificação',
       'ARTE', 'OS', 'CORTE', 'ESTAMPA PRODUÇÃO', 'PRONTO PARA ENVIO',
-      'Tipo Peça', 'Tipo Malha', 'Cor Malha', 'Detalhe Peça', 'Estampa Resumo'
+      'Tipo Peça', 'Tipo Malha', 'Cor Malha', 'Detalhe Peça', 'Estampa Resumo',
+      'Vendedor', 'Tag Pedido'
     ]);
   }
   return { sucesso: true, mensagem: 'Banco criado com sucesso' };
@@ -103,11 +104,13 @@ function salvarPedido(dados) {
     const valorEntrada = Number((dados.financeiro && dados.financeiro.valorEntrada) || 0);
     const restante = Number((dados.financeiro && dados.financeiro.restante) || 0);
     const status = dados.statusOperacional || dados.status || 'PENDENTE';
+    const vendedor = dados.responsavelAtual || dados.vendedor || 'ISABELA SIRAY';
+    const tagPedido = dados.tagPedido || 'PEDIDO';
     const statusProducao = normalizarStatusProducao(dados.statusProducao || {});
     const resumoProduto = extrairResumoProduto((dados.produtos && dados.produtos[0]) || {});
 
     const dadosPlanilha = sheet.getDataRange().getValues();
-    const colunas = Math.max((dadosPlanilha[0] || []).length, 24);
+    const colunas = Math.max((dadosPlanilha[0] || []).length, 26);
     for (var i = 1; i < dadosPlanilha.length; i++) {
       if (dadosPlanilha[i][0] === idPedido) {
         const linhaAtual = dadosPlanilha[i];
@@ -116,7 +119,8 @@ function salvarPedido(dados) {
           JSON.stringify(dados.produtos || []), observacoes, valorTotal, valorEntrada,
           restante, status, linhaAtual[12], new Date(),
           statusProducao.arte, statusProducao.os, statusProducao.corte, statusProducao.estampa, statusProducao.prontoParaEnvio,
-          resumoProduto.tipoPeca, resumoProduto.tipoMalha, resumoProduto.corMalha, resumoProduto.detalhePeca, resumoProduto.estampaResumo
+          resumoProduto.tipoPeca, resumoProduto.tipoMalha, resumoProduto.corMalha, resumoProduto.detalhePeca, resumoProduto.estampaResumo,
+          vendedor, tagPedido
         ]]);
         return { sucesso: true, mensagem: 'Pedido atualizado', id: idPedido };
       }
@@ -127,7 +131,8 @@ function salvarPedido(dados) {
       JSON.stringify(dados.produtos || []), observacoes, valorTotal, valorEntrada,
       restante, status, new Date(), new Date(),
       statusProducao.arte, statusProducao.os, statusProducao.corte, statusProducao.estampa, statusProducao.prontoParaEnvio,
-      resumoProduto.tipoPeca, resumoProduto.tipoMalha, resumoProduto.corMalha, resumoProduto.detalhePeca, resumoProduto.estampaResumo
+      resumoProduto.tipoPeca, resumoProduto.tipoMalha, resumoProduto.corMalha, resumoProduto.detalhePeca, resumoProduto.estampaResumo,
+      vendedor, tagPedido
     ]);
 
     return { sucesso: true, mensagem: 'Pedido salvo', id: idPedido };
@@ -171,6 +176,8 @@ function buscarPedido(termo) {
               detalhePeca: row[22] || '',
               estampaResumo: row[23] || ''
             },
+            responsavelAtual: row[24] || 'ISABELA SIRAY',
+            tagPedido: row[25] || 'PEDIDO',
             dataCriacao: row[12],
             dataModificacao: row[13]
           }
@@ -214,6 +221,8 @@ function listarPedidos(filtro) {
           detalhePeca: row[22] || '',
           estampaResumo: row[23] || ''
         },
+        responsavelAtual: row[24] || 'ISABELA SIRAY',
+        tagPedido: row[25] || 'PEDIDO',
         dataCriacao: row[12],
         dataModificacao: row[13]
       };

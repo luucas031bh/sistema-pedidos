@@ -7,11 +7,9 @@ async function inicializarApp() {
     atualizarRelogio();
     setInterval(atualizarRelogio, 1000);
     configurarBotaoVoltarPrincipal();
-    inicializarStatusOperacionais();
     configurarValoresPadraoFormulario();
     configurarEventListeners();
     adicionarProduto();
-    await carregarFilaVisual();
     await carregarPedidoViaURL();
 }
 
@@ -20,16 +18,13 @@ function atualizarRelogio() {
     if (relogio) relogio.textContent = Utils.dataHoraCompleta();
 }
 
-function inicializarStatusOperacionais() {
-    const select = document.getElementById('statusOperacional');
-    if (!select) return;
-    select.innerHTML = CONFIG.STATUS_PEDIDO.map((status) => `<option value="${status}">${status}</option>`).join('');
-    select.value = 'Novo pedido';
-}
-
 function configurarValoresPadraoFormulario() {
     document.getElementById('dataPedido').value = Utils.dataAtual();
     calcularDataEntrega();
+    const vendedorSelect = document.getElementById('responsavelAtual');
+    if (vendedorSelect) vendedorSelect.value = 'ISABELA SIRAY';
+    const tagSelect = document.getElementById('tagPedido');
+    if (tagSelect) tagSelect.value = 'PEDIDO';
 }
 
 function configurarEventListeners() {
@@ -45,10 +40,6 @@ function configurarEventListeners() {
     document.getElementById('valorEntrada')?.addEventListener('input', calcularResumoFinanceiro);
     document.getElementById('btnAdicionarProduto')?.addEventListener('click', adicionarProduto);
     document.getElementById('btnSalvar')?.addEventListener('click', salvarPedido);
-    document.getElementById('btnBuscar')?.addEventListener('click', abrirModalBusca);
-    document.getElementById('btnAtualizarFila')?.addEventListener('click', carregarFilaVisual);
-    document.getElementById('btnImprimir')?.addEventListener('click', () => window.print());
-    document.getElementById('btnWhatsApp')?.addEventListener('click', enviarWhatsApp);
 }
 
 function configurarBotaoVoltarPrincipal() {
@@ -344,7 +335,6 @@ async function salvarPedido() {
         if (!resultado.sucesso) throw new Error(resultado.erro || 'Falha ao salvar');
         estadoApp.pedidoEmEdicao = resultado.id || dados.id;
         Utils.mostrarNotificacao('Pedido salvo com sucesso!', 'success');
-        await carregarFilaVisual();
     } catch (erro) {
         console.error(erro);
         Utils.mostrarNotificacao('Erro ao salvar pedido.', 'error');
@@ -369,13 +359,15 @@ function coletarDadosFormulario() {
         datas: { pedido: document.getElementById('dataPedido').value, entrega: document.getElementById('dataEntrega').value },
         totalPecas: parseInt(document.getElementById('totalPecas').value || '0', 10),
         observacoes: document.getElementById('observacoes').value,
-        statusOperacional: document.getElementById('statusOperacional').value,
+        statusOperacional: 'Novo pedido',
+        responsavelAtual: document.getElementById('responsavelAtual')?.value || 'ISABELA SIRAY',
+        tagPedido: document.getElementById('tagPedido')?.value || 'PEDIDO',
         statusProducao: {
-            arte: document.getElementById('statusArte')?.checked || false,
-            os: document.getElementById('statusOS')?.checked || false,
-            corte: document.getElementById('statusCorte')?.checked || false,
-            estampa: document.getElementById('statusEstampa')?.checked || false,
-            prontoParaEnvio: document.getElementById('statusProntoEnvio')?.checked || false
+            arte: false,
+            os: false,
+            corte: false,
+            estampa: false,
+            prontoParaEnvio: false
         },
         financeiro: { totalPedido, valorEntrada, restante: totalPedido - valorEntrada },
         produtos: estadoApp.produtos.map((p) => coletarProduto(p.id))
@@ -466,12 +458,8 @@ function preencherFormulario(pedido) {
     document.getElementById('resumoTotalPedido').textContent = Utils.formatarMoeda(pedido.financeiro?.totalPedido || 0);
     document.getElementById('valorEntrada').value = pedido.financeiro?.valorEntrada || 0;
     document.getElementById('resumoRestante').textContent = Utils.formatarMoeda(pedido.financeiro?.restante || 0);
-    document.getElementById('statusOperacional').value = pedido.statusOperacional || 'PENDENTE';
-    document.getElementById('statusArte').checked = !!pedido.statusProducao?.arte;
-    document.getElementById('statusOS').checked = !!pedido.statusProducao?.os;
-    document.getElementById('statusCorte').checked = !!pedido.statusProducao?.corte;
-    document.getElementById('statusEstampa').checked = !!pedido.statusProducao?.estampa;
-    document.getElementById('statusProntoEnvio').checked = !!pedido.statusProducao?.prontoParaEnvio;
+    document.getElementById('responsavelAtual').value = pedido.responsavelAtual || 'ISABELA SIRAY';
+    document.getElementById('tagPedido').value = pedido.tagPedido || 'PEDIDO';
 }
 
 function limparFormulario() {
@@ -482,89 +470,8 @@ function limparFormulario() {
     estadoApp.pedidoEmEdicao = null;
     document.getElementById('resumoTotalPedido').textContent = 'R$ 0,00';
     document.getElementById('resumoRestante').textContent = 'R$ 0,00';
-    inicializarStatusOperacionais();
     configurarValoresPadraoFormulario();
     adicionarProduto();
-}
-
-async function carregarFilaVisual() {
-    const tbody = document.getElementById('filaPedidosBody');
-    if (!tbody || !CONFIG.APPS_SCRIPT_URL) return;
-    if (window.location.protocol === 'file:') {
-        tbody.innerHTML = '<tr><td colspan="14">Abra via localhost para carregar a fila.</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = '<tr><td colspan="14">Atualizando fila...</td></tr>';
-    try {
-        const resposta = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=listarPedidos&acao=listarPedidos`);
-        const resultado = await resposta.json();
-        if (!resultado.sucesso) throw new Error(resultado.erro || 'Falha ao carregar fila');
-        renderizarFila(resultado.pedidos || resultado.fila || []);
-    } catch (erro) {
-        console.error(erro);
-        tbody.innerHTML = '<tr><td colspan="14">Falha ao carregar fila.</td></tr>';
-    }
-}
-
-function renderizarFila(fila) {
-    const tbody = document.getElementById('filaPedidosBody');
-    if (!tbody) return;
-    if (!fila.length) {
-        tbody.innerHTML = '<tr><td colspan="14">Nenhum pedido na fila.</td></tr>';
-        return;
-    }
-    tbody.innerHTML = fila.map((pedido) => {
-        const linkPedido = `editar-pedido.html?id=${encodeURIComponent(pedido.id || '')}`;
-        const resumo = obterResumoProdutoPedido(pedido);
-        return `
-            <tr>
-                <td><a class="cliente-link" href="${linkPedido}" target="_blank" rel="noopener noreferrer">${pedido.cliente?.nome || '-'}</a></td>
-                <td>${pedido.id || '-'}</td>
-                <td>${formatarDataEntregaSimples(pedido.datas?.entrega)}</td>
-                <td>${pedido.totalPecas ?? 0}</td>
-                <td>${resumo.tipoPeca || '-'}</td>
-                <td>${resumo.tipoMalha || '-'}</td>
-                <td>${resumo.corMalha || '-'}</td>
-                <td>${resumo.detalhePeca || '-'}</td>
-                <td>${resumo.estampaResumo || '-'}</td>
-                <td>${renderizarBadgeProducao(pedido.statusProducao?.arte)}</td>
-                <td>${renderizarBadgeProducao(pedido.statusProducao?.os)}</td>
-                <td>${renderizarBadgeProducao(pedido.statusProducao?.corte)}</td>
-                <td>${renderizarBadgeProducao(pedido.statusProducao?.estampa)}</td>
-                <td>${renderizarBadgeProducao(pedido.statusProducao?.prontoParaEnvio)}</td>
-            </tr>
-        `;
-    }).join('');
-}
-
-function renderizarBadgeProducao(status) {
-    return status ? '<span class="badge-producao badge-producao-ok">VERDE</span>' : '<span class="badge-producao badge-producao-pendente">VERMELHO</span>';
-}
-
-function formatarDataEntregaSimples(data) {
-    if (!data) return '-';
-    if (typeof data === 'string') {
-        const match = data.match(/^(\d{4})-(\d{2})-(\d{2})/);
-        if (match) return `${match[3]}/${match[2]}/${match[1]}`;
-    }
-    const dataObj = new Date(data);
-    if (Number.isNaN(dataObj.getTime())) return '-';
-    return `${String(dataObj.getDate()).padStart(2, '0')}/${String(dataObj.getMonth() + 1).padStart(2, '0')}/${dataObj.getFullYear()}`;
-}
-
-function obterResumoProdutoPedido(pedido) {
-    const resumo = pedido.resumoProduto || {};
-    if (resumo.tipoPeca || resumo.tipoMalha || resumo.corMalha || resumo.detalhePeca || resumo.estampaResumo) return resumo;
-    const produto = Array.isArray(pedido.produtos) ? (pedido.produtos[0] || {}) : {};
-    const estampas = Array.isArray(produto.estampas) ? produto.estampas : [];
-    return {
-        tipoPeca: produto.tipoPeca || '',
-        tipoMalha: produto.tipoMalha || '',
-        corMalha: produto.corMalha || '',
-        detalhePeca: produto.detalhesPeca || produto.detalhePeca || '',
-        estampaResumo: estampas.map((item) => item?.tipo).filter(Boolean).join(', ')
-    };
 }
 
 async function carregarPedidoViaURL() {
