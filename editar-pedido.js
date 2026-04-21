@@ -154,8 +154,13 @@ async function salvarEdicaoPedido() {
         const resultado = await resposta.json();
         if (!resultado.sucesso) throw new Error(resultado.erro || 'Falha ao salvar');
 
-        pedidoOriginal = dados;
-        preencherResumoEdicao(dados);
+        if (resultado.operacao === 'criado') {
+            Utils.mostrarNotificacao('Atenção: foi criado um novo registro em vez de atualizar. Verifique o ID na planilha.', 'error');
+            return;
+        }
+
+        pedidoOriginal = { ...dados, id: resultado.id != null ? String(resultado.id) : dados.id };
+        preencherResumoEdicao(pedidoOriginal);
         Utils.mostrarNotificacao('Edição salva com sucesso!', 'success');
     } catch (erro) {
         console.error(erro);
@@ -185,7 +190,8 @@ function montarPayloadEdicao() {
 
     return {
         ...pedidoOriginal,
-        id: pedidoOriginal.id,
+        id: String(pedidoOriginal.id ?? ''),
+        atualizacao: true,
         cliente: {
             ...(pedidoOriginal.cliente || {}),
             nome: document.getElementById('nomeClienteEdicao').value,

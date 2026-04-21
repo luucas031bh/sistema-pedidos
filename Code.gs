@@ -93,7 +93,14 @@ function salvarPedido(dados) {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.ABAS.PEDIDOS);
     if (!sheet) return { sucesso: false, erro: 'Aba PEDIDOS não encontrada' };
 
-    const idPedido = normalizarId(dados.id || gerarId());
+    const eAtualizacao = dados.atualizacao === true || dados.atualizacao === 'true';
+    if (eAtualizacao && !normalizarId(dados.id)) {
+      return { sucesso: false, erro: 'ID obrigatório para atualizar o pedido.' };
+    }
+
+    const idPedido = eAtualizacao
+      ? normalizarId(dados.id)
+      : (normalizarId(dados.id) || normalizarId(gerarId()));
     const nomeCliente = (dados.cliente && dados.cliente.nome) || '';
     const telefone = (dados.cliente && dados.cliente.telefone) || '';
     const dataPedido = (dados.datas && dados.datas.pedido) || '';
@@ -112,18 +119,33 @@ function salvarPedido(dados) {
     const dadosPlanilha = sheet.getDataRange().getValues();
     const colunas = 26;
     for (var i = 1; i < dadosPlanilha.length; i++) {
-      if (normalizarId(dadosPlanilha[i][0]) === idPedido) {
+      if (idsCorrespondem(dadosPlanilha[i][0], idPedido)) {
         const linhaAtual = dadosPlanilha[i];
+        var idGravar = linhaAtual[0] !== undefined && linhaAtual[0] !== null && String(linhaAtual[0]).trim() !== ''
+          ? linhaAtual[0]
+          : idPedido;
         sheet.getRange(i + 1, 1, 1, colunas).setValues([[
-          idPedido, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
+          idGravar, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
           JSON.stringify(dados.produtos || []), observacoes, valorTotal, valorEntrada,
           restante, status, linhaAtual[12], new Date(),
           statusProducao.arte, statusProducao.os, statusProducao.corte, statusProducao.estampa, statusProducao.prontoParaEnvio,
           resumoProduto.tipoPeca, resumoProduto.tipoMalha, resumoProduto.corMalha, resumoProduto.detalhePeca, resumoProduto.estampaResumo,
           vendedor, tagPedido
         ]]);
-        return { sucesso: true, mensagem: 'Pedido atualizado', id: idPedido };
+        return {
+          sucesso: true,
+          mensagem: 'Pedido atualizado',
+          id: normalizarId(idGravar) || idPedido,
+          operacao: 'atualizado'
+        };
       }
+    }
+
+    if (eAtualizacao) {
+      return {
+        sucesso: false,
+        erro: 'Pedido não encontrado na planilha para atualizar. Nenhuma linha com este ID.'
+      };
     }
 
     sheet.appendRow([
@@ -135,7 +157,7 @@ function salvarPedido(dados) {
       vendedor, tagPedido
     ]);
 
-    return { sucesso: true, mensagem: 'Pedido salvo', id: idPedido };
+    return { sucesso: true, mensagem: 'Pedido salvo', id: idPedido, operacao: 'criado' };
   } catch (erro) {
     return { sucesso: false, erro: erro.toString() };
   }
@@ -149,51 +171,60 @@ function buscarPedido(termo) {
     if (dados.length <= 1) return { sucesso: false, erro: 'Nenhum pedido cadastrado' };
 
     const termoId = normalizarId(termo);
-    for (var i = 1; i < dados.length; i++) {
+    var i;
+    for (i = 1; i < dados.length; i++) {
+      if (idsCorrespondem(dados[i][0], termoId)) {
+        return { sucesso: true, pedido: linhaParaPedido(dados[i]) };
+      }
+    }
+
+    const termoStr = String(termo || '').toLowerCase();
+    const termoTelefone = normalizarTelefone(termo);
+    for (i = 1; i < dados.length; i++) {
       const row = dados[i];
-      const rowId = normalizarId(row[0]);
       const rowNome = String(row[1] || '').toLowerCase();
       const rowTelefone = normalizarTelefone(row[2]);
-      const termoStr = String(termo || '').toLowerCase();
-      const termoTelefone = normalizarTelefone(termo);
-      if (rowId === termoId || rowNome.indexOf(termoStr) !== -1 || (termoTelefone && rowTelefone === termoTelefone)) {
-        return {
-          sucesso: true,
-          pedido: {
-            id: row[0],
-            cliente: { nome: row[1], telefone: row[2] },
-            datas: { pedido: row[3], entrega: row[4] },
-            totalPecas: row[5],
-            produtos: parseProdutosSeguro(row[6]),
-            observacoes: row[7],
-            financeiro: { totalPedido: row[8], valorEntrada: row[9], restante: row[10] },
-            statusOperacional: row[11],
-            statusProducao: {
-              arte: asBoolean(row[14]),
-              os: asBoolean(row[15]),
-              corte: asBoolean(row[16]),
-              estampa: asBoolean(row[17]),
-              prontoParaEnvio: asBoolean(row[18])
-            },
-            resumoProduto: {
-              tipoPeca: row[19] || '',
-              tipoMalha: row[20] || '',
-              corMalha: row[21] || '',
-              detalhePeca: row[22] || '',
-              estampaResumo: row[23] || ''
-            },
-            responsavelAtual: row[24] || 'ISABELA SIRAY',
-            tagPedido: row[25] || 'PEDIDO',
-            dataCriacao: row[12],
-            dataModificacao: row[13]
-          }
-        };
+      var matchNome = termoStr.length > 0 && rowNome.indexOf(termoStr) !== -1;
+      var matchFone = termoTelefone.length > 0 && rowTelefone === termoTelefone;
+      if (matchNome || matchFone) {
+        return { sucesso: true, pedido: linhaParaPedido(row) };
       }
     }
     return { sucesso: false, erro: 'Pedido não encontrado' };
   } catch (erro) {
     return { sucesso: false, erro: erro.toString() };
   }
+}
+
+function linhaParaPedido(row) {
+  return {
+    id: row[0],
+    cliente: { nome: row[1], telefone: row[2] },
+    datas: { pedido: row[3], entrega: row[4] },
+    totalPecas: row[5],
+    produtos: parseProdutosSeguro(row[6]),
+    observacoes: row[7],
+    financeiro: { totalPedido: row[8], valorEntrada: row[9], restante: row[10] },
+    statusOperacional: row[11],
+    statusProducao: {
+      arte: asBoolean(row[14]),
+      os: asBoolean(row[15]),
+      corte: asBoolean(row[16]),
+      estampa: asBoolean(row[17]),
+      prontoParaEnvio: asBoolean(row[18])
+    },
+    resumoProduto: {
+      tipoPeca: row[19] || '',
+      tipoMalha: row[20] || '',
+      corMalha: row[21] || '',
+      detalhePeca: row[22] || '',
+      estampaResumo: row[23] || ''
+    },
+    responsavelAtual: row[24] || 'ISABELA SIRAY',
+    tagPedido: row[25] || 'PEDIDO',
+    dataCriacao: row[12],
+    dataModificacao: row[13]
+  };
 }
 
 // ================= LISTAR =================
@@ -300,7 +331,23 @@ function parseProdutosSeguro(valor) {
 }
 
 function normalizarId(valor) {
-  return String(valor === null || valor === undefined ? '' : valor).trim();
+  if (valor === null || valor === undefined) return '';
+  if (typeof valor === 'number' && !isNaN(valor)) return String(Math.round(valor));
+  return String(valor).trim();
+}
+
+/** Igualdade exata (após normalizar) ou o termo coincide com algum segmento do ID (ex.: PED-ts-1133-abc e termo 1133). */
+function idsCorrespondem(idPlanilha, termo) {
+  var a = normalizarId(idPlanilha);
+  var b = normalizarId(termo);
+  if (!a || !b) return a === b;
+  if (a === b) return true;
+  var partes = String(idPlanilha).split(/[-_]/);
+  var j;
+  for (j = 0; j < partes.length; j++) {
+    if (normalizarId(partes[j]) === b) return true;
+  }
+  return false;
 }
 
 function normalizarTelefone(valor) {
