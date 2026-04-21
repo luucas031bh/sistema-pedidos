@@ -393,12 +393,13 @@ function planilhaPedidosTemColunaCostura(sheet) {
 
 function montarLinhaValoresPedido(idGravar, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas, produtosArr, observacoes, valorTotal, valorEntrada, restante, status, dataCriacao, dataModificacao, statusProducao, resumoProduto, vendedor, tagPedido, temCostura) {
   var produtosJson = JSON.stringify(produtosArr);
-  var a = !!statusProducao.arte;
-  var o = !!statusProducao.os;
-  var c = !!statusProducao.corte;
-  var co = !!statusProducao.costura;
-  var e = !!statusProducao.estampa;
-  var p = !!statusProducao.prontoParaEnvio;
+  var sp = normalizarStatusProducao(statusProducao);
+  var a = sp.arte;
+  var o = sp.os;
+  var c = sp.corte;
+  var co = sp.costura;
+  var e = sp.estampa;
+  var p = sp.prontoParaEnvio;
   var base = [
     idGravar, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
     produtosJson, observacoes, valorTotal, valorEntrada, restante, status, dataCriacao, dataModificacao
@@ -605,13 +606,17 @@ function normalizarStatusOperacional(status) {
 }
 
 function normalizarStatusProducao(statusProducao) {
+  var s = statusProducao;
+  if (s === null || s === undefined || typeof s !== 'object' || Array.isArray(s)) {
+    s = {};
+  }
   return {
-    arte: asBoolean(statusProducao.arte),
-    os: asBoolean(statusProducao.os),
-    corte: asBoolean(statusProducao.corte),
-    costura: asBoolean(statusProducao.costura),
-    estampa: asBoolean(statusProducao.estampa),
-    prontoParaEnvio: asBoolean(statusProducao.prontoParaEnvio)
+    arte: asBoolean(s.arte),
+    os: asBoolean(s.os),
+    corte: asBoolean(s.corte),
+    costura: asBoolean(s.costura),
+    estampa: asBoolean(s.estampa),
+    prontoParaEnvio: asBoolean(s.prontoParaEnvio)
   };
 }
 
