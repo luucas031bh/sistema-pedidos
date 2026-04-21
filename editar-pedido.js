@@ -171,14 +171,20 @@ async function salvarEdicaoPedido() {
     const dados = montarPayloadEdicao();
     mostrarLoadingEdicao('Salvando edição...');
     try {
-        const body = new URLSearchParams();
-        body.append('action', 'salvarPedido');
-        body.append('acao', 'salvarPedido');
-        body.append('dados', JSON.stringify(dados));
-        body.append('modoEdicao', 'true');
-        body.append('idEdicao', String(pedidoOriginal.id ?? dados.id ?? ''));
-
-        const resposta = await fetch(CONFIG.APPS_SCRIPT_URL, { method: 'POST', body });
+        // JSON no corpo com text/plain: evita preflight CORS e não depende do parse de campo
+        // enorme em x-www-form-urlencoded (Apps Script pode truncar/incompletar → appendRow).
+        const payload = {
+            action: 'salvarPedido',
+            acao: 'salvarPedido',
+            dados,
+            modoEdicao: 'true',
+            idEdicao: String(pedidoOriginal.id ?? dados.id ?? '')
+        };
+        const resposta = await fetch(CONFIG.APPS_SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
+        });
         const resultado = await resposta.json();
         if (!resultado.sucesso) throw new Error(resultado.erro || 'Falha ao salvar');
 

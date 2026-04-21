@@ -154,38 +154,66 @@ function normalizarDadosObjeto(dados) {
 // ================= POST =================
 function doPost(e) {
   try {
-    let acao = '';
-    let dados = {};
+    var acao = '';
+    var dados = {};
+    var modoEdParam = null;
+    var idEdParam = null;
 
-    if (e && e.parameter) {
-      // Prioriza requests form-urlencoded (evita preflight no navegador).
-      acao = e.parameter.action || e.parameter.acao || '';
-      if (e.parameter.dados) {
+    // Corpo JSON (ex.: edição com Content-Type text/plain): ler primeiro — payload grande fica íntegro em postData.contents.
+    if (e && e.postData && e.postData.contents) {
+      var raw = String(e.postData.contents).trim();
+      if (raw.charAt(0) === '{') {
         try {
-          dados = JSON.parse(e.parameter.dados);
-        } catch (parseErr) {
-          dados = e.parameter.dados;
+          var payload = JSON.parse(raw);
+          acao = payload.action || payload.acao || '';
+          if (payload.dados !== undefined && payload.dados !== null) {
+            dados = payload.dados;
+          }
+          if (payload.modoEdicao !== undefined && payload.modoEdicao !== null) {
+            modoEdParam = payload.modoEdicao;
+          }
+          if (payload.idEdicao !== undefined && payload.idEdicao !== null) {
+            idEdParam = payload.idEdicao;
+          }
+        } catch (parseJsonErr) {
+          // tenta form-urlencoded abaixo
         }
       }
     }
 
-    if (!acao && e && e.postData && e.postData.contents) {
-      const payload = JSON.parse(e.postData.contents || '{}');
-      acao = payload.action || payload.acao || '';
-      dados = payload.dados || dados || payload;
+    if (e && e.parameter) {
+      acao = acao || e.parameter.action || e.parameter.acao || '';
+      if (e.parameter.dados) {
+        var dadosVazios = true;
+        try {
+          var prov = normalizarDadosObjeto(dados);
+          dadosVazios = !prov || Object.keys(prov).length === 0;
+        } catch (ign) {
+          dadosVazios = true;
+        }
+        if (dadosVazios) {
+          try {
+            dados = JSON.parse(e.parameter.dados);
+          } catch (parseErr) {
+            dados = e.parameter.dados;
+          }
+        }
+      }
+      if (modoEdParam === null || modoEdParam === undefined || modoEdParam === '') {
+        modoEdParam = e.parameter.modoEdicao;
+      }
+      if (idEdParam === null || idEdParam === undefined || idEdParam === '') {
+        idEdParam = e.parameter.idEdicao;
+      }
     }
 
     dados = normalizarDadosObjeto(dados);
 
-    if (e && e.parameter) {
-      var modoEd = e.parameter.modoEdicao;
-      if (modoEd === 'true' || modoEd === true) {
-        dados.atualizacao = true;
-      }
-      var idEdParam = e.parameter.idEdicao;
-      if (idEdParam != null && normalizarId(idEdParam)) {
-        dados.id = normalizarId(dados.id) || normalizarId(idEdParam);
-      }
+    if (modoEdParam === 'true' || modoEdParam === true) {
+      dados.atualizacao = true;
+    }
+    if (idEdParam != null && normalizarId(idEdParam)) {
+      dados.id = normalizarId(dados.id) || normalizarId(idEdParam);
     }
 
     if (!acao) {
