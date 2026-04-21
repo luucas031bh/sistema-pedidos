@@ -22,6 +22,7 @@
     <link rel="preload" href="script.js" as="script">
 </head>
 <body>
+    <a href="principal.html" id="btnVoltarPrincipal" class="btn-voltar-principal hidden" title="Voltar ao painel principal">Voltar ao principal</a>
     <!-- ========== CABEÇALHO ========== -->
     <header class="header">
         <div class="header-content">
@@ -192,6 +193,15 @@
                     <label class="checkbox-item"><input type="checkbox" id="precisaTerceirizacao"> Precisa de terceirização</label>
                 </div>
 
+                <h3 class="card-subtitle mt-2">Status de Produção</h3>
+                <div class="checkbox-grid">
+                    <label class="checkbox-item"><input type="checkbox" id="statusArte"> ARTE</label>
+                    <label class="checkbox-item"><input type="checkbox" id="statusOS"> OS</label>
+                    <label class="checkbox-item"><input type="checkbox" id="statusCorte"> CORTE</label>
+                    <label class="checkbox-item"><input type="checkbox" id="statusEstampa"> ESTAMPA</label>
+                    <label class="checkbox-item"><input type="checkbox" id="statusProntoEnvio"> PRONTO PARA ENVIO</label>
+                </div>
+
                 <div class="form-row mt-2">
                     <div class="form-group">
                         <label for="motivoTravamento" class="form-label">Motivo de Travamento</label>
@@ -271,19 +281,25 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>ID</th>
                             <th>Cliente</th>
-                            <th>Status</th>
-                            <th>Responsável</th>
-                            <th>Prazo</th>
-                            <th>Dias Restantes</th>
-                            <th>Urgência</th>
-                            <th>Pendências</th>
+                            <th>ID</th>
+                            <th>Data Entrega</th>
+                            <th>Total Peças</th>
+                            <th>Tipo Peça</th>
+                            <th>Tipo Malha</th>
+                            <th>Cor Malha</th>
+                            <th>Detalhe Peça</th>
+                            <th>Estampa</th>
+                            <th>ARTE</th>
+                            <th>OS</th>
+                            <th>CORTE</th>
+                            <th>ESTAMPA</th>
+                            <th>PRONTO ENVIO</th>
                         </tr>
                     </thead>
                     <tbody id="filaPedidosBody">
                         <tr>
-                            <td colspan="8">Carregando fila...</td>
+                            <td colspan="14">Carregando fila...</td>
                         </tr>
                     </tbody>
                 </table>

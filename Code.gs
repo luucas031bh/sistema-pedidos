@@ -22,7 +22,9 @@ function criarTodasAbas() {
     pedidos.appendRow([
       'ID', 'Nome Cliente', 'Telefone', 'Data Pedido', 'Data Entrega',
       'Total Peças', 'Produtos', 'Observações', 'Valor Total', 'Entrada',
-      'Restante', 'Status', 'Data Criação', 'Data Modificação'
+      'Restante', 'Status', 'Data Criação', 'Data Modificação',
+      'ARTE', 'OS', 'CORTE', 'ESTAMPA PRODUÇÃO', 'PRONTO PARA ENVIO',
+      'Tipo Peça', 'Tipo Malha', 'Cor Malha', 'Detalhe Peça', 'Estampa Resumo'
     ]);
   }
   return { sucesso: true, mensagem: 'Banco criado com sucesso' };
@@ -101,14 +103,20 @@ function salvarPedido(dados) {
     const valorEntrada = Number((dados.financeiro && dados.financeiro.valorEntrada) || 0);
     const restante = Number((dados.financeiro && dados.financeiro.restante) || 0);
     const status = dados.statusOperacional || dados.status || 'PENDENTE';
+    const statusProducao = normalizarStatusProducao(dados.statusProducao || {});
+    const resumoProduto = extrairResumoProduto((dados.produtos && dados.produtos[0]) || {});
 
     const dadosPlanilha = sheet.getDataRange().getValues();
+    const colunas = Math.max((dadosPlanilha[0] || []).length, 24);
     for (var i = 1; i < dadosPlanilha.length; i++) {
       if (dadosPlanilha[i][0] === idPedido) {
-        sheet.getRange(i + 1, 1, 1, 14).setValues([[
+        const linhaAtual = dadosPlanilha[i];
+        sheet.getRange(i + 1, 1, 1, colunas).setValues([[
           idPedido, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
           JSON.stringify(dados.produtos || []), observacoes, valorTotal, valorEntrada,
-          restante, status, dadosPlanilha[i][12], new Date()
+          restante, status, linhaAtual[12], new Date(),
+          statusProducao.arte, statusProducao.os, statusProducao.corte, statusProducao.estampa, statusProducao.prontoParaEnvio,
+          resumoProduto.tipoPeca, resumoProduto.tipoMalha, resumoProduto.corMalha, resumoProduto.detalhePeca, resumoProduto.estampaResumo
         ]]);
         return { sucesso: true, mensagem: 'Pedido atualizado', id: idPedido };
       }
@@ -117,7 +125,9 @@ function salvarPedido(dados) {
     sheet.appendRow([
       idPedido, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
       JSON.stringify(dados.produtos || []), observacoes, valorTotal, valorEntrada,
-      restante, status, new Date(), new Date()
+      restante, status, new Date(), new Date(),
+      statusProducao.arte, statusProducao.os, statusProducao.corte, statusProducao.estampa, statusProducao.prontoParaEnvio,
+      resumoProduto.tipoPeca, resumoProduto.tipoMalha, resumoProduto.corMalha, resumoProduto.detalhePeca, resumoProduto.estampaResumo
     ]);
 
     return { sucesso: true, mensagem: 'Pedido salvo', id: idPedido };
@@ -147,6 +157,20 @@ function buscarPedido(termo) {
             observacoes: row[7],
             financeiro: { totalPedido: row[8], valorEntrada: row[9], restante: row[10] },
             statusOperacional: row[11],
+            statusProducao: {
+              arte: asBoolean(row[14]),
+              os: asBoolean(row[15]),
+              corte: asBoolean(row[16]),
+              estampa: asBoolean(row[17]),
+              prontoParaEnvio: asBoolean(row[18])
+            },
+            resumoProduto: {
+              tipoPeca: row[19] || '',
+              tipoMalha: row[20] || '',
+              corMalha: row[21] || '',
+              detalhePeca: row[22] || '',
+              estampaResumo: row[23] || ''
+            },
             dataCriacao: row[12],
             dataModificacao: row[13]
           }
@@ -176,6 +200,20 @@ function listarPedidos(filtro) {
         observacoes: row[7],
         financeiro: { totalPedido: row[8], valorEntrada: row[9], restante: row[10] },
         statusOperacional: row[11],
+        statusProducao: {
+          arte: asBoolean(row[14]),
+          os: asBoolean(row[15]),
+          corte: asBoolean(row[16]),
+          estampa: asBoolean(row[17]),
+          prontoParaEnvio: asBoolean(row[18])
+        },
+        resumoProduto: {
+          tipoPeca: row[19] || '',
+          tipoMalha: row[20] || '',
+          corMalha: row[21] || '',
+          detalhePeca: row[22] || '',
+          estampaResumo: row[23] || ''
+        },
         dataCriacao: row[12],
         dataModificacao: row[13]
       };
@@ -208,6 +246,42 @@ function gerarId() {
 function resposta(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+function asBoolean(valor) {
+  if (typeof valor === 'boolean') return valor;
+  if (typeof valor === 'number') return valor === 1;
+  if (typeof valor === 'string') {
+    const normalizado = valor.toLowerCase().trim();
+    return normalizado === 'true' || normalizado === 'sim' || normalizado === '1' || normalizado === 'x';
+  }
+  return false;
+}
+
+function normalizarStatusProducao(statusProducao) {
+  return {
+    arte: asBoolean(statusProducao.arte),
+    os: asBoolean(statusProducao.os),
+    corte: asBoolean(statusProducao.corte),
+    estampa: asBoolean(statusProducao.estampa),
+    prontoParaEnvio: asBoolean(statusProducao.prontoParaEnvio)
+  };
+}
+
+function extrairResumoProduto(produto) {
+  const estampas = Array.isArray(produto.estampas) ? produto.estampas : [];
+  const estampaResumo = estampas.map(function(item) {
+    return item && item.tipo ? item.tipo : '';
+  }).filter(function(item) {
+    return item;
+  }).join(', ');
+  return {
+    tipoPeca: produto.tipoPeca || '',
+    tipoMalha: produto.tipoMalha || '',
+    corMalha: produto.corMalha || '',
+    detalhePeca: produto.detalhesPeca || produto.detalhePeca || '',
+    estampaResumo: estampaResumo
+  };
 }
 
 function getStats() {

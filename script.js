@@ -6,11 +6,13 @@ document.addEventListener('DOMContentLoaded', () => inicializarApp());
 async function inicializarApp() {
     atualizarRelogio();
     setInterval(atualizarRelogio, 1000);
+    configurarBotaoVoltarPrincipal();
     inicializarStatusOperacionais();
     configurarValoresPadraoFormulario();
     configurarEventListeners();
     adicionarProduto();
     await carregarFilaVisual();
+    await carregarPedidoViaURL();
 }
 
 function atualizarRelogio() {
@@ -47,6 +49,13 @@ function configurarEventListeners() {
     document.getElementById('btnAtualizarFila')?.addEventListener('click', carregarFilaVisual);
     document.getElementById('btnImprimir')?.addEventListener('click', () => window.print());
     document.getElementById('btnWhatsApp')?.addEventListener('click', enviarWhatsApp);
+}
+
+function configurarBotaoVoltarPrincipal() {
+    const btn = document.getElementById('btnVoltarPrincipal');
+    if (!btn) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('id')) btn.classList.remove('hidden');
 }
 
 function atualizarID() {
@@ -361,6 +370,13 @@ function coletarDadosFormulario() {
         totalPecas: parseInt(document.getElementById('totalPecas').value || '0', 10),
         observacoes: document.getElementById('observacoes').value,
         statusOperacional: document.getElementById('statusOperacional').value,
+        statusProducao: {
+            arte: document.getElementById('statusArte')?.checked || false,
+            os: document.getElementById('statusOS')?.checked || false,
+            corte: document.getElementById('statusCorte')?.checked || false,
+            estampa: document.getElementById('statusEstampa')?.checked || false,
+            prontoParaEnvio: document.getElementById('statusProntoEnvio')?.checked || false
+        },
         financeiro: { totalPedido, valorEntrada, restante: totalPedido - valorEntrada },
         produtos: estadoApp.produtos.map((p) => coletarProduto(p.id))
     };
@@ -450,6 +466,11 @@ function preencherFormulario(pedido) {
     document.getElementById('valorEntrada').value = pedido.financeiro?.valorEntrada || 0;
     document.getElementById('resumoRestante').textContent = Utils.formatarMoeda(pedido.financeiro?.restante || 0);
     document.getElementById('statusOperacional').value = pedido.statusOperacional || 'PENDENTE';
+    document.getElementById('statusArte').checked = !!pedido.statusProducao?.arte;
+    document.getElementById('statusOS').checked = !!pedido.statusProducao?.os;
+    document.getElementById('statusCorte').checked = !!pedido.statusProducao?.corte;
+    document.getElementById('statusEstampa').checked = !!pedido.statusProducao?.estampa;
+    document.getElementById('statusProntoEnvio').checked = !!pedido.statusProducao?.prontoParaEnvio;
 }
 
 function limparFormulario() {
@@ -469,11 +490,11 @@ async function carregarFilaVisual() {
     const tbody = document.getElementById('filaPedidosBody');
     if (!tbody || !CONFIG.APPS_SCRIPT_URL) return;
     if (window.location.protocol === 'file:') {
-        tbody.innerHTML = '<tr><td colspan="8">Abra via localhost para carregar a fila.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="14">Abra via localhost para carregar a fila.</td></tr>';
         return;
     }
 
-    tbody.innerHTML = '<tr><td colspan="8">Atualizando fila...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="14">Atualizando fila...</td></tr>';
     try {
         const resposta = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=listarPedidos&acao=listarPedidos`);
         const resultado = await resposta.json();
@@ -481,7 +502,7 @@ async function carregarFilaVisual() {
         renderizarFila(resultado.pedidos || resultado.fila || []);
     } catch (erro) {
         console.error(erro);
-        tbody.innerHTML = '<tr><td colspan="8">Falha ao carregar fila.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="14">Falha ao carregar fila.</td></tr>';
     }
 }
 
@@ -489,10 +510,79 @@ function renderizarFila(fila) {
     const tbody = document.getElementById('filaPedidosBody');
     if (!tbody) return;
     if (!fila.length) {
-        tbody.innerHTML = '<tr><td colspan="8">Nenhum pedido na fila.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="14">Nenhum pedido na fila.</td></tr>';
         return;
     }
-    tbody.innerHTML = fila.map((pedido) => `<tr><td>${pedido.id || '-'}</td><td>${pedido.cliente?.nome || '-'}</td><td>${pedido.statusOperacional || '-'}</td><td>${pedido.responsavelAtual || '-'}</td><td>${Utils.dataISOParaBR(pedido.datas?.entrega || '')}</td><td>-</td><td><span class="badge-urgencia badge-normal">Normal</span></td><td>-</td></tr>`).join('');
+    tbody.innerHTML = fila.map((pedido) => {
+        const linkPedido = `index.html?id=${encodeURIComponent(pedido.id || '')}`;
+        const resumo = obterResumoProdutoPedido(pedido);
+        return `
+            <tr>
+                <td><a class="cliente-link" href="${linkPedido}" target="_blank" rel="noopener noreferrer">${pedido.cliente?.nome || '-'}</a></td>
+                <td>${pedido.id || '-'}</td>
+                <td>${formatarDataEntregaSimples(pedido.datas?.entrega)}</td>
+                <td>${pedido.totalPecas ?? 0}</td>
+                <td>${resumo.tipoPeca || '-'}</td>
+                <td>${resumo.tipoMalha || '-'}</td>
+                <td>${resumo.corMalha || '-'}</td>
+                <td>${resumo.detalhePeca || '-'}</td>
+                <td>${resumo.estampaResumo || '-'}</td>
+                <td>${renderizarBadgeProducao(pedido.statusProducao?.arte)}</td>
+                <td>${renderizarBadgeProducao(pedido.statusProducao?.os)}</td>
+                <td>${renderizarBadgeProducao(pedido.statusProducao?.corte)}</td>
+                <td>${renderizarBadgeProducao(pedido.statusProducao?.estampa)}</td>
+                <td>${renderizarBadgeProducao(pedido.statusProducao?.prontoParaEnvio)}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function renderizarBadgeProducao(status) {
+    return status ? '<span class="badge-producao badge-producao-ok">VERDE</span>' : '<span class="badge-producao badge-producao-pendente">VERMELHO</span>';
+}
+
+function formatarDataEntregaSimples(data) {
+    if (!data) return '-';
+    if (typeof data === 'string') {
+        const match = data.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (match) return `${match[3]}/${match[2]}/${match[1]}`;
+    }
+    const dataObj = new Date(data);
+    if (Number.isNaN(dataObj.getTime())) return '-';
+    return `${String(dataObj.getDate()).padStart(2, '0')}/${String(dataObj.getMonth() + 1).padStart(2, '0')}/${dataObj.getFullYear()}`;
+}
+
+function obterResumoProdutoPedido(pedido) {
+    const resumo = pedido.resumoProduto || {};
+    if (resumo.tipoPeca || resumo.tipoMalha || resumo.corMalha || resumo.detalhePeca || resumo.estampaResumo) return resumo;
+    const produto = Array.isArray(pedido.produtos) ? (pedido.produtos[0] || {}) : {};
+    const estampas = Array.isArray(produto.estampas) ? produto.estampas : [];
+    return {
+        tipoPeca: produto.tipoPeca || '',
+        tipoMalha: produto.tipoMalha || '',
+        corMalha: produto.corMalha || '',
+        detalhePeca: produto.detalhesPeca || produto.detalhePeca || '',
+        estampaResumo: estampas.map((item) => item?.tipo).filter(Boolean).join(', ')
+    };
+}
+
+async function carregarPedidoViaURL() {
+    const params = new URLSearchParams(window.location.search);
+    const id = (params.get('id') || '').trim();
+    if (!id) return;
+    if (window.location.protocol === 'file:') return;
+    mostrarLoading('Carregando pedido...');
+    try {
+        const resposta = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=buscarPedido&acao=buscarPedido&termo=${encodeURIComponent(id)}`);
+        const resultado = await resposta.json();
+        if (!resultado.sucesso || !resultado.pedido) throw new Error('Pedido não encontrado');
+        preencherFormulario(resultado.pedido);
+    } catch (erro) {
+        console.error(erro);
+        Utils.mostrarNotificacao('Não foi possível carregar o pedido da fila.', 'error');
+    } finally {
+        esconderLoading();
+    }
 }
 
 function enviarWhatsApp() {
