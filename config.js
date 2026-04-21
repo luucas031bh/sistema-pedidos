@@ -130,23 +130,15 @@ const CONFIG = {
         'Algodão com Elastano (98% Algodão 2% Elastano)'
     ],
     
-    // Status operacionais da fila única
+    // Status operacionais (select único; valores gravados na planilha como texto)
     STATUS_PEDIDO: [
-        'PENDENTE',
         'Novo pedido',
-        'Aguardando entrada',
-        'Aguardando arte',
-        'Aguardando compra',
-        'Pronto para produção',
-        'Em corte',
-        'Em estampa',
-        'Em terceirização',
-        'Em finalização',
-        'Pronto para entrega',
-        'Entregue',
-        'Travado',
+        'Pendente',
+        'Orçamento',
+        'Em produção',
         'Atrasado',
-        'Cancelado'
+        'Cancelado',
+        'Travado'
     ],
     
     // Mensagens do Sistema

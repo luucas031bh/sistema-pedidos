@@ -699,7 +699,7 @@ function coletarDadosFormulario() {
 
     return {
         ...base,
-        statusOperacional: 'PENDENTE',
+        statusOperacional: 'Novo pedido',
         statusProducao: {
             arte: false,
             os: false,

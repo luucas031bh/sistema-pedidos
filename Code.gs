@@ -273,7 +273,7 @@ function salvarPedido(dados) {
     const valorTotal = Number((dados.financeiro && dados.financeiro.totalPedido) || 0);
     const valorEntrada = Number((dados.financeiro && dados.financeiro.valorEntrada) || 0);
     const restante = Number((dados.financeiro && dados.financeiro.restante) || 0);
-    const status = normalizarStatusOperacional(dados.statusOperacional || dados.status || 'PENDENTE');
+    const status = normalizarStatusOperacional(dados.statusOperacional || dados.status || 'Novo pedido');
     const vendedor = dados.responsavelAtual || dados.vendedor || 'ISABELA SIRAY';
     const tagPedido = dados.tagPedido || 'PEDIDO';
     const statusProducao = normalizarStatusProducao(dados.statusProducao || {});
@@ -724,12 +724,40 @@ function obterTimestampSeguro(valorData) {
   return Number.isNaN(timestamp) ? 0 : timestamp;
 }
 
+/**
+ * Alinha ao CONFIG.STATUS_PEDIDO do front. Preserva Entregue (legado). Mapeia status antigos para o vocabulário novo.
+ */
 function normalizarStatusOperacional(status) {
-  var valor = String(status || '').trim().toLowerCase();
-  if (valor === 'novo pedido' || valor === 'novo') return 'PENDENTE';
+  var raw = String(status || '').trim();
+  if (!raw) return 'Novo pedido';
+  var valor = raw.toLowerCase();
   if (valor === 'finalizado' || valor === 'entregue') return 'Entregue';
+
+  var canon = ['Novo pedido', 'Pendente', 'Orçamento', 'Em produção', 'Atrasado', 'Cancelado', 'Travado'];
+  var i;
+  for (i = 0; i < canon.length; i++) {
+    if (canon[i].toLowerCase() === valor) return canon[i];
+  }
+
   if (valor === 'cancelado') return 'Cancelado';
-  return status || 'PENDENTE';
+
+  if (raw === 'PENDENTE' || valor === 'pendente') return 'Pendente';
+  if (valor === 'novo pedido' || valor === 'novo') return 'Novo pedido';
+  if (valor === 'orçamento' || valor === 'orcamento') return 'Orçamento';
+  if (valor === 'atrasado') return 'Atrasado';
+  if (valor === 'travado') return 'Travado';
+  if (valor === 'em produção' || valor === 'em producao') return 'Em produção';
+
+  var emProd = [
+    'em corte', 'em estampa', 'em terceirização', 'em terceirizacao', 'em finalização', 'em finalizacao',
+    'pronto para produção', 'pronto para producao', 'aguardando entrada', 'aguardando arte', 'aguardando compra',
+    'pronto para entrega'
+  ];
+  for (i = 0; i < emProd.length; i++) {
+    if (valor === emProd[i]) return 'Em produção';
+  }
+
+  return raw;
 }
 
 function normalizarStatusProducao(statusProducao) {
@@ -789,7 +817,8 @@ function getStats() {
     dataPedido.setHours(0, 0, 0, 0);
 
     valorTotal += valor;
-    if (statusNorm === 'PENDENTE' || statusLower === 'novo pedido' || statusLower === 'novo') pedidosNovo++;
+    if (statusNorm === 'Novo pedido' || statusNorm === 'Pendente' || statusNorm === 'PENDENTE' ||
+      statusLower === 'novo pedido' || statusLower === 'pendente' || statusLower === 'novo') pedidosNovo++;
     if (statusNorm === 'Entregue' || statusLower === 'finalizado') pedidosFinalizado++;
     if (statusNorm === 'Cancelado' || statusLower === 'cancelado') pedidosCancelado++;
     if (!Number.isNaN(dataPedido.getTime()) && dataPedido.getTime() === hoje.getTime()) pedidosHoje++;
