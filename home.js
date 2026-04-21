@@ -158,8 +158,14 @@ function filtrarPedidosPorTermoLocal(pedidos, termoApi) {
     if (soDigitos.length === 4) {
         return lista.filter((p) => {
             const ib = String(p.idBusca != null ? p.idBusca : '').replace(/\D/g, '');
-            const last4 = ib.length >= 4 ? ib.slice(-4) : (`0000${ib}`).slice(-4);
-            return last4 === soDigitos;
+            const last4IdBusca = ib.length >= 4 ? ib.slice(-4) : (`0000${ib}`).slice(-4);
+            if (last4IdBusca === soDigitos) return true;
+            const tel = String(p.cliente?.telefone || '').replace(/\D/g, '');
+            if (tel.length >= 4 && tel.slice(-4) === soDigitos) return true;
+            if (typeof Utils !== 'undefined' && Utils.obterIdBusca) {
+                if (Utils.obterIdBusca(p.cliente?.telefone || '') === soDigitos) return true;
+            }
+            return false;
         });
     }
     const termoLower = t.toLowerCase();
@@ -175,27 +181,12 @@ function filtrarPedidosPorTermoLocal(pedidos, termoApi) {
     });
 }
 
+/** Sempre lista todos e filtra no cliente (match por idBusca e pelos últimos 4 dígitos do telefone). */
 async function buscarPedidosComFallback(termo) {
-    const url = `${CONFIG.APPS_SCRIPT_URL}?action=buscarPedidos&acao=buscarPedidos&termo=${encodeURIComponent(termo)}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    const msgErro = String(data.erro || '');
-    const acaoInvalida = msgErro.indexOf('Ação inválida') !== -1;
-
-    if (!acaoInvalida) {
-        return data;
-    }
-
     const res2 = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=listarPedidos&acao=listarPedidos`);
     const data2 = await res2.json();
     if (!res2.ok || data2.sucesso === false) {
-        return {
-            sucesso: false,
-            erro:
-                data.erro ||
-                data2.erro ||
-                'Atualize o Code.gs no Apps Script e faça uma nova implantação da Web App (ação buscarPedidos).'
-        };
+        return { sucesso: false, erro: data2.erro || `Erro HTTP ${res2.status}` };
     }
     const todos = data2.pedidos || data2.fila || [];
     return { sucesso: true, pedidos: filtrarPedidosPorTermoLocal(todos, termo) };
