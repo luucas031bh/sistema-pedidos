@@ -5,6 +5,14 @@ const CONFIG = {
     // IMPORTANTE: Sempre que alterar Code.gs, faça Implantação > Gerenciar implantações >
     // Editar > Versão: Nova versão > Implantar e cole aqui a URL /exec dessa implantação.
     // Se esta URL estiver desatualizada, o painel e a edição podem falhar ou apontar para lógica antiga.
+    //
+    // CHECKLIST após mudanças (evita duplicação / lógica antiga no ar):
+    // [ ] Colar o Code.gs atualizado no projeto Google Apps Script
+    // [ ] Implantação > Gerenciar implantações > Editar > Versão: Nova versão > Implantar
+    // [ ] Copiar a URL /exec desta implantação e colar em APPS_SCRIPT_URL abaixo
+    // [ ] Publicar no host do site: editar-pedido.js, script.js, principal.js, config.js, utils.js (o que mudou)
+    // [ ] Hard refresh no navegador; na planilha, remover linhas duplicadas com o mesmo ID se existirem
+    //
     // INSTRUÇÕES:
     // 1. Siga o GUIA-BANCO-DADOS.md para criar o banco de dados
     // 2. Após o PASSO 5 (Deploy), copie a URL do aplicativo da Web

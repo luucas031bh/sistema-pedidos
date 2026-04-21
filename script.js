@@ -52,7 +52,14 @@ function configurarBotaoVoltarPrincipal() {
 function atualizarID() {
     if (estadoApp.pedidoEmEdicao) return;
     const telefone = document.getElementById('telefone').value;
-    if (telefone) document.getElementById('idPedido').value = Utils.gerarID(telefone);
+    const elIdBusca = document.getElementById('idBusca');
+    if (telefone) {
+        document.getElementById('idPedido').value = Utils.gerarID(telefone);
+        if (elIdBusca) elIdBusca.value = Utils.obterIdBusca(telefone);
+    } else {
+        document.getElementById('idPedido').value = '';
+        if (elIdBusca) elIdBusca.value = '';
+    }
 }
 
 function calcularDataEntrega() {
@@ -355,6 +362,7 @@ function coletarDadosFormulario() {
     const valorEntrada = parseFloat(document.getElementById('valorEntrada').value || '0');
     return {
         id: document.getElementById('idPedido').value || Utils.gerarID(document.getElementById('telefone').value),
+        idBusca: Utils.obterIdBusca(document.getElementById('telefone').value),
         cliente: { nome: document.getElementById('nomeCliente').value, telefone: document.getElementById('telefone').value },
         datas: { pedido: document.getElementById('dataPedido').value, entrega: document.getElementById('dataEntrega').value },
         totalPecas: parseInt(document.getElementById('totalPecas').value || '0', 10),
@@ -450,6 +458,8 @@ function preencherFormulario(pedido) {
     limparFormulario();
     estadoApp.pedidoEmEdicao = pedido.id;
     document.getElementById('idPedido').value = pedido.id || '';
+    const elIb = document.getElementById('idBusca');
+    if (elIb) elIb.value = pedido.idBusca || Utils.obterIdBusca(pedido.cliente?.telefone || '');
     document.getElementById('nomeCliente').value = pedido.cliente?.nome || '';
     document.getElementById('telefone').value = pedido.cliente?.telefone || '';
     document.getElementById('dataPedido').value = pedido.datas?.pedido || '';
@@ -465,6 +475,8 @@ function preencherFormulario(pedido) {
 
 function limparFormulario() {
     document.getElementById('formPedido').reset();
+    const elIb = document.getElementById('idBusca');
+    if (elIb) elIb.value = '';
     document.getElementById('produtosContainer').innerHTML = '';
     estadoApp.produtos = [];
     estadoApp.produtoAtualId = 1;

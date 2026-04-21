@@ -108,13 +108,24 @@ const Utils = {
     },
     
     /**
+     * 4 últimos dígitos do telefone (ou preenchido com zeros à esquerda) — chave de busca auxiliar.
+     * @param {string} telefone
+     * @returns {string} 4 caracteres
+     */
+    obterIdBusca(telefone) {
+        const numeros = this.limparTelefone(telefone);
+        if (!numeros.length) return '0000';
+        if (numeros.length >= 4) return numeros.slice(-4);
+        return numeros.padStart(4, '0');
+    },
+
+    /**
      * Gera ID robusto de pedido para evitar colisões
      * @param {string} telefone - Telefone do cliente (opcional para sufixo)
      * @returns {string} ID gerado
      */
     gerarID(telefone) {
-        const numeros = this.limparTelefone(telefone);
-        const sufixoTelefone = numeros.length >= 4 ? numeros.slice(-4) : '0000';
+        const sufixoTelefone = this.obterIdBusca(telefone);
         const timestamp = Date.now();
         const aleatorio = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
         return `PED-${timestamp}-${sufixoTelefone}-${aleatorio}`;

@@ -25,7 +25,7 @@ function criarTodasAbas() {
       'Restante', 'Status', 'Data Criação', 'Data Modificação',
       'ARTE', 'OS', 'CORTE', 'COSTURA', 'ESTAMPA PRODUÇÃO', 'PRONTO PARA ENVIO',
       'Tipo Peça', 'Tipo Malha', 'Cor Malha', 'Detalhe Peça', 'Estampa Resumo',
-      'Vendedor', 'Tag Pedido'
+      'Vendedor', 'Tag Pedido', 'ID BUSCA'
     ]);
   }
   return { sucesso: true, mensagem: 'Banco criado com sucesso' };
@@ -40,7 +40,7 @@ function criarTodasAbas() {
 var CABECALHO_PEDIDOS_COLUNAS_EXTRAS = [
   'ARTE', 'OS', 'CORTE', 'COSTURA', 'ESTAMPA PRODUÇÃO', 'PRONTO PARA ENVIO',
   'Tipo Peça', 'Tipo Malha', 'Cor Malha', 'Detalhe Peça', 'Estampa Resumo',
-  'Vendedor', 'Tag Pedido'
+  'Vendedor', 'Tag Pedido', 'ID BUSCA'
 ];
 
 /** Preenche O1:AA1 com os títulos oficiais. Não apaga A1:N1. Se lastColumn < 15, grava o bloco inteiro. */
@@ -161,10 +161,15 @@ function doPost(e) {
 
     // Corpo JSON (ex.: edição com Content-Type text/plain): ler primeiro — payload grande fica íntegro em postData.contents.
     if (e && e.postData && e.postData.contents) {
-      var raw = String(e.postData.contents).trim();
-      if (raw.charAt(0) === '{') {
+      var raw = String(e.postData.contents).replace(/^\uFEFF/, '').trim();
+      var jsonSlice = raw;
+      if (jsonSlice.charAt(0) !== '{') {
+        var idxJson = jsonSlice.indexOf('{');
+        if (idxJson !== -1) jsonSlice = jsonSlice.substring(idxJson);
+      }
+      if (jsonSlice.charAt(0) === '{') {
         try {
-          var payload = JSON.parse(raw);
+          var payload = JSON.parse(jsonSlice);
           acao = payload.action || payload.acao || '';
           if (payload.dados !== undefined && payload.dados !== null) {
             dados = payload.dados;
@@ -245,11 +250,12 @@ function salvarPedido(dados) {
       return { sucesso: false, erro: 'ID obrigatório para atualizar o pedido.' };
     }
 
-    const idPedido = eAtualizacao
-      ? normalizarId(dados.id)
-      : (normalizarId(dados.id) || normalizarId(gerarId()));
     const nomeCliente = (dados.cliente && dados.cliente.nome) || '';
     const telefone = (dados.cliente && dados.cliente.telefone) || '';
+    const idPedido = eAtualizacao
+      ? normalizarId(dados.id)
+      : (normalizarId(dados.id) || normalizarId(gerarId(telefone)));
+    const idBuscaVal = idBuscaDeDados(dados);
     const dataPedido = (dados.datas && dados.datas.pedido) || '';
     const dataEntrega = (dados.datas && dados.datas.entrega) || '';
     const totalPecas = Number(dados.totalPecas || 0);
@@ -265,7 +271,7 @@ function salvarPedido(dados) {
 
     const dadosPlanilha = sheet.getDataRange().getValues();
     var temCostura = planilhaPedidosTemColunaCostura(sheet);
-    var colunas = temCostura ? 27 : 26;
+    var colunas = temCostura ? 28 : 27;
 
     var indicesMatch = [];
     var j;
@@ -294,7 +300,7 @@ function salvarPedido(dados) {
           idGravar, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
           dados.produtos || [], observacoes, valorTotal, valorEntrada, restante, status,
           linhaAtual[12], new Date(), statusProducao, resumoProduto, vendedor, tagPedido,
-          temCostura
+          idBuscaVal, temCostura
         );
         sheet.getRange(i + 1, 1, 1, colunas).setValues([linhaVals]);
         idResposta = normalizarId(idGravar) || idPedido;
@@ -322,7 +328,7 @@ function salvarPedido(dados) {
         idGravar0, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
         dados.produtos || [], observacoes, valorTotal, valorEntrada, restante, status,
         linhaAtual0[12], new Date(), statusProducao, resumoProduto, vendedor, tagPedido,
-        temCostura
+        idBuscaVal, temCostura
       );
       sheet.getRange(i0 + 1, 1, 1, colunas).setValues([linhaVals0]);
       return {
@@ -337,7 +343,7 @@ function salvarPedido(dados) {
       idPedido, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
       dados.produtos || [], observacoes, valorTotal, valorEntrada, restante, status,
       new Date(), new Date(), statusProducao, resumoProduto, vendedor, tagPedido,
-      temCostura
+      idBuscaVal, temCostura
     );
     sheet.appendRow(linhaNova);
 
@@ -360,6 +366,18 @@ function buscarPedido(termo) {
     for (i = 1; i < dados.length; i++) {
       if (idsCorrespondem(dados[i][0], termoId)) {
         return { sucesso: true, pedido: linhaParaPedido(dados[i], temCosturaBusca) };
+      }
+    }
+
+    var termoSoDigitos = normalizarTelefone(termo);
+    if (termoSoDigitos.length === 4) {
+      var idxIdBusca = temCosturaBusca ? 27 : 26;
+      for (i = 1; i < dados.length; i++) {
+        var rowIb = dados[i];
+        var celIb = rowIb.length > idxIdBusca ? rowIb[idxIdBusca] : '';
+        if (normalizarIdBuscaPlanilha(celIb) === termoSoDigitos) {
+          return { sucesso: true, pedido: linhaParaPedido(rowIb, temCosturaBusca) };
+        }
       }
     }
 
@@ -391,7 +409,7 @@ function planilhaPedidosTemColunaCostura(sheet) {
   }
 }
 
-function montarLinhaValoresPedido(idGravar, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas, produtosArr, observacoes, valorTotal, valorEntrada, restante, status, dataCriacao, dataModificacao, statusProducao, resumoProduto, vendedor, tagPedido, temCostura) {
+function montarLinhaValoresPedido(idGravar, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas, produtosArr, observacoes, valorTotal, valorEntrada, restante, status, dataCriacao, dataModificacao, statusProducao, resumoProduto, vendedor, tagPedido, idBusca, temCostura) {
   var produtosJson = JSON.stringify(produtosArr);
   var sp = normalizarStatusProducao(statusProducao);
   var a = sp.arte;
@@ -400,6 +418,7 @@ function montarLinhaValoresPedido(idGravar, nomeCliente, telefone, dataPedido, d
   var co = sp.costura;
   var e = sp.estampa;
   var p = sp.prontoParaEnvio;
+  var ib = normalizarIdBuscaPlanilha(idBusca);
   var base = [
     idGravar, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
     produtosJson, observacoes, valorTotal, valorEntrada, restante, status, dataCriacao, dataModificacao
@@ -407,12 +426,12 @@ function montarLinhaValoresPedido(idGravar, nomeCliente, telefone, dataPedido, d
   if (temCostura) {
     return base.concat([a, o, c, co, e, p,
       resumoProduto.tipoPeca, resumoProduto.tipoMalha, resumoProduto.corMalha, resumoProduto.detalhePeca, resumoProduto.estampaResumo,
-      vendedor, tagPedido
+      vendedor, tagPedido, ib
     ]);
   }
   return base.concat([a, o, c, e, p,
     resumoProduto.tipoPeca, resumoProduto.tipoMalha, resumoProduto.corMalha, resumoProduto.detalhePeca, resumoProduto.estampaResumo,
-    vendedor, tagPedido
+    vendedor, tagPedido, ib
   ]);
 }
 
@@ -448,6 +467,7 @@ function linhaParaPedido(row, temCostura) {
       resumoProduto: rp,
       responsavelAtual: row[25] || 'ISABELA SIRAY',
       tagPedido: row[26] || 'PEDIDO',
+      idBusca: row.length > 27 ? normalizarIdBuscaPlanilha(row[27]) : sufixoIdBuscaDeTelefone(normalizarTelefone(row[2])),
       dataCriacao: row[12],
       dataModificacao: row[13]
     };
@@ -480,6 +500,7 @@ function linhaParaPedido(row, temCostura) {
     resumoProduto: rp,
     responsavelAtual: row[24] || 'ISABELA SIRAY',
     tagPedido: row[25] || 'PEDIDO',
+    idBusca: row.length > 26 ? normalizarIdBuscaPlanilha(row[26]) : sufixoIdBuscaDeTelefone(normalizarTelefone(row[2])),
     dataCriacao: row[12],
     dataModificacao: row[13]
   };
@@ -532,8 +553,40 @@ function obterDados() {
 }
 
 // ================= UTIL =================
-function gerarId() {
-  return 'PED-' + new Date().getTime();
+/** 4 dígitos para coluna ID BUSCA e sufixo do PED quando o servidor gera o ID. */
+function sufixoIdBuscaDeTelefone(telefone) {
+  var d = normalizarTelefone(telefone);
+  if (!d.length) return '0000';
+  if (d.length >= 4) return d.slice(-4);
+  return ('0000' + d).slice(-4);
+}
+
+/** Valor vindo do payload ou derivado do telefone do cliente. */
+function idBuscaDeDados(dados) {
+  if (!dados) return '0000';
+  var manual = normalizarId(dados.idBusca);
+  if (manual.length >= 4) return manual.slice(-4);
+  if (manual.length > 0) return sufixoIdBuscaDeTelefone(manual);
+  var tel = dados.cliente && normalizarTelefone(dados.cliente.telefone);
+  return sufixoIdBuscaDeTelefone(tel);
+}
+
+/** Normaliza célula da planilha ou valor a gravar para string de 4 dígitos. */
+function normalizarIdBuscaPlanilha(valor) {
+  var s = normalizarId(valor);
+  if (!s.length) return '0000';
+  if (/^\d+$/.test(s)) {
+    if (s.length >= 4) return s.slice(-4);
+    return ('0000' + s).slice(-4);
+  }
+  return sufixoIdBuscaDeTelefone(s);
+}
+
+/** Mesmo padrão do front: PED-timestamp-ultimos4-aleatorio3 */
+function gerarId(telefone) {
+  var suf = sufixoIdBuscaDeTelefone(telefone || '');
+  var rnd = Math.floor(Math.random() * 1000);
+  return 'PED-' + new Date().getTime() + '-' + suf + '-' + ('000' + rnd).slice(-3);
 }
 
 function resposta(obj) {
@@ -571,13 +624,17 @@ function normalizarId(valor) {
   return String(valor).trim();
 }
 
-/** Igualdade exata (após normalizar) ou o termo coincide com algum segmento do ID (ex.: PED-ts-1133-abc e termo 1133). Segmentos só contam se o termo tiver pelo menos 3 caracteres (evita "1" casar em falso). */
+/**
+ * Igualdade exata (após normalizar) ou o termo coincide com algum segmento do ID
+ * (ex.: PED-ts-1133-abc e termo 1133, ou sufixo "99" com 2 caracteres).
+ * Segmentos com termo de 1 caractere não contam (evita "1" casar em falso).
+ */
 function idsCorrespondem(idPlanilha, termo) {
   var a = normalizarId(idPlanilha);
   var b = normalizarId(termo);
   if (!a || !b) return a === b;
   if (a === b) return true;
-  if (b.length < 3) return false;
+  if (b.length < 2) return false;
   var partes = String(idPlanilha).split(/[-_]/);
   var j;
   for (j = 0; j < partes.length; j++) {

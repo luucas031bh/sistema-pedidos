@@ -223,9 +223,11 @@ function montarPayloadEdicao() {
         estampas
     };
 
+    const telEd = document.getElementById('telefoneEdicao').value;
     return {
         ...pedidoOriginal,
         id: String(pedidoOriginal.id ?? ''),
+        idBusca: Utils.obterIdBusca(telEd) || (pedidoOriginal.idBusca != null ? String(pedidoOriginal.idBusca) : ''),
         atualizacao: true,
         cliente: {
             ...(pedidoOriginal.cliente || {}),
