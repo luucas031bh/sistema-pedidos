@@ -2,7 +2,9 @@
 
 const CONFIG = {
     // URL do Google Apps Script (Web App)
-    // IMPORTANTE: Após fazer o deploy do Apps Script, cole a URL aqui
+    // IMPORTANTE: Sempre que alterar Code.gs, faça Implantação > Gerenciar implantações >
+    // Editar > Versão: Nova versão > Implantar e cole aqui a URL /exec dessa implantação.
+    // Se esta URL estiver desatualizada, o painel e a edição podem falhar ou apontar para lógica antiga.
     // INSTRUÇÕES:
     // 1. Siga o GUIA-BANCO-DADOS.md para criar o banco de dados
     // 2. Após o PASSO 5 (Deploy), copie a URL do aplicativo da Web
@@ -122,6 +124,7 @@ const CONFIG = {
     
     // Status operacionais da fila única
     STATUS_PEDIDO: [
+        'PENDENTE',
         'Novo pedido',
         'Aguardando entrada',
         'Aguardando arte',

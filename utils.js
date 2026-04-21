@@ -40,7 +40,7 @@ const Utils = {
      */
     validarTelefone(telefone) {
         const numeros = this.limparTelefone(telefone);
-        return numeros.length === 11;
+        return numeros.length === 10 || numeros.length === 11;
     },
     
     /**

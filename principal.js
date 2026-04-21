@@ -15,11 +15,11 @@ async function carregarPainel() {
     if (!tbody) return;
 
     if (window.location.protocol === 'file:') {
-        tbody.innerHTML = '<tr><td colspan="14">Abra via localhost para carregar o painel.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="15">Abra via localhost para carregar o painel.</td></tr>';
         return;
     }
 
-    tbody.innerHTML = '<tr><td colspan="14">Atualizando...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="15">Atualizando...</td></tr>';
     try {
         const [filaRes, statsRes] = await Promise.all([
             fetch(`${CONFIG.APPS_SCRIPT_URL}?action=listarPedidos&acao=listarPedidos`),
@@ -32,7 +32,7 @@ async function carregarPainel() {
         renderizarStats(statsData.stats || {});
     } catch (err) {
         console.error(err);
-        tbody.innerHTML = '<tr><td colspan="14">Falha ao carregar dados do painel.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="15">Falha ao carregar dados do painel.</td></tr>';
     }
 }
 
@@ -40,7 +40,7 @@ function renderizarFilaPainel(pedidos) {
     const tbody = document.getElementById('painelFilaBody');
     if (!tbody) return;
     if (!pedidos.length) {
-        tbody.innerHTML = '<tr><td colspan="14">Nenhum pedido encontrado.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="15">Nenhum pedido encontrado.</td></tr>';
         return;
     }
 
@@ -51,6 +51,7 @@ function renderizarFilaPainel(pedidos) {
             <tr>
                 <td><a class="cliente-link" href="${linkPedido}" target="_blank" rel="noopener noreferrer">${pedido.cliente?.nome || '-'}</a></td>
                 <td>${pedido.id || '-'}</td>
+                <td>${pedido.statusOperacional || '-'}</td>
                 <td>${formatarDataEntregaSimples(pedido.datas?.entrega)}</td>
                 <td>${pedido.totalPecas ?? 0}</td>
                 <td>${resumo.tipoPeca || '-'}</td>

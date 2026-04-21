@@ -5,8 +5,14 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(atualizarRelogioEdicao, 1000);
     inicializarStatusOperacionaisEdicao();
     configurarEventosEdicao();
+    definirSalvarEdicaoHabilitado(false);
     carregarPedidoPorId();
 });
+
+function definirSalvarEdicaoHabilitado(habilitado) {
+    const btn = document.getElementById('btnSalvarEdicao');
+    if (btn) btn.disabled = !habilitado;
+}
 
 function atualizarRelogioEdicao() {
     const el = document.getElementById('relogio');
@@ -31,10 +37,12 @@ function configurarEventosEdicao() {
 async function carregarPedidoPorId() {
     const id = (new URLSearchParams(window.location.search).get('id') || '').trim();
     if (!id) {
+        definirSalvarEdicaoHabilitado(false);
         Utils.mostrarNotificacao('ID do pedido não informado.', 'error');
         return;
     }
     if (window.location.protocol === 'file:') {
+        definirSalvarEdicaoHabilitado(false);
         Utils.mostrarNotificacao('Abra via localhost para carregar dados.', 'error');
         return;
     }
@@ -46,8 +54,11 @@ async function carregarPedidoPorId() {
         pedidoOriginal = resultado.pedido;
         preencherResumoEdicao(pedidoOriginal);
         preencherFormularioEdicao(pedidoOriginal);
+        definirSalvarEdicaoHabilitado(true);
     } catch (erro) {
         console.error(erro);
+        pedidoOriginal = null;
+        definirSalvarEdicaoHabilitado(false);
         Utils.mostrarNotificacao('Não foi possível carregar o pedido.', 'error');
     } finally {
         esconderLoadingEdicao();
@@ -109,7 +120,10 @@ function obterResumoProduto(pedido) {
 }
 
 async function salvarEdicaoPedido() {
-    if (!pedidoOriginal) return;
+    if (!pedidoOriginal) {
+        Utils.mostrarNotificacao('Pedido não carregado. Aguarde o carregamento ou verifique o ID na URL.', 'error');
+        return;
+    }
     if (!Utils.validarCampoObrigatorio(document.getElementById('nomeClienteEdicao').value)) {
         Utils.mostrarNotificacao('Informe o nome do cliente.', 'error');
         return;
