@@ -103,14 +103,14 @@ function salvarPedido(dados) {
     const valorTotal = Number((dados.financeiro && dados.financeiro.totalPedido) || 0);
     const valorEntrada = Number((dados.financeiro && dados.financeiro.valorEntrada) || 0);
     const restante = Number((dados.financeiro && dados.financeiro.restante) || 0);
-    const status = dados.statusOperacional || dados.status || 'PENDENTE';
+    const status = normalizarStatusOperacional(dados.statusOperacional || dados.status || 'PENDENTE');
     const vendedor = dados.responsavelAtual || dados.vendedor || 'ISABELA SIRAY';
     const tagPedido = dados.tagPedido || 'PEDIDO';
     const statusProducao = normalizarStatusProducao(dados.statusProducao || {});
     const resumoProduto = extrairResumoProduto((dados.produtos && dados.produtos[0]) || {});
 
     const dadosPlanilha = sheet.getDataRange().getValues();
-    const colunas = Math.max((dadosPlanilha[0] || []).length, 26);
+    const colunas = 26;
     for (var i = 1; i < dadosPlanilha.length; i++) {
       if (normalizarId(dadosPlanilha[i][0]) === idPedido) {
         const linhaAtual = dadosPlanilha[i];
@@ -153,9 +153,10 @@ function buscarPedido(termo) {
       const row = dados[i];
       const rowId = normalizarId(row[0]);
       const rowNome = String(row[1] || '').toLowerCase();
-      const rowTelefone = normalizarId(row[2]);
+      const rowTelefone = normalizarTelefone(row[2]);
       const termoStr = String(termo || '').toLowerCase();
-      if (rowId === termoId || rowNome.indexOf(termoStr) !== -1 || rowTelefone === termoId) {
+      const termoTelefone = normalizarTelefone(termo);
+      if (rowId === termoId || rowNome.indexOf(termoStr) !== -1 || (termoTelefone && rowTelefone === termoTelefone)) {
         return {
           sucesso: true,
           pedido: {
@@ -163,7 +164,7 @@ function buscarPedido(termo) {
             cliente: { nome: row[1], telefone: row[2] },
             datas: { pedido: row[3], entrega: row[4] },
             totalPecas: row[5],
-            produtos: JSON.parse(row[6] || '[]'),
+            produtos: parseProdutosSeguro(row[6]),
             observacoes: row[7],
             financeiro: { totalPedido: row[8], valorEntrada: row[9], restante: row[10] },
             statusOperacional: row[11],
@@ -209,7 +210,7 @@ function listarPedidos(filtro) {
         cliente: { nome: row[1], telefone: row[2] },
         datas: { pedido: row[3], entrega: row[4] },
         totalPecas: row[5],
-        produtos: JSON.parse(row[6] || '[]'),
+        produtos: parseProdutosSeguro(row[6]),
         observacoes: row[7],
         financeiro: { totalPedido: row[8], valorEntrada: row[9], restante: row[10] },
         statusOperacional: row[11],
@@ -232,7 +233,8 @@ function listarPedidos(filtro) {
         dataCriacao: row[12],
         dataModificacao: row[13]
       };
-      const chaveId = normalizarId(pedido.id);
+      const chaveIdNormalizada = normalizarId(pedido.id);
+      const chaveId = chaveIdNormalizada ? chaveIdNormalizada : ('ROW_' + row[0] + '_' + row[12] + '_' + row[13]);
       const existente = pedidosPorId[chaveId];
       if (!existente) {
         pedidosPorId[chaveId] = pedido;
@@ -286,8 +288,23 @@ function asBoolean(valor) {
   return false;
 }
 
+function parseProdutosSeguro(valor) {
+  if (!valor) return [];
+  if (Array.isArray(valor)) return valor;
+  try {
+    var parsed = JSON.parse(valor);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (erro) {
+    return [];
+  }
+}
+
 function normalizarId(valor) {
   return String(valor === null || valor === undefined ? '' : valor).trim();
+}
+
+function normalizarTelefone(valor) {
+  return String(valor === null || valor === undefined ? '' : valor).replace(/\D/g, '');
 }
 
 function obterTimestampSeguro(valorData) {
@@ -295,6 +312,14 @@ function obterTimestampSeguro(valorData) {
   var data = valorData instanceof Date ? valorData : new Date(valorData);
   var timestamp = data.getTime();
   return Number.isNaN(timestamp) ? 0 : timestamp;
+}
+
+function normalizarStatusOperacional(status) {
+  var valor = String(status || '').trim().toLowerCase();
+  if (valor === 'novo pedido' || valor === 'novo') return 'PENDENTE';
+  if (valor === 'finalizado' || valor === 'entregue') return 'Entregue';
+  if (valor === 'cancelado') return 'Cancelado';
+  return status || 'PENDENTE';
 }
 
 function normalizarStatusProducao(statusProducao) {
@@ -342,7 +367,7 @@ function getStats() {
   semanaPassada.setDate(hoje.getDate() - 7);
 
   data.forEach(function(row) {
-    const status = row[11];
+    const status = normalizarStatusOperacional(row[11]);
     const valor = parseFloat(row[8]) || 0;
     const dataPedido = new Date(row[3]);
     dataPedido.setHours(0, 0, 0, 0);

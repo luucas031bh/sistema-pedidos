@@ -108,14 +108,16 @@ const Utils = {
     },
     
     /**
-     * Gera ID baseado nos últimos 4 dígitos do telefone
-     * @param {string} telefone - Telefone do cliente
+     * Gera ID robusto de pedido para evitar colisões
+     * @param {string} telefone - Telefone do cliente (opcional para sufixo)
      * @returns {string} ID gerado
      */
     gerarID(telefone) {
         const numeros = this.limparTelefone(telefone);
-        if (numeros.length < 4) return '0000';
-        return numeros.slice(-4);
+        const sufixoTelefone = numeros.length >= 4 ? numeros.slice(-4) : '0000';
+        const timestamp = Date.now();
+        const aleatorio = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        return `PED-${timestamp}-${sufixoTelefone}-${aleatorio}`;
     },
     
     /**

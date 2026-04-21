@@ -359,7 +359,7 @@ function coletarDadosFormulario() {
         datas: { pedido: document.getElementById('dataPedido').value, entrega: document.getElementById('dataEntrega').value },
         totalPecas: parseInt(document.getElementById('totalPecas').value || '0', 10),
         observacoes: document.getElementById('observacoes').value,
-        statusOperacional: 'Novo pedido',
+        statusOperacional: 'PENDENTE',
         responsavelAtual: document.getElementById('responsavelAtual')?.value || 'ISABELA SIRAY',
         tagPedido: document.getElementById('tagPedido')?.value || 'PEDIDO',
         statusProducao: {
