@@ -187,6 +187,7 @@ async function salvarEdicaoPedido() {
 
         pedidoOriginal = { ...dados, id: resultado.id != null ? String(resultado.id) : dados.id };
         preencherResumoEdicao(pedidoOriginal);
+        if (resultado.aviso) Utils.mostrarNotificacao(resultado.aviso, 'info');
         Utils.mostrarNotificacao('Edição salva com sucesso!', 'success');
     } catch (erro) {
         console.error(erro);

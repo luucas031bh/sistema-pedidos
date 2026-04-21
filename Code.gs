@@ -130,6 +130,27 @@ function doGet(e) {
   }
 }
 
+/** Garante objeto vindo do POST (string JSON dupla ou payload inválido). */
+function normalizarDadosObjeto(dados) {
+  if (dados === null || dados === undefined) return {};
+  if (typeof dados === 'string') {
+    try {
+      dados = JSON.parse(dados);
+    } catch (err1) {
+      return {};
+    }
+    if (typeof dados === 'string') {
+      try {
+        dados = JSON.parse(dados);
+      } catch (err2) {
+        return {};
+      }
+    }
+  }
+  if (typeof dados !== 'object' || Array.isArray(dados)) return {};
+  return dados;
+}
+
 // ================= POST =================
 function doPost(e) {
   try {
@@ -154,6 +175,8 @@ function doPost(e) {
       dados = payload.dados || dados || payload;
     }
 
+    dados = normalizarDadosObjeto(dados);
+
     if (!acao) {
       return resposta({ sucesso: false, erro: 'Nenhum dado recebido' });
     }
@@ -172,10 +195,13 @@ function doPost(e) {
 // ================= SALVAR =================
 function salvarPedido(dados) {
   try {
+    dados = normalizarDadosObjeto(dados);
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.ABAS.PEDIDOS);
     if (!sheet) return { sucesso: false, erro: 'Aba PEDIDOS não encontrada' };
 
-    const eAtualizacao = dados.atualizacao === true || dados.atualizacao === 'true';
+    var eAtualizacao = dados.atualizacao === true ||
+      dados.atualizacao === 'true' ||
+      String(dados.atualizacao || '').toLowerCase().trim() === 'true';
     if (eAtualizacao && !normalizarId(dados.id)) {
       return { sucesso: false, erro: 'ID obrigatório para atualizar o pedido.' };
     }
@@ -201,8 +227,26 @@ function salvarPedido(dados) {
     const dadosPlanilha = sheet.getDataRange().getValues();
     var temCostura = planilhaPedidosTemColunaCostura(sheet);
     var colunas = temCostura ? 27 : 26;
-    for (var i = 1; i < dadosPlanilha.length; i++) {
-      if (idsCorrespondem(dadosPlanilha[i][0], idPedido)) {
+
+    var indicesMatch = [];
+    var j;
+    for (j = 1; j < dadosPlanilha.length; j++) {
+      if (idsCorrespondem(dadosPlanilha[j][0], idPedido)) {
+        indicesMatch.push(j);
+      }
+    }
+
+    if (eAtualizacao) {
+      if (indicesMatch.length === 0) {
+        return {
+          sucesso: false,
+          erro: 'Pedido não encontrado na planilha para atualizar. Nenhuma linha com este ID.'
+        };
+      }
+      var idResposta = idPedido;
+      var m;
+      for (m = 0; m < indicesMatch.length; m++) {
+        var i = indicesMatch[m];
         const linhaAtual = dadosPlanilha[i];
         var idGravar = linhaAtual[0] !== undefined && linhaAtual[0] !== null && String(linhaAtual[0]).trim() !== ''
           ? linhaAtual[0]
@@ -214,19 +258,39 @@ function salvarPedido(dados) {
           temCostura
         );
         sheet.getRange(i + 1, 1, 1, colunas).setValues([linhaVals]);
-        return {
-          sucesso: true,
-          mensagem: 'Pedido atualizado',
-          id: normalizarId(idGravar) || idPedido,
-          operacao: 'atualizado'
-        };
+        idResposta = normalizarId(idGravar) || idPedido;
       }
+      var respEdicao = {
+        sucesso: true,
+        mensagem: 'Pedido atualizado',
+        id: idResposta,
+        operacao: 'atualizado',
+        linhasAtualizadas: indicesMatch.length
+      };
+      if (indicesMatch.length > 1) {
+        respEdicao.aviso = 'Varias linhas com o mesmo ID foram atualizadas; considere apagar duplicatas na planilha.';
+      }
+      return respEdicao;
     }
 
-    if (eAtualizacao) {
+    if (indicesMatch.length > 0) {
+      var i0 = indicesMatch[0];
+      const linhaAtual0 = dadosPlanilha[i0];
+      var idGravar0 = linhaAtual0[0] !== undefined && linhaAtual0[0] !== null && String(linhaAtual0[0]).trim() !== ''
+        ? linhaAtual0[0]
+        : idPedido;
+      var linhaVals0 = montarLinhaValoresPedido(
+        idGravar0, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
+        dados.produtos || [], observacoes, valorTotal, valorEntrada, restante, status,
+        linhaAtual0[12], new Date(), statusProducao, resumoProduto, vendedor, tagPedido,
+        temCostura
+      );
+      sheet.getRange(i0 + 1, 1, 1, colunas).setValues([linhaVals0]);
       return {
-        sucesso: false,
-        erro: 'Pedido não encontrado na planilha para atualizar. Nenhuma linha com este ID.'
+        sucesso: true,
+        mensagem: 'Pedido atualizado',
+        id: normalizarId(idGravar0) || idPedido,
+        operacao: 'atualizado'
       };
     }
 

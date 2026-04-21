@@ -1,8 +1,23 @@
+let painelPodeRecarregarVisibilidade = false;
+
 document.addEventListener('DOMContentLoaded', () => {
     atualizarRelogioPainel();
     setInterval(atualizarRelogioPainel, 1000);
     document.getElementById('btnAtualizarPainel')?.addEventListener('click', carregarPainel);
     carregarPainel();
+    window.setTimeout(() => {
+        painelPodeRecarregarVisibilidade = true;
+    }, 800);
+});
+
+window.addEventListener('pageshow', (ev) => {
+    if (ev.persisted) carregarPainel();
+});
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && painelPodeRecarregarVisibilidade) {
+        carregarPainel();
+    }
 });
 
 function atualizarRelogioPainel() {
