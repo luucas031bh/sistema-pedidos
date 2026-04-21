@@ -22,7 +22,7 @@
     <link rel="preload" href="script.js" as="script">
 </head>
 <body>
-    <a href="principal.html" id="btnVoltarPrincipal" class="btn-voltar-principal hidden" title="Voltar ao painel principal">Voltar ao principal</a>
+    <a href="home.html" id="btnVoltarPrincipal" class="btn-voltar-principal hidden" title="Voltar à fila (HOME)">Voltar à HOME</a>
     <!-- ========== CABEÇALHO ========== -->
     <header class="header">
         <div class="header-content">
@@ -48,9 +48,12 @@
     <!-- ========== CONTAINER PRINCIPAL ========== -->
     <main class="container">
         <section class="card">
-            <div class="flex-between">
+            <div class="flex-between flex-wrap gap-1">
                 <h2 class="card-title">🏠 Cadastro de Pedidos</h2>
-                <a class="btn btn-info" href="principal.html">📊 Ir para Painel Principal</a>
+                <div class="flex flex-wrap gap-1">
+                    <a class="btn btn-info" href="home.html">Fila visual (HOME)</a>
+                    <a class="btn btn-secondary" href="principal.html">Painel produção</a>
+                </div>
             </div>
         </section>
         

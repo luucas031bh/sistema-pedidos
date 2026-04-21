@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="description" content="Fila visual - Adonay Confecção">
+    <meta name="theme-color" content="#1a1a1a">
+    <title>HOME - Fila visual | Adonay Confecção</title>
+    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👕</text></svg>">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="page-home">
+    <header class="header header--home">
+        <div class="header-content">
+            <h1 class="empresa-nome">ADONAY CONFECÇÃO</h1>
+            <div class="empresa-info">
+                <p>CNPJ: 42.522.845/0001-97</p>
+                <p>Rua Geraldo Teixeira da Costa, São Benedito, Santa Luzia - MG</p>
+            </div>
+            <div class="empresa-contatos">
+                <span class="contato-item">💬 (31) 3950-3089</span>
+                <span class="contato-item">📷 @adonayconfeccao</span>
+                <span class="contato-item">☎ (31) 3950-3089</span>
+            </div>
+            <div class="relogio" id="relogio">Carregando...</div>
+        </div>
+    </header>
+
+    <main class="container container--home">
+        <section class="card">
+            <div class="flex-between flex-wrap gap-1">
+                <h2 class="card-title">Fila visual — pedidos em aberto</h2>
+                <div class="btn-group flex-wrap">
+                    <button type="button" id="btnAtualizarHome" class="btn btn-info">Atualizar</button>
+                    <a href="index.html" class="btn btn-primary">Novo pedido</a>
+                    <a href="principal.html" class="btn btn-secondary">Painel produção</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2 class="card-title">Indicadores (pedidos em aberto)</h2>
+            <div class="form-row home-kpi-grid">
+                <div class="form-group">
+                    <label class="form-label">Pedidos em aberto</label>
+                    <div class="form-input" id="kpiPedidosAbertos">0</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Quantidade de peças (total)</label>
+                    <div class="form-input" id="kpiPecasTotal">0</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Valor recebido (entradas)</label>
+                    <div class="form-input" id="kpiValorRecebido">R$ 0,00</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Valor a receber</label>
+                    <div class="form-input" id="kpiValorReceber">R$ 0,00</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Valor total dos pedidos</label>
+                    <div class="form-input" id="kpiValorTotalPedidos">R$ 0,00</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2 class="card-title">Fila</h2>
+            <div class="tabela-dinamica tabela-home-fila">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Data entrega</th>
+                            <th>Total peças</th>
+                            <th>Tipo de peças</th>
+                            <th>Malha</th>
+                            <th>Cor</th>
+                            <th>Tipo de estampa</th>
+                            <th>Dias restantes</th>
+                        </tr>
+                    </thead>
+                    <tbody id="homeFilaBody">
+                        <tr><td colspan="8">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="config.js"></script>
+    <script src="utils.js"></script>
+    <script src="home.js"></script>
+</body>
+</html>

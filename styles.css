@@ -776,4 +776,21 @@ body {
 .flex-between { display: flex; justify-content: space-between; align-items: center; }
 .gap-1 { gap: var(--espacamento-sm); }
 .gap-2 { gap: var(--espacamento-md); }
+.flex-wrap { flex-wrap: wrap; }
+
+/* HOME — fila visual: cabeçalho fixo reforçado (sticky já em .header) */
+.header--home {
+    background-color: #000000;
+}
+
+.home-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--espacamento-md);
+    align-items: start;
+}
+
+.tabela-home-fila table {
+    min-width: 900px;
+}
 
