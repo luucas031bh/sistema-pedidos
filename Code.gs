@@ -23,12 +23,93 @@ function criarTodasAbas() {
       'ID', 'Nome Cliente', 'Telefone', 'Data Pedido', 'Data Entrega',
       'Total Peças', 'Produtos', 'Observações', 'Valor Total', 'Entrada',
       'Restante', 'Status', 'Data Criação', 'Data Modificação',
-      'ARTE', 'OS', 'CORTE', 'ESTAMPA PRODUÇÃO', 'PRONTO PARA ENVIO',
+      'ARTE', 'OS', 'CORTE', 'COSTURA', 'ESTAMPA PRODUÇÃO', 'PRONTO PARA ENVIO',
       'Tipo Peça', 'Tipo Malha', 'Cor Malha', 'Detalhe Peça', 'Estampa Resumo',
       'Vendedor', 'Tag Pedido'
     ]);
   }
   return { sucesso: true, mensagem: 'Banco criado com sucesso' };
+}
+
+/**
+ * Migração: planilhas que só tinham colunas A–N (até Data Modificação).
+ * 1) Rode expandirCabecalhoPedidos() ou migrarPedidosPlanilhaAntiga() uma vez no editor (Executar).
+ * 2) IDs duplicados (ex.: várias linhas com 1133): apague ou una manualmente — mantenha uma linha por ID.
+ *    Caso contrário o painel e a edição podem mostrar a linha “errada”.
+ */
+var CABECALHO_PEDIDOS_COLUNAS_EXTRAS = [
+  'ARTE', 'OS', 'CORTE', 'COSTURA', 'ESTAMPA PRODUÇÃO', 'PRONTO PARA ENVIO',
+  'Tipo Peça', 'Tipo Malha', 'Cor Malha', 'Detalhe Peça', 'Estampa Resumo',
+  'Vendedor', 'Tag Pedido'
+];
+
+/** Preenche O1:AA1 com os títulos oficiais. Não apaga A1:N1. Se lastColumn < 15, grava o bloco inteiro. */
+function expandirCabecalhoPedidos() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.ABAS.PEDIDOS);
+  if (!sheet) return { sucesso: false, erro: 'Aba PEDIDOS não encontrada' };
+  var extras = CABECALHO_PEDIDOS_COLUNAS_EXTRAS;
+  var lastCol = sheet.getLastColumn();
+  var preenchidos = 0;
+  if (lastCol < 15) {
+    sheet.getRange(1, 15, 1, 14 + extras.length).setValues([extras]);
+    preenchidos = extras.length;
+  } else {
+    var i;
+    for (i = 0; i < extras.length; i++) {
+      var col = 15 + i;
+      var cur = sheet.getRange(1, col).getValue();
+      if (cur === '' || cur === null || String(cur).trim() === '') {
+        sheet.getRange(1, col).setValue(extras[i]);
+        preenchidos++;
+      }
+    }
+  }
+  return {
+    sucesso: true,
+    mensagem: 'Cabeçalhos de produção e resumo (colunas O em diante) verificados.',
+    celulasPreenchidas: preenchidos
+  };
+}
+
+/**
+ * Nas linhas de dados (2..última), colunas de flags ARTE até PRONTO recebem FALSE onde estiver vazio.
+ * Não altera células que já têm valor. Execute após expandirCabecalhoPedidos.
+ */
+function preencherFlagsVaziasPedidos() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.ABAS.PEDIDOS);
+  if (!sheet) return { sucesso: false, erro: 'Aba PEDIDOS não encontrada' };
+  expandirCabecalhoPedidos();
+  var temCostura = planilhaPedidosTemColunaCostura(sheet);
+  var lastFlagCol = temCostura ? 20 : 19;
+  var lastRow = sheet.getLastRow();
+  var alteradas = 0;
+  if (lastRow < 2) {
+    return { sucesso: true, mensagem: 'Nenhuma linha de dado abaixo do cabeçalho.', alteradas: 0 };
+  }
+  var r;
+  var c;
+  for (r = 2; r <= lastRow; r++) {
+    for (c = 15; c <= lastFlagCol; c++) {
+      var v = sheet.getRange(r, c).getValue();
+      if (v === '' || v === null || v === undefined) {
+        sheet.getRange(r, c).setValue(false);
+        alteradas++;
+      }
+    }
+  }
+  return { sucesso: true, mensagem: 'Flags de produção vazias preenchidas com FALSE.', alteradas: alteradas };
+}
+
+/** Executa expandir cabeçalho + preencher flags. Use uma vez após colar o Code.gs no projeto. */
+function migrarPedidosPlanilhaAntiga() {
+  var h = expandirCabecalhoPedidos();
+  var f = preencherFlagsVaziasPedidos();
+  return {
+    sucesso: h.sucesso && f.sucesso,
+    cabecalho: h,
+    flags: f,
+    lembrete: 'Revise linhas com o mesmo ID e deixe apenas uma por pedido. Implante nova versão da Web App após migrar.'
+  };
 }
 
 // ================= GET =================
@@ -117,21 +198,21 @@ function salvarPedido(dados) {
     const resumoProduto = extrairResumoProduto((dados.produtos && dados.produtos[0]) || {});
 
     const dadosPlanilha = sheet.getDataRange().getValues();
-    const colunas = 26;
+    var temCostura = planilhaPedidosTemColunaCostura(sheet);
+    var colunas = temCostura ? 27 : 26;
     for (var i = 1; i < dadosPlanilha.length; i++) {
       if (idsCorrespondem(dadosPlanilha[i][0], idPedido)) {
         const linhaAtual = dadosPlanilha[i];
         var idGravar = linhaAtual[0] !== undefined && linhaAtual[0] !== null && String(linhaAtual[0]).trim() !== ''
           ? linhaAtual[0]
           : idPedido;
-        sheet.getRange(i + 1, 1, 1, colunas).setValues([[
+        var linhaVals = montarLinhaValoresPedido(
           idGravar, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
-          JSON.stringify(dados.produtos || []), observacoes, valorTotal, valorEntrada,
-          restante, status, linhaAtual[12], new Date(),
-          statusProducao.arte, statusProducao.os, statusProducao.corte, statusProducao.estampa, statusProducao.prontoParaEnvio,
-          resumoProduto.tipoPeca, resumoProduto.tipoMalha, resumoProduto.corMalha, resumoProduto.detalhePeca, resumoProduto.estampaResumo,
-          vendedor, tagPedido
-        ]]);
+          dados.produtos || [], observacoes, valorTotal, valorEntrada, restante, status,
+          linhaAtual[12], new Date(), statusProducao, resumoProduto, vendedor, tagPedido,
+          temCostura
+        );
+        sheet.getRange(i + 1, 1, 1, colunas).setValues([linhaVals]);
         return {
           sucesso: true,
           mensagem: 'Pedido atualizado',
@@ -148,14 +229,13 @@ function salvarPedido(dados) {
       };
     }
 
-    sheet.appendRow([
+    var linhaNova = montarLinhaValoresPedido(
       idPedido, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
-      JSON.stringify(dados.produtos || []), observacoes, valorTotal, valorEntrada,
-      restante, status, new Date(), new Date(),
-      statusProducao.arte, statusProducao.os, statusProducao.corte, statusProducao.estampa, statusProducao.prontoParaEnvio,
-      resumoProduto.tipoPeca, resumoProduto.tipoMalha, resumoProduto.corMalha, resumoProduto.detalhePeca, resumoProduto.estampaResumo,
-      vendedor, tagPedido
-    ]);
+      dados.produtos || [], observacoes, valorTotal, valorEntrada, restante, status,
+      new Date(), new Date(), statusProducao, resumoProduto, vendedor, tagPedido,
+      temCostura
+    );
+    sheet.appendRow(linhaNova);
 
     return { sucesso: true, mensagem: 'Pedido salvo', id: idPedido, operacao: 'criado' };
   } catch (erro) {
@@ -172,9 +252,10 @@ function buscarPedido(termo) {
 
     const termoId = normalizarId(termo);
     var i;
+    var temCosturaBusca = planilhaPedidosTemColunaCostura(sheet);
     for (i = 1; i < dados.length; i++) {
       if (idsCorrespondem(dados[i][0], termoId)) {
-        return { sucesso: true, pedido: linhaParaPedido(dados[i]) };
+        return { sucesso: true, pedido: linhaParaPedido(dados[i], temCosturaBusca) };
       }
     }
 
@@ -187,7 +268,7 @@ function buscarPedido(termo) {
       var matchNome = termoStr.length > 0 && rowNome.indexOf(termoStr) !== -1;
       var matchFone = termoTelefone.length > 0 && rowTelefone === termoTelefone;
       if (matchNome || matchFone) {
-        return { sucesso: true, pedido: linhaParaPedido(row) };
+        return { sucesso: true, pedido: linhaParaPedido(row, temCosturaBusca) };
       }
     }
     return { sucesso: false, erro: 'Pedido não encontrado' };
@@ -196,7 +277,91 @@ function buscarPedido(termo) {
   }
 }
 
-function linhaParaPedido(row) {
+/** Coluna R (18): se o cabeçalho for COSTURA, usa layout 27 colunas; senão layout legado 26. */
+function planilhaPedidosTemColunaCostura(sheet) {
+  try {
+    var v = String(sheet.getRange(1, 18).getValue() || '').toUpperCase();
+    return v.indexOf('COSTUR') !== -1;
+  } catch (err) {
+    return false;
+  }
+}
+
+function montarLinhaValoresPedido(idGravar, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas, produtosArr, observacoes, valorTotal, valorEntrada, restante, status, dataCriacao, dataModificacao, statusProducao, resumoProduto, vendedor, tagPedido, temCostura) {
+  var produtosJson = JSON.stringify(produtosArr);
+  var a = !!statusProducao.arte;
+  var o = !!statusProducao.os;
+  var c = !!statusProducao.corte;
+  var co = !!statusProducao.costura;
+  var e = !!statusProducao.estampa;
+  var p = !!statusProducao.prontoParaEnvio;
+  var base = [
+    idGravar, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
+    produtosJson, observacoes, valorTotal, valorEntrada, restante, status, dataCriacao, dataModificacao
+  ];
+  if (temCostura) {
+    return base.concat([a, o, c, co, e, p,
+      resumoProduto.tipoPeca, resumoProduto.tipoMalha, resumoProduto.corMalha, resumoProduto.detalhePeca, resumoProduto.estampaResumo,
+      vendedor, tagPedido
+    ]);
+  }
+  return base.concat([a, o, c, e, p,
+    resumoProduto.tipoPeca, resumoProduto.tipoMalha, resumoProduto.corMalha, resumoProduto.detalhePeca, resumoProduto.estampaResumo,
+    vendedor, tagPedido
+  ]);
+}
+
+function linhaParaPedido(row, temCostura) {
+  var sp;
+  var rp;
+  if (temCostura) {
+    sp = {
+      arte: asBoolean(row[14]),
+      os: asBoolean(row[15]),
+      corte: asBoolean(row[16]),
+      costura: asBoolean(row[17]),
+      estampa: asBoolean(row[18]),
+      prontoParaEnvio: asBoolean(row[19])
+    };
+    rp = {
+      tipoPeca: row[20] || '',
+      tipoMalha: row[21] || '',
+      corMalha: row[22] || '',
+      detalhePeca: row[23] || '',
+      estampaResumo: row[24] || ''
+    };
+    return {
+      id: row[0],
+      cliente: { nome: row[1], telefone: row[2] },
+      datas: { pedido: row[3], entrega: row[4] },
+      totalPecas: row[5],
+      produtos: parseProdutosSeguro(row[6]),
+      observacoes: row[7],
+      financeiro: { totalPedido: row[8], valorEntrada: row[9], restante: row[10] },
+      statusOperacional: row[11],
+      statusProducao: sp,
+      resumoProduto: rp,
+      responsavelAtual: row[25] || 'ISABELA SIRAY',
+      tagPedido: row[26] || 'PEDIDO',
+      dataCriacao: row[12],
+      dataModificacao: row[13]
+    };
+  }
+  sp = {
+    arte: asBoolean(row[14]),
+    os: asBoolean(row[15]),
+    corte: asBoolean(row[16]),
+    costura: false,
+    estampa: asBoolean(row[17]),
+    prontoParaEnvio: asBoolean(row[18])
+  };
+  rp = {
+    tipoPeca: row[19] || '',
+    tipoMalha: row[20] || '',
+    corMalha: row[21] || '',
+    detalhePeca: row[22] || '',
+    estampaResumo: row[23] || ''
+  };
   return {
     id: row[0],
     cliente: { nome: row[1], telefone: row[2] },
@@ -206,20 +371,8 @@ function linhaParaPedido(row) {
     observacoes: row[7],
     financeiro: { totalPedido: row[8], valorEntrada: row[9], restante: row[10] },
     statusOperacional: row[11],
-    statusProducao: {
-      arte: asBoolean(row[14]),
-      os: asBoolean(row[15]),
-      corte: asBoolean(row[16]),
-      estampa: asBoolean(row[17]),
-      prontoParaEnvio: asBoolean(row[18])
-    },
-    resumoProduto: {
-      tipoPeca: row[19] || '',
-      tipoMalha: row[20] || '',
-      corMalha: row[21] || '',
-      detalhePeca: row[22] || '',
-      estampaResumo: row[23] || ''
-    },
+    statusProducao: sp,
+    resumoProduto: rp,
     responsavelAtual: row[24] || 'ISABELA SIRAY',
     tagPedido: row[25] || 'PEDIDO',
     dataCriacao: row[12],
@@ -233,37 +386,11 @@ function listarPedidos(filtro) {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.ABAS.PEDIDOS);
     const data = sheet.getDataRange().getValues();
     data.shift();
+    var temCosturaLista = planilhaPedidosTemColunaCostura(sheet);
 
     const pedidosPorId = {};
     data.forEach(function(row) {
-      const pedido = {
-        id: row[0],
-        cliente: { nome: row[1], telefone: row[2] },
-        datas: { pedido: row[3], entrega: row[4] },
-        totalPecas: row[5],
-        produtos: parseProdutosSeguro(row[6]),
-        observacoes: row[7],
-        financeiro: { totalPedido: row[8], valorEntrada: row[9], restante: row[10] },
-        statusOperacional: row[11],
-        statusProducao: {
-          arte: asBoolean(row[14]),
-          os: asBoolean(row[15]),
-          corte: asBoolean(row[16]),
-          estampa: asBoolean(row[17]),
-          prontoParaEnvio: asBoolean(row[18])
-        },
-        resumoProduto: {
-          tipoPeca: row[19] || '',
-          tipoMalha: row[20] || '',
-          corMalha: row[21] || '',
-          detalhePeca: row[22] || '',
-          estampaResumo: row[23] || ''
-        },
-        responsavelAtual: row[24] || 'ISABELA SIRAY',
-        tagPedido: row[25] || 'PEDIDO',
-        dataCriacao: row[12],
-        dataModificacao: row[13]
-      };
+      const pedido = linhaParaPedido(row, temCosturaLista);
       const chaveIdNormalizada = normalizarId(pedido.id);
       const chaveId = chaveIdNormalizada ? chaveIdNormalizada : ('ROW_' + row[0] + '_' + row[12] + '_' + row[13]);
       const existente = pedidosPorId[chaveId];
@@ -310,11 +437,14 @@ function resposta(obj) {
 }
 
 function asBoolean(valor) {
+  if (valor === null || valor === undefined || valor === '') return false;
   if (typeof valor === 'boolean') return valor;
   if (typeof valor === 'number') return valor === 1;
   if (typeof valor === 'string') {
     const normalizado = valor.toLowerCase().trim();
-    return normalizado === 'true' || normalizado === 'sim' || normalizado === '1' || normalizado === 'x';
+    if (normalizado === 'false' || normalizado === 'falso' || normalizado === 'não' || normalizado === 'nao' || normalizado === '0') return false;
+    return normalizado === 'true' || normalizado === 'sim' || normalizado === '1' || normalizado === 'x' ||
+      normalizado === 'verdadeiro' || normalizado === 'v' || normalizado === '✓' || normalizado === '☑';
   }
   return false;
 }
@@ -375,6 +505,7 @@ function normalizarStatusProducao(statusProducao) {
     arte: asBoolean(statusProducao.arte),
     os: asBoolean(statusProducao.os),
     corte: asBoolean(statusProducao.corte),
+    costura: asBoolean(statusProducao.costura),
     estampa: asBoolean(statusProducao.estampa),
     prontoParaEnvio: asBoolean(statusProducao.prontoParaEnvio)
   };

@@ -15,11 +15,11 @@ async function carregarPainel() {
     if (!tbody) return;
 
     if (window.location.protocol === 'file:') {
-        tbody.innerHTML = '<tr><td colspan="15">Abra via localhost para carregar o painel.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="16">Abra via localhost para carregar o painel.</td></tr>';
         return;
     }
 
-    tbody.innerHTML = '<tr><td colspan="15">Atualizando...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="16">Atualizando...</td></tr>';
     try {
         const [filaRes, statsRes] = await Promise.all([
             fetch(`${CONFIG.APPS_SCRIPT_URL}?action=listarPedidos&acao=listarPedidos`),
@@ -30,7 +30,7 @@ async function carregarPainel() {
 
         if (!filaRes.ok || filaData.sucesso === false) {
             const msg = filaData.erro || `Erro HTTP ${filaRes.status}`;
-            tbody.innerHTML = `<tr><td colspan="15">Fila: ${escapeHtmlPainel(msg)}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="16">Fila: ${escapeHtmlPainel(msg)}</td></tr>`;
             renderizarStats(statsData.sucesso !== false && statsData.stats ? statsData.stats : {});
             return;
         }
@@ -46,7 +46,7 @@ async function carregarPainel() {
         renderizarStats(statsData.stats || {});
     } catch (err) {
         console.error(err);
-        tbody.innerHTML = '<tr><td colspan="15">Falha ao carregar dados do painel (rede ou resposta inválida).</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="16">Falha ao carregar dados do painel (rede ou resposta inválida).</td></tr>';
     }
 }
 
@@ -54,7 +54,7 @@ function renderizarFilaPainel(pedidos) {
     const tbody = document.getElementById('painelFilaBody');
     if (!tbody) return;
     if (!pedidos.length) {
-        tbody.innerHTML = '<tr><td colspan="15">Nenhum pedido encontrado.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="16">Nenhum pedido encontrado.</td></tr>';
         return;
     }
 
@@ -76,6 +76,7 @@ function renderizarFilaPainel(pedidos) {
                 <td>${renderizarBadgeProducao(pedido.statusProducao?.arte)}</td>
                 <td>${renderizarBadgeProducao(pedido.statusProducao?.os)}</td>
                 <td>${renderizarBadgeProducao(pedido.statusProducao?.corte)}</td>
+                <td>${renderizarBadgeProducao(pedido.statusProducao?.costura)}</td>
                 <td>${renderizarBadgeProducao(pedido.statusProducao?.estampa)}</td>
                 <td>${renderizarBadgeProducao(pedido.statusProducao?.prontoParaEnvio)}</td>
             </tr>

@@ -366,6 +366,7 @@ function coletarDadosFormulario() {
             arte: false,
             os: false,
             corte: false,
+            costura: false,
             estampa: false,
             prontoParaEnvio: false
         },

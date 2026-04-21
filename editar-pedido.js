@@ -137,6 +137,8 @@ function preencherFormularioEdicao(pedido) {
     document.getElementById('statusArteEdicao').checked = !!pedido.statusProducao?.arte;
     document.getElementById('statusOSEdicao').checked = !!pedido.statusProducao?.os;
     document.getElementById('statusCorteEdicao').checked = !!pedido.statusProducao?.corte;
+    const elCostura = document.getElementById('statusCosturaEdicao');
+    if (elCostura) elCostura.checked = !!pedido.statusProducao?.costura;
     document.getElementById('statusEstampaOkEdicao').checked = !!pedido.statusProducao?.estampa;
     document.getElementById('statusProntoEnvioEdicao').checked = !!pedido.statusProducao?.prontoParaEnvio;
 }
@@ -233,6 +235,7 @@ function montarPayloadEdicao() {
             arte: document.getElementById('statusArteEdicao').checked,
             os: document.getElementById('statusOSEdicao').checked,
             corte: document.getElementById('statusCorteEdicao').checked,
+            costura: document.getElementById('statusCosturaEdicao')?.checked || false,
             estampa: document.getElementById('statusEstampaOkEdicao').checked,
             prontoParaEnvio: document.getElementById('statusProntoEnvioEdicao').checked
         },
