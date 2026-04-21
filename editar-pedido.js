@@ -27,7 +27,29 @@ function atualizarRelogioEdicao() {
 function inicializarStatusOperacionaisEdicao() {
     const select = document.getElementById('statusOperacionalEdicao');
     if (!select) return;
-    select.innerHTML = CONFIG.STATUS_PEDIDO.map((status) => `<option value="${status}">${status}</option>`).join('');
+    select.innerHTML = CONFIG.STATUS_PEDIDO.map((status) => `<option value="${escapeAttrEdicao(status)}">${escapeHtmlEdicao(status)}</option>`).join('');
+}
+
+function escapeAttrEdicao(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+function escapeHtmlEdicao(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/** Garante que o valor vindo da planilha exista no select (status legado ou fora da lista). */
+function garantirOpcaoStatusEdicao(valorPlanilha) {
+    const select = document.getElementById('statusOperacionalEdicao');
+    if (!select || !valorPlanilha) return;
+    const v = String(valorPlanilha);
+    const existe = Array.from(select.options).some((opt) => opt.value === v);
+    if (!existe) {
+        const opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = `${v} (planilha)`;
+        select.appendChild(opt);
+    }
 }
 
 function configurarEventosEdicao() {
@@ -101,7 +123,9 @@ function preencherFormularioEdicao(pedido) {
     document.getElementById('dataPedidoEdicao').value = normalizarDataISO(pedido.datas?.pedido);
     document.getElementById('totalPecasEdicao').value = pedido.totalPecas || 0;
     document.getElementById('observacoesEdicao').value = pedido.observacoes || '';
-    document.getElementById('statusOperacionalEdicao').value = pedido.statusOperacional || CONFIG.STATUS_PEDIDO[0];
+    const statusAtual = pedido.statusOperacional || CONFIG.STATUS_PEDIDO[0];
+    garantirOpcaoStatusEdicao(statusAtual);
+    document.getElementById('statusOperacionalEdicao').value = statusAtual;
 
     const resumo = obterResumoProduto(pedido);
     document.getElementById('tipoPecaEdicao').value = resumo.tipoPeca || '';

@@ -28,11 +28,25 @@ async function carregarPainel() {
         const filaData = await filaRes.json();
         const statsData = await statsRes.json();
 
+        if (!filaRes.ok || filaData.sucesso === false) {
+            const msg = filaData.erro || `Erro HTTP ${filaRes.status}`;
+            tbody.innerHTML = `<tr><td colspan="15">Fila: ${escapeHtmlPainel(msg)}</td></tr>`;
+            renderizarStats(statsData.sucesso !== false && statsData.stats ? statsData.stats : {});
+            return;
+        }
+        if (!statsRes.ok || statsData.sucesso === false) {
+            renderizarFilaPainel(filaData.pedidos || []);
+            const msg = statsData.erro || `Erro HTTP ${statsRes.status}`;
+            Utils.mostrarNotificacao(`Indicadores: ${msg}`, 'error');
+            renderizarStats({});
+            return;
+        }
+
         renderizarFilaPainel(filaData.pedidos || []);
         renderizarStats(statsData.stats || {});
     } catch (err) {
         console.error(err);
-        tbody.innerHTML = '<tr><td colspan="15">Falha ao carregar dados do painel.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="15">Falha ao carregar dados do painel (rede ou resposta inválida).</td></tr>';
     }
 }
 
@@ -89,6 +103,14 @@ function formatarDataEntregaSimples(data) {
 
 function renderizarBadgeProducao(status) {
     return status ? '<span class="badge-producao badge-producao-ok">VERDE</span>' : '<span class="badge-producao badge-producao-pendente">VERMELHO</span>';
+}
+
+function escapeHtmlPainel(texto) {
+    return String(texto || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
 }
 
 function obterResumoProdutoPedido(pedido) {

@@ -336,12 +336,13 @@ function normalizarId(valor) {
   return String(valor).trim();
 }
 
-/** Igualdade exata (após normalizar) ou o termo coincide com algum segmento do ID (ex.: PED-ts-1133-abc e termo 1133). */
+/** Igualdade exata (após normalizar) ou o termo coincide com algum segmento do ID (ex.: PED-ts-1133-abc e termo 1133). Segmentos só contam se o termo tiver pelo menos 3 caracteres (evita "1" casar em falso). */
 function idsCorrespondem(idPlanilha, termo) {
   var a = normalizarId(idPlanilha);
   var b = normalizarId(termo);
   if (!a || !b) return a === b;
   if (a === b) return true;
+  if (b.length < 3) return false;
   var partes = String(idPlanilha).split(/[-_]/);
   var j;
   for (j = 0; j < partes.length; j++) {
@@ -414,17 +415,18 @@ function getStats() {
   semanaPassada.setDate(hoje.getDate() - 7);
 
   data.forEach(function(row) {
-    const status = normalizarStatusOperacional(row[11]);
+    const statusNorm = normalizarStatusOperacional(row[11]);
+    const statusLower = String(statusNorm || '').trim().toLowerCase();
     const valor = parseFloat(row[8]) || 0;
     const dataPedido = new Date(row[3]);
     dataPedido.setHours(0, 0, 0, 0);
 
     valorTotal += valor;
-    if (status === 'Novo' || status === 'PENDENTE') pedidosNovo++;
-    if (status === 'Finalizado' || status === 'Entregue') pedidosFinalizado++;
-    if (status === 'Cancelado') pedidosCancelado++;
-    if (dataPedido.getTime() === hoje.getTime()) pedidosHoje++;
-    if (dataPedido >= semanaPassada) pedidosEstaSemana++;
+    if (statusNorm === 'PENDENTE' || statusLower === 'novo pedido' || statusLower === 'novo') pedidosNovo++;
+    if (statusNorm === 'Entregue' || statusLower === 'finalizado') pedidosFinalizado++;
+    if (statusNorm === 'Cancelado' || statusLower === 'cancelado') pedidosCancelado++;
+    if (!Number.isNaN(dataPedido.getTime()) && dataPedido.getTime() === hoje.getTime()) pedidosHoje++;
+    if (!Number.isNaN(dataPedido.getTime()) && dataPedido >= semanaPassada) pedidosEstaSemana++;
   });
 
   return {
