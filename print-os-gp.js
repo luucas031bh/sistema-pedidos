@@ -206,9 +206,18 @@
         return coletarDadosFormulario();
     }
 
-    function prepararImagemInput(inputEl) {
+    function prepararImagemInput(inputEl, notificarErro) {
         if (!inputEl || !inputEl.files || !inputEl.files[0]) return { src: null, revoke: null };
-        const url = URL.createObjectURL(inputEl.files[0]);
+        const file = inputEl.files[0];
+        const ok = file.type === 'image/png' || file.type === 'image/jpeg';
+        if (!ok) {
+            if (notificarErro && typeof Utils !== 'undefined' && Utils.mostrarNotificacao) {
+                Utils.mostrarNotificacao('Use apenas imagem PNG ou JPG.', 'error');
+            }
+            inputEl.value = '';
+            return { src: null, revoke: null };
+        }
+        const url = URL.createObjectURL(file);
         return { src: url, revoke: url };
     }
 
@@ -224,8 +233,8 @@
         const mount = document.getElementById(tipo === 'os' ? 'printOsMount' : 'printGpMount');
         if (!mount) return;
 
-        const inputEl = document.getElementById(tipo === 'os' ? 'inputMockupOs' : 'inputMockupGp');
-        const { src: imgSrc, revoke } = prepararImagemInput(inputEl);
+        const inputEl = document.getElementById('inputMockupPedido');
+        const { src: imgSrc, revoke } = prepararImagemInput(inputEl, true);
 
         mount.innerHTML = tipo === 'os' ? montarHtmlOs(dados, imgSrc) : montarHtmlGp(dados, imgSrc);
 
@@ -255,5 +264,15 @@
     document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('btnImprimirOs')?.addEventListener('click', () => executarImpressao('os'));
         document.getElementById('btnImprimirGp')?.addEventListener('click', () => executarImpressao('gp'));
+        document.getElementById('inputMockupPedido')?.addEventListener('change', function () {
+            if (!this.files || !this.files[0]) return;
+            const file = this.files[0];
+            if (file.type !== 'image/png' && file.type !== 'image/jpeg') {
+                if (typeof Utils !== 'undefined' && Utils.mostrarNotificacao) {
+                    Utils.mostrarNotificacao('Use apenas PNG ou JPG.', 'error');
+                }
+                this.value = '';
+            }
+        });
     });
 })();

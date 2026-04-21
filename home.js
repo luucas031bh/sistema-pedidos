@@ -150,6 +150,57 @@ function formatarDataHoraPedidoHome(val) {
     return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
 }
 
+/** Se o Apps Script implantado ainda não tiver buscarPedidos, filtra após listarPedidos. */
+function filtrarPedidosPorTermoLocal(pedidos, termoApi) {
+    const t = String(termoApi || '').trim();
+    const soDigitos = t.replace(/\D/g, '');
+    const lista = Array.isArray(pedidos) ? pedidos : [];
+    if (soDigitos.length === 4) {
+        return lista.filter((p) => {
+            const ib = String(p.idBusca != null ? p.idBusca : '').replace(/\D/g, '');
+            const last4 = ib.length >= 4 ? ib.slice(-4) : (`0000${ib}`).slice(-4);
+            return last4 === soDigitos;
+        });
+    }
+    const termoLower = t.toLowerCase();
+    const telFull = soDigitos;
+    return lista.filter((p) => {
+        const nome = String(p.cliente?.nome || '').toLowerCase();
+        const tel = String(p.cliente?.telefone || '').replace(/\D/g, '');
+        const id = String(p.id || '');
+        if (termoLower.length > 0 && nome.indexOf(termoLower) !== -1) return true;
+        if (telFull.length >= 10 && tel === telFull) return true;
+        if (t && (id === t || id.indexOf(t) !== -1)) return true;
+        return id.split(/[-_]/).some((seg) => seg && String(seg) === t);
+    });
+}
+
+async function buscarPedidosComFallback(termo) {
+    const url = `${CONFIG.APPS_SCRIPT_URL}?action=buscarPedidos&acao=buscarPedidos&termo=${encodeURIComponent(termo)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const msgErro = String(data.erro || '');
+    const acaoInvalida = msgErro.indexOf('Ação inválida') !== -1;
+
+    if (!acaoInvalida) {
+        return data;
+    }
+
+    const res2 = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=listarPedidos&acao=listarPedidos`);
+    const data2 = await res2.json();
+    if (!res2.ok || data2.sucesso === false) {
+        return {
+            sucesso: false,
+            erro:
+                data.erro ||
+                data2.erro ||
+                'Atualize o Code.gs no Apps Script e faça uma nova implantação da Web App (ação buscarPedidos).'
+        };
+    }
+    const todos = data2.pedidos || data2.fila || [];
+    return { sucesso: true, pedidos: filtrarPedidosPorTermoLocal(todos, termo) };
+}
+
 function mostrarMsgBuscaHome(texto, tipo) {
     const el = document.getElementById('homeBuscaMensagem');
     if (!el) return;
@@ -186,11 +237,9 @@ async function executarBuscaPedidoHome() {
     wrap.innerHTML = '';
 
     try {
-        const url = `${CONFIG.APPS_SCRIPT_URL}?action=buscarPedidos&acao=buscarPedidos&termo=${encodeURIComponent(termo)}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        if (!res.ok || data.sucesso === false) {
-            mostrarMsgBuscaHome(data.erro || `Erro HTTP ${res.status}`, 'erro');
+        const data = await buscarPedidosComFallback(termo);
+        if (!data.sucesso) {
+            mostrarMsgBuscaHome(data.erro || 'Falha na busca.', 'erro');
             return;
         }
         const lista = data.pedidos || [];
