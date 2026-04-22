@@ -461,7 +461,7 @@
         text-align: center;
         border-bottom: 2px solid #000;
         padding-bottom: 8px;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
     }
     .gp-marca {
         font-size: 16pt;
@@ -473,27 +473,102 @@
         gap: 16px;
         flex-wrap: wrap;
         margin-top: 4px;
+        font-size: 9pt;
     }
-    .gp-datas {
+    .gp-endereco {
+        font-size: 9pt;
+        margin-top: 4px;
+        color: #333 !important;
+    }
+
+    .gp-sec-titulo {
+        font-size: 10pt;
+        font-weight: bold;
+        margin: 0 0 8px;
+        padding-top: 2px;
+        border-top: 3px solid #b8941e;
+        color: #000 !important;
+    }
+    .gp-sec-titulo--sub {
+        font-size: 9pt;
+        border-top-width: 1px;
+        border-top-color: #ccc;
+        padding-top: 6px;
+        margin-bottom: 6px;
+    }
+
+    .gp-info-cliente {
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 10px 12px;
+        margin-bottom: 12px;
+        page-break-inside: avoid;
+    }
+    .gp-info-cliente-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px 16px;
+    }
+    .gp-cel {
         display: flex;
-        gap: 16px;
-        margin-bottom: 10px;
-        flex-wrap: wrap;
+        flex-direction: column;
+        gap: 2px;
+        padding: 6px 8px;
+        border: 1px solid #ddd;
+        border-radius: 3px;
     }
-    .gp-entrega {
-        background: #d1fae5 !important;
-        padding: 6px 10px;
-        border: 1px solid #000;
+    .gp-cel--entrega {
+        border-color: #166534;
+        background: #f0fdf4 !important;
     }
-    .gp-cliente {
-        margin-bottom: 10px;
-        border: 1px solid #000;
-        padding: 8px;
+    .gp-label {
+        font-size: 8pt;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: #444 !important;
     }
+    .gp-val {
+        font-size: 10pt;
+        font-weight: 600;
+    }
+    .gp-cel--entrega .gp-val {
+        color: #14532d !important;
+    }
+
+    .gp-desc-pedido {
+        border: 1px solid #ddd;
+        border-left: 3px solid #b8941e;
+        border-radius: 0 4px 4px 0;
+        padding: 10px 12px;
+        margin-bottom: 12px;
+        page-break-inside: avoid;
+    }
+    .gp-desc-texto {
+        margin: 0;
+        font-size: 9pt;
+        line-height: 1.4;
+        white-space: pre-wrap;
+    }
+
+    .gp-produto {
+        margin-bottom: 14px;
+        page-break-inside: avoid;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 10px 12px 12px;
+        border-left: 3px solid #b8941e;
+    }
+    .gp-produto-tit {
+        font-size: 10pt;
+        margin: 0 0 8px;
+        font-weight: bold;
+    }
+
     .gp-tabela {
         width: 100%;
         border-collapse: collapse;
-        margin-bottom: 10px;
+        margin-bottom: 0;
+        font-size: 9pt;
     }
     .gp-tabela th,
     .gp-tabela td {
@@ -501,40 +576,110 @@
         padding: 4px 6px;
         text-align: left;
     }
+    .gp-tabela th {
+        background: #f5f5f5 !important;
+        font-weight: 600;
+    }
     .gp-tabela .gp-num {
         text-align: center;
     }
     .gp-tabela .gp-moeda {
         text-align: right;
+        font-variant-numeric: tabular-nums;
     }
     .gp-desc {
         max-width: 180px;
     }
-    .gp-financeiro {
-        display: flex;
-        gap: 20px;
-        flex-wrap: wrap;
-        justify-content: flex-end;
-        margin: 10px 0;
-        font-size: 11pt;
-    }
+
     .gp-mockup {
-        min-height: 120px;
-        border: 1px dashed #666;
+        min-height: 100px;
+        border: 1px dashed #999;
         margin: 12px 0;
         text-align: center;
         padding: 8px;
+        page-break-inside: avoid;
     }
     .gp-mockup-img {
         max-width: 100%;
-        max-height: 280px;
+        max-height: 260px;
         object-fit: contain;
     }
+
+    .gp-rodape-valores {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 20px;
+        margin-top: 14px;
+        page-break-inside: avoid;
+    }
+    .gp-resumo-financeiro {
+        flex: 1;
+        min-width: 0;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 10px 12px;
+    }
+    .gp-resumo-lista {
+        margin: 0;
+    }
+    .gp-resumo-linha {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        padding: 4px 0;
+        border-bottom: 1px solid #eee;
+        font-size: 10pt;
+    }
+    .gp-resumo-linha:last-child {
+        border-bottom: none;
+    }
+    .gp-resumo-linha dt {
+        margin: 0;
+        font-weight: normal;
+        flex: 1;
+    }
+    .gp-resumo-linha dd {
+        margin: 0;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+    }
+
+    .gp-assinatura {
+        flex: 0 0 42%;
+        max-width: 280px;
+        min-width: 200px;
+        padding: 8px 4px 0;
+    }
+    .gp-assinatura-texto {
+        font-size: 8pt;
+        line-height: 1.35;
+        margin: 0 0 28px;
+        color: #333 !important;
+    }
+    .gp-linha-assinatura {
+        border-top: 1px solid #000;
+        width: 100%;
+        max-width: 260px;
+        margin: 0 auto 4px;
+    }
+    .gp-assinatura-rotulo {
+        font-size: 8pt;
+        text-align: center;
+        margin: 0;
+    }
+
     .gp-rodape {
         text-align: center;
         font-weight: bold;
         font-size: 14pt;
-        margin-top: 12px;
+        margin-top: 16px;
+        padding-top: 8px;
+        border-top: 1px solid #ddd;
     }
 
     .os-titulo {

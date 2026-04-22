@@ -43,30 +43,55 @@
         return tipo || det || '—';
     }
 
-    function montarLinhasGp(produtos) {
+    function montarLinhasGpUmProduto(prod) {
         const linhas = [];
-        (produtos || []).forEach((prod) => {
-            const pu = Number(prod.precoUnitario) || 0;
-            const tams = Array.isArray(prod.tamanhos) ? prod.tamanhos : [];
-            const tipo = resumirTipoPeca(prod.tipoPeca, prod.detalhesPeca);
-            const desc = [prod.tipoMalha, prod.corMalha].filter(Boolean).join(' — ') || '—';
-            if (tams.length === 0) {
-                linhas.push({ q: 0, tam: '—', tipo, desc, un: pu, tot: 0 });
-                return;
-            }
-            tams.forEach((t) => {
-                const q = Number(t.quantidade) || 0;
-                linhas.push({
-                    q,
-                    tam: t.tamanho || '—',
-                    tipo,
-                    desc,
-                    un: pu,
-                    tot: q * pu
-                });
+        const pu = Number(prod.precoUnitario) || 0;
+        const tams = Array.isArray(prod.tamanhos) ? prod.tamanhos : [];
+        const tipo = resumirTipoPeca(prod.tipoPeca, prod.detalhesPeca);
+        const desc = [prod.tipoMalha, prod.corMalha].filter(Boolean).join(' — ') || '—';
+        if (tams.length === 0) {
+            linhas.push({ q: 0, tam: '—', tipo, desc, un: pu, tot: 0 });
+            return linhas;
+        }
+        tams.forEach((t) => {
+            const q = Number(t.quantidade) || 0;
+            linhas.push({
+                q,
+                tam: t.tamanho || '—',
+                tipo,
+                desc,
+                un: pu,
+                tot: q * pu
             });
         });
         return linhas;
+    }
+
+    function calcularTotalPecasGp(produtos) {
+        let n = 0;
+        (produtos || []).forEach((prod) => {
+            const tams = Array.isArray(prod.tamanhos) ? prod.tamanhos : [];
+            tams.forEach((t) => {
+                n += Number(t.quantidade) || 0;
+            });
+        });
+        return n;
+    }
+
+    function linhasGpParaHtmlTabela(linhas) {
+        return linhas
+            .map(
+                (ln) => `
+            <tr>
+                <td class="gp-num">${ln.q}</td>
+                <td>${escapeHtml(ln.tam)}</td>
+                <td>${escapeHtml(ln.tipo)}</td>
+                <td class="gp-desc">${escapeHtml(ln.desc)}</td>
+                <td class="gp-moeda">${Utils.formatarMoeda(ln.un)}</td>
+                <td class="gp-moeda">${Utils.formatarMoeda(ln.tot)}</td>
+            </tr>`
+            )
+            .join('');
     }
 
     function listaEstampasProduto(prod) {
@@ -87,22 +112,34 @@
         const total = Number(fin.totalPedido) || 0;
         const entrada = Number(fin.valorEntrada) || 0;
         const restante = Number(fin.restante) != null ? Number(fin.restante) : total - entrada;
-        const linhas = montarLinhasGp(dados.produtos);
+        const produtos = Array.isArray(dados.produtos) ? dados.produtos : [];
+        const totalPecasCalc = calcularTotalPecasGp(produtos);
+        const totalPecas =
+            totalPecasCalc > 0 ? totalPecasCalc : Number(dados.totalPecas) || 0;
         const cli = dados.cliente || {};
         const obs = dados.observacoes || '';
-        const linhasHtml = linhas
-            .map(
-                (ln) => `
-            <tr>
-                <td class="gp-num">${ln.q}</td>
-                <td>${escapeHtml(ln.tam)}</td>
-                <td>${escapeHtml(ln.tipo)}</td>
-                <td class="gp-desc">${escapeHtml(ln.desc)}</td>
-                <td class="gp-moeda">${Utils.formatarMoeda(ln.un)}</td>
-                <td class="gp-moeda">${Utils.formatarMoeda(ln.tot)}</td>
-            </tr>`
-            )
+        const obsHtml = obs.trim() ? escapeHtml(obs) : '—';
+
+        const blocosProduto = produtos
+            .map((prod, idx) => {
+                const linhas = montarLinhasGpUmProduto(prod);
+                const corpo = linhasGpParaHtmlTabela(linhas);
+                const n = idx + 1;
+                return `
+    <section class="gp-produto">
+        <h3 class="gp-produto-tit">Produto ${n}</h3>
+        <table class="gp-tabela">
+            <thead>
+                <tr>
+                    <th>Quant.</th><th>Tamanho</th><th>Tipo</th><th>Descrição</th><th>Preç. un.</th><th>Total</th>
+                </tr>
+            </thead>
+            <tbody>${corpo}</tbody>
+        </table>
+    </section>`;
+            })
             .join('');
+
         const imgBloco = imgSrc
             ? `<div class="gp-mockup"><img src="${imgSrc}" alt="Mockup" class="gp-mockup-img"></div>`
             : '<div class="gp-mockup gp-mockup--vazio">(Sem imagem de mockup)</div>';
@@ -117,29 +154,49 @@
         </div>
         <div class="gp-endereco">${escapeHtml(end)}</div>
     </div>
-    <div class="gp-datas">
-        <div><strong>Data (pedido)</strong><br>${formatarDataBR(dados.datas?.pedido)}</div>
-        <div class="gp-entrega"><strong>ENTREGA</strong><br>${formatarDataBR(dados.datas?.entrega)}</div>
-    </div>
-    <div class="gp-cliente">
-        <div><strong>Cliente</strong> ${escapeHtml(cli.nome)}</div>
-        <div><strong>Celular</strong> ${escapeHtml(cli.telefone)}</div>
-        <div><strong>Pedido / obs.</strong> ${escapeHtml(obs)}</div>
-    </div>
-    <table class="gp-tabela">
-        <thead>
-            <tr>
-                <th>Quant.</th><th>Tamanho</th><th>Tipo</th><th>Descrição</th><th>Preç. un.</th><th>Total</th>
-            </tr>
-        </thead>
-        <tbody>${linhasHtml}</tbody>
-    </table>
-    <div class="gp-financeiro">
-        <div><strong>TOTAL</strong> ${Utils.formatarMoeda(total)}</div>
-        <div><strong>ENTRADA</strong> ${entrada > 0 ? Utils.formatarMoeda(entrada) : '—'}</div>
-        <div><strong>RESTANTE</strong> ${Utils.formatarMoeda(restante)}</div>
-    </div>
+    <section class="gp-info-cliente">
+        <h2 class="gp-sec-titulo">Cliente e prazos</h2>
+        <div class="gp-info-cliente-grid">
+            <div class="gp-cel">
+                <span class="gp-label">Nome</span>
+                <span class="gp-val">${escapeHtml(cli.nome)}</span>
+            </div>
+            <div class="gp-cel">
+                <span class="gp-label">Telefone</span>
+                <span class="gp-val">${escapeHtml(cli.telefone)}</span>
+            </div>
+            <div class="gp-cel">
+                <span class="gp-label">Data do pedido</span>
+                <span class="gp-val">${formatarDataBR(dados.datas?.pedido)}</span>
+            </div>
+            <div class="gp-cel gp-cel--entrega">
+                <span class="gp-label">Data de entrega</span>
+                <span class="gp-val">${formatarDataBR(dados.datas?.entrega)}</span>
+            </div>
+        </div>
+    </section>
+    <section class="gp-desc-pedido">
+        <h2 class="gp-sec-titulo gp-sec-titulo--sub">Descrição do pedido</h2>
+        <p class="gp-desc-texto">${obsHtml}</p>
+    </section>
+    ${blocosProduto}
     ${imgBloco}
+    <div class="gp-rodape-valores">
+        <div class="gp-resumo-financeiro">
+            <h2 class="gp-sec-titulo gp-sec-titulo--sub">Resumo financeiro</h2>
+            <dl class="gp-resumo-lista">
+                <div class="gp-resumo-linha"><dt>Total de peças</dt><dd>${totalPecas}</dd></div>
+                <div class="gp-resumo-linha"><dt>Valor total do pedido</dt><dd>${Utils.formatarMoeda(total)}</dd></div>
+                <div class="gp-resumo-linha"><dt>Valor da entrada</dt><dd>${entrada > 0 ? Utils.formatarMoeda(entrada) : '—'}</dd></div>
+                <div class="gp-resumo-linha"><dt>Valor restante</dt><dd>${Utils.formatarMoeda(restante)}</dd></div>
+            </dl>
+        </div>
+        <div class="gp-assinatura">
+            <p class="gp-assinatura-texto">Declaro ter lido e estar de acordo com o descrito nesta guia.</p>
+            <div class="gp-linha-assinatura"></div>
+            <p class="gp-assinatura-rotulo">Assinatura do cliente</p>
+        </div>
+    </div>
     <div class="gp-rodape">GP</div>
 </div>`;
     }
