@@ -401,54 +401,6 @@
         color: black !important;
     }
 
-    /* Impressão exclusiva OS / GP */
-    body.imprimindo-doc-os .faixa-somente-leitura,
-    body.imprimindo-doc-os .btn-voltar-principal,
-    body.imprimindo-doc-os .header,
-    body.imprimindo-doc-os main.container,
-    body.imprimindo-doc-os .print-footer,
-    body.imprimindo-doc-gp .faixa-somente-leitura,
-    body.imprimindo-doc-gp .btn-voltar-principal,
-    body.imprimindo-doc-gp .header,
-    body.imprimindo-doc-gp main.container,
-    body.imprimindo-doc-gp .print-footer {
-        display: none !important;
-    }
-
-    body.imprimindo-doc-os * {
-        visibility: hidden;
-    }
-    body.imprimindo-doc-os #printOsMount,
-    body.imprimindo-doc-os #printOsMount * {
-        visibility: visible;
-    }
-    body.imprimindo-doc-os #printOsMount {
-        display: block !important;
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        padding: 10mm;
-        box-sizing: border-box;
-    }
-
-    body.imprimindo-doc-gp * {
-        visibility: hidden;
-    }
-    body.imprimindo-doc-gp #printGpMount,
-    body.imprimindo-doc-gp #printGpMount * {
-        visibility: visible;
-    }
-    body.imprimindo-doc-gp #printGpMount {
-        display: block !important;
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        padding: 10mm;
-        box-sizing: border-box;
-    }
-
     .gp-doc,
     .os-doc {
         font-size: 10pt;
@@ -751,4 +703,66 @@
 
 .print-doc-root {
     display: none;
+}
+
+/*
+ * OS/GP: estas regras precisam de aplicar no ecrã (não só em @media print).
+ * Caso contrário, ao clicar em Imprimir, a UI principal continua visível até
+ * o diálogo de impressão e parece que "nada mudou".
+ */
+body.imprimindo-doc-os .faixa-somente-leitura,
+body.imprimindo-doc-os .btn-voltar-principal,
+body.imprimindo-doc-os .header,
+body.imprimindo-doc-os main.container,
+body.imprimindo-doc-os .print-footer,
+body.imprimindo-doc-gp .faixa-somente-leitura,
+body.imprimindo-doc-gp .btn-voltar-principal,
+body.imprimindo-doc-gp .header,
+body.imprimindo-doc-gp main.container,
+body.imprimindo-doc-gp .print-footer {
+    display: none !important;
+}
+
+body.imprimindo-doc-os * {
+    visibility: hidden;
+}
+body.imprimindo-doc-os #printOsMount,
+body.imprimindo-doc-os #printOsMount * {
+    visibility: visible;
+}
+body.imprimindo-doc-os #printOsMount {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 10mm;
+    box-sizing: border-box;
+    z-index: 99999;
+    background: #fff !important;
+}
+
+body.imprimindo-doc-gp * {
+    visibility: hidden;
+}
+body.imprimindo-doc-gp #printGpMount,
+body.imprimindo-doc-gp #printGpMount * {
+    visibility: visible;
+}
+body.imprimindo-doc-gp #printGpMount {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    min-height: 100%;
+    padding: 10mm;
+    box-sizing: border-box;
+    z-index: 99999;
+    background: #fff !important;
+}
+
+body.imprimindo-doc-os,
+body.imprimindo-doc-gp {
+    overflow: hidden !important;
 }
