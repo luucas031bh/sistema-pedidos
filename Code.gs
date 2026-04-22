@@ -731,9 +731,10 @@ function normalizarStatusOperacional(status) {
   var raw = String(status || '').trim();
   if (!raw) return 'Novo pedido';
   var valor = raw.toLowerCase();
-  if (valor === 'finalizado' || valor === 'entregue') return 'Entregue';
+  if (valor === 'entregue') return 'Entregue';
+  if (valor === 'finalizado') return 'Finalizado';
 
-  var canon = ['Novo pedido', 'Pendente', 'Orçamento', 'Em produção', 'Atrasado', 'Cancelado', 'Travado'];
+  var canon = ['Novo pedido', 'Pendente', 'Orçamento', 'Em produção', 'Atrasado', 'Cancelado', 'Travado', 'Finalizado'];
   var i;
   for (i = 0; i < canon.length; i++) {
     if (canon[i].toLowerCase() === valor) return canon[i];
@@ -819,7 +820,7 @@ function getStats() {
     valorTotal += valor;
     if (statusNorm === 'Novo pedido' || statusNorm === 'Pendente' || statusNorm === 'PENDENTE' ||
       statusLower === 'novo pedido' || statusLower === 'pendente' || statusLower === 'novo') pedidosNovo++;
-    if (statusNorm === 'Entregue' || statusLower === 'finalizado') pedidosFinalizado++;
+    if (statusNorm === 'Entregue' || statusNorm === 'Finalizado' || statusLower === 'finalizado') pedidosFinalizado++;
     if (statusNorm === 'Cancelado' || statusLower === 'cancelado') pedidosCancelado++;
     if (!Number.isNaN(dataPedido.getTime()) && dataPedido.getTime() === hoje.getTime()) pedidosHoje++;
     if (!Number.isNaN(dataPedido.getTime()) && dataPedido >= semanaPassada) pedidosEstaSemana++;

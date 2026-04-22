@@ -138,7 +138,8 @@ const CONFIG = {
         'Em produção',
         'Atrasado',
         'Cancelado',
-        'Travado'
+        'Travado',
+        'Finalizado'
     ],
     
     // Mensagens do Sistema
