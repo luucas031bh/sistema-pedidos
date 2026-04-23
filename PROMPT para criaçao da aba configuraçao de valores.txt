@@ -1,0 +1,180 @@
+Sistema de Configuração Dinâmica de Cálculos
+1. 📌 VISÃO GERAL
+
+Este documento descreve a implementação de um módulo de configuração dinâmica de parâmetros de cálculo dentro do sistema de pedidos.
+
+O objetivo é remover valores fixos da lógica de cálculo e permitir que sejam:
+
+editáveis via interface
+persistidos em banco de dados
+consumidos dinamicamente pelo sistema
+2. 🎯 OBJETIVOS
+Eliminar valores hardcoded
+Permitir manutenção sem alteração de código
+Garantir consistência nos cálculos
+Suportar expansão futura de parâmetros
+3. 🏗️ ARQUITETURA FUNCIONAL
+
+O sistema será dividido em três camadas lógicas:
+
+3.1. Camada de Configuração (Interface)
+
+Responsável por:
+
+exibir os parâmetros atuais
+permitir edição, criação e remoção
+enviar dados para persistência
+3.2. Camada de Persistência
+
+Responsável por:
+
+armazenar os dados de configuração
+fornecer leitura e escrita
+3.3. Camada de Consumo (Engine de Cálculo)
+
+Responsável por:
+
+carregar os dados de configuração
+aplicar regras de cálculo existentes
+nunca conter valores fixos
+4. 📊 ESTRUTURA DOS DADOS
+
+Os dados devem ser organizados em entidades independentes:
+
+4.1. MALHAS
+
+Descrição: custo base por tipo de tecido
+
+Campos:
+
+identificador (string)
+valor (numérico)
+
+Regra:
+
+identificador deve corresponder ao tipo selecionado no sistema de pedidos
+4.2. MÃO DE OBRA
+
+Descrição: custo por tipo de peça
+
+Campos:
+
+identificador (string)
+valor (numérico)
+4.3. ESTAMPAS
+
+Descrição: custo por tipo e dimensão
+
+Campos:
+
+tipo (string)
+valor_10x10 (numérico)
+valor_10x6 (numérico)
+valor_a4 (numérico)
+valor_a3 (numérico)
+
+Regra:
+
+o sistema deve determinar automaticamente qual valor usar com base no contexto
+4.4. TAMANHOS
+
+Descrição: custo adicional por tamanho
+
+Campos:
+
+tamanho (string)
+valor (numérico)
+
+Observação:
+
+pode assumir valor zero
+4.5. CONFIGURAÇÕES GERAIS
+
+Campos:
+
+custo_fixo (numérico)
+margem_padrao (numérico)
+5. 🔄 FLUXOS OPERACIONAIS
+5.1. Carregamento Inicial
+Sistema inicia
+Dados de configuração são requisitados
+Dados são armazenados em memória
+Engine de cálculo passa a utilizá-los
+5.2. Fluxo de Edição
+Usuário acessa página de configurações
+Sistema carrega dados atuais
+Usuário pode:
+editar valores
+adicionar novos itens
+remover itens
+Usuário aciona ação de salvar
+Sistema valida os dados
+Dados são persistidos
+Alterações tornam-se ativas globalmente
+5.3. Fluxo de Cálculo
+
+Para cada item do pedido:
+
+Identificar tipo de malha → obter custo
+Identificar tipo de peça → obter custo de mão de obra
+Calcular custo de estampa:
+identificar tipo
+identificar dimensão
+aplicar valor correspondente
+aplicar regras adicionais (ex: múltiplas cores)
+Somar custo fixo
+Aplicar margem
+Multiplicar pela quantidade
+6. ⚠️ REGRAS DE NEGÓCIO
+6.1. Consistência de Identificadores
+Identificadores devem ser únicos
+Alteração de identificador pode impactar o sistema
+Deve haver controle ou validação para evitar inconsistência
+6.2. Validação de Dados
+
+O sistema deve garantir:
+
+valores numéricos válidos
+ausência de valores negativos
+ausência de campos obrigatórios vazios
+6.3. Tolerância a Falhas
+
+Caso um valor não seja encontrado:
+
+utilizar valor padrão (ex: zero)
+nunca interromper o fluxo de cálculo
+6.4. Integridade
+alterações devem ser aplicadas de forma completa
+evitar estados parcialmente salvos
+7. 🔐 RESTRIÇÕES
+A lógica de cálculo não deve ser modificada
+Apenas os dados devem ser configuráveis
+O sistema deve funcionar mesmo em caso de falha parcial de dados
+8. 📈 ESCALABILIDADE
+
+A estrutura deve permitir:
+
+inclusão de novos tipos de malha
+inclusão de novos tipos de peça
+inclusão de novos tipos de estampa
+expansão de parâmetros sem refatoração da lógica
+9. 🧪 TESTES RECOMENDADOS
+cálculo com dados padrão
+cálculo com dados alterados
+inclusão de novos itens
+remoção de itens existentes
+valores extremos (zero, muito alto)
+ausência de dados
+10. 🚀 EXTENSÕES FUTURAS
+versionamento de configurações
+histórico de alterações
+múltiplas tabelas de preço
+personalização por cliente
+controle de acesso por usuário
+11. ✅ CONCLUSÃO
+
+O sistema deve evoluir para um modelo onde:
+
+a lógica permanece fixa
+os dados são completamente configuráveis
+o sistema se torna flexível, escalável e de fácil manutenção
