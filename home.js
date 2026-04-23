@@ -194,6 +194,11 @@ function obterIdBuscaExibicaoPedido(p) {
     return t.length >= 4 ? t.slice(-4) : '—';
 }
 
+function pedidoContaNosIndicadores(pedido) {
+    const s = String(pedido?.statusOperacional || '').trim().toLowerCase();
+    return s !== 'orçamento' && s !== 'orcamento';
+}
+
 /** Se o Apps Script implantado ainda não tiver buscarPedidos, filtra após listarPedidos. */
 function filtrarPedidosPorTermoLocal(pedidos, termoApi) {
     const t = String(termoApi || '').trim();
@@ -347,17 +352,18 @@ function renderizarFilaHome(abertos) {
         const resumo = obterResumoProdutoPedidoHome(pedido);
         const tipoRes = resumirTipoPeca(resumo.tipoPeca, resumo.detalhePeca);
         const nome = escapeHtmlHome(pedido.cliente?.nome || '-');
+        const idBusca = escapeHtmlHome(obterIdBuscaExibicaoPedido(pedido));
         return `
             <tr>
                 <td><a class="cliente-link" href="${link}" target="_blank" rel="noopener noreferrer">${nome}</a></td>
-                <td>${formatarDataEntregaBR(pedido.datas?.entrega)}</td>
+                <td>${escapeHtmlHome(textoDiasParaEntrega(pedido.datas?.entrega))}</td>
+                <td>${idBusca}</td>
                 <td>${escapeHtmlHome(String(pedido.statusOperacional || '—'))}</td>
                 <td>${pedido.totalPecas ?? 0}</td>
                 <td>${escapeHtmlHome(tipoRes)}</td>
                 <td>${escapeHtmlHome(resumo.tipoMalha || '—')}</td>
                 <td>${escapeHtmlHome(resumo.corMalha || '—')}</td>
                 <td>${escapeHtmlHome(resumo.estampaResumo || '—')}</td>
-                <td>${escapeHtmlHome(textoDiasParaEntrega(pedido.datas?.entrega))}</td>
             </tr>
         `;
     }).join('');
@@ -384,12 +390,13 @@ async function carregarHome() {
         }
         const todos = data.pedidos || [];
         const abertos = todos.filter(pedidoEstaAberto);
+        const abertosParaKpi = abertos.filter(pedidoContaNosIndicadores);
         abertos.sort((a, b) => {
             const da = parseDataEntregaLocal(a.datas?.entrega)?.getTime() ?? 0;
             const db = parseDataEntregaLocal(b.datas?.entrega)?.getTime() ?? 0;
             return da - db;
         });
-        renderizarKpisHome(abertos);
+        renderizarKpisHome(abertosParaKpi);
         renderizarFilaHome(abertos);
     } catch (err) {
         console.error(err);
