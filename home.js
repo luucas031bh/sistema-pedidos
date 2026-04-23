@@ -238,6 +238,10 @@ function resolverEtapaPedidoHome(pedido) {
     if (pedido.etapaProducaoAtual != null && String(pedido.etapaProducaoAtual).trim() !== '') {
         return normalizarIdEtapaProducaoHome(pedido.etapaProducaoAtual);
     }
+    const etapaNoProduto = Array.isArray(pedido.produtos) ? pedido.produtos.find((p) => p && p.etapaProducaoAtual) : null;
+    if (etapaNoProduto && etapaNoProduto.etapaProducaoAtual) {
+        return normalizarIdEtapaProducaoHome(etapaNoProduto.etapaProducaoAtual);
+    }
     const sp = pedido.statusProducao || {};
     if (sp.prontoParaEnvio) return 'aguardando_retirada';
     if (sp.costura) return 'costura';

@@ -762,10 +762,28 @@ function obterEtapaProducaoDoFormulario() {
     return id || 'pedido_feito';
 }
 
+function statusProducaoDerivadoDaEtapaNoFrontend(etapaId) {
+    const etapa = normalizarIdEtapaProducao(etapaId) || 'pedido_feito';
+    const ordem = ['pedido_feito', 'fechamento_arte', 'insumos', 'corte', 'estampa', 'costura', 'embalo', 'aguardando_retirada'];
+    const idx = ordem.indexOf(etapa);
+    const pos = idx >= 0 ? idx : 0;
+    return {
+        arte: pos >= 1,
+        os: pos >= 2,
+        corte: pos >= 3,
+        estampa: pos >= 4,
+        costura: pos >= 5,
+        prontoParaEnvio: pos >= 7
+    };
+}
+
 function coletarDadosFormulario() {
     const totalPedido = Utils.limparMoeda(document.getElementById('resumoTotalPedido').textContent);
     const valorEntrada = parseFloat(document.getElementById('valorEntrada').value || '0');
     const tel = document.getElementById('telefone').value;
+    const etapaProducaoAtual = obterEtapaProducaoDoFormulario();
+    const statusProducaoCompat = statusProducaoDerivadoDaEtapaNoFrontend(etapaProducaoAtual);
+    const produtosComEtapa = estadoApp.produtos.map((p) => ({ ...coletarProduto(p.id), etapaProducaoAtual }));
     const base = {
         id: document.getElementById('idPedido').value || Utils.gerarID(tel),
         idBusca: Utils.obterIdBusca(tel),
@@ -776,7 +794,7 @@ function coletarDadosFormulario() {
         responsavelAtual: document.getElementById('responsavelAtual')?.value || 'ISABELA SIRAY',
         tagPedido: document.getElementById('tagPedido')?.value || 'PEDIDO',
         financeiro: { totalPedido, valorEntrada, restante: totalPedido - valorEntrada },
-        produtos: estadoApp.produtos.map((p) => coletarProduto(p.id))
+        produtos: produtosComEtapa
     };
 
     if (estadoApp.modoEdicao && estadoApp.idEdicao) {
@@ -786,14 +804,16 @@ function coletarDadosFormulario() {
             idBusca: document.getElementById('idBusca')?.value || Utils.obterIdBusca(tel) || base.idBusca,
             atualizacao: true,
             statusOperacional: document.getElementById('statusOperacionalIndex')?.value || CONFIG.STATUS_PEDIDO[0],
-            etapaProducaoAtual: obterEtapaProducaoDoFormulario()
+            etapaProducaoAtual,
+            statusProducao: statusProducaoCompat
         };
     }
 
     return {
         ...base,
         statusOperacional: 'Novo pedido',
-        etapaProducaoAtual: 'pedido_feito'
+        etapaProducaoAtual,
+        statusProducao: statusProducaoCompat
     };
 }
 
