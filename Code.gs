@@ -1096,7 +1096,6 @@ function migrarPedidosLegadosParaV2() {
 
   var msg = 'Migração concluída. Migradas: ' + migradas + ' | Já v2 (ignoradas): ' + ignoradas;
   Logger.log(msg);
-  SpreadsheetApp.getUi().alert(msg);
 }
 
 /**
@@ -1120,7 +1119,6 @@ function reverterMigracaoV2() {
   if (!backupSheet || backupSheet.getLastRow() < 2) {
     var erro = 'Backup não encontrado ou vazio em "' + backupNome + '". Reversão cancelada.';
     Logger.log(erro);
-    SpreadsheetApp.getUi().alert(erro);
     return;
   }
 
@@ -1130,7 +1128,7 @@ function reverterMigracaoV2() {
   // Lê apenas a coluna G do backup (coluna 7)
   var backupLastRow = backupSheet.getLastRow();
   if (backupLastRow < 2) {
-    SpreadsheetApp.getUi().alert('Backup está vazio. Reversão cancelada.');
+    Logger.log('Backup está vazio. Reversão cancelada.');
     return;
   }
   var colGBackup = backupSheet.getRange(2, 7, backupLastRow - 1, 1).getValues();
@@ -1140,7 +1138,6 @@ function reverterMigracaoV2() {
 
   var msg = 'Reversão concluída. Coluna G restaurada do backup (' + colGBackup.length + ' linhas).';
   Logger.log(msg);
-  SpreadsheetApp.getUi().alert(msg);
 }
 
 // ============================================================
