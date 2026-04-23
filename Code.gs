@@ -1020,6 +1020,131 @@ function normalizarProdutosParaCalculoTemporario(produtos) {
   });
 }
 
+// ============================================================
+// MIGRAÇÃO v1 → v2  (rode uma vez no editor do Apps Script)
+// ============================================================
+
+/**
+ * migrarPedidosLegadosParaV2()
+ *
+ * Percorre todas as linhas da aba PEDIDOS.
+ * Para cada linha cuja coluna G ainda é um array simples (formato legado),
+ * envolve os produtos no envelope v2 com etapaProducaoAtual = 'Pedido em Aberto'.
+ * Linhas já no formato v2 são ignoradas.
+ *
+ * ANTES de rodar: a função grava automaticamente um backup na aba
+ * "BACKUP_MIGRACAO_V2" (criada se não existir).
+ *
+ * Como executar:
+ *   1. Abra o Google Apps Script do projeto
+ *   2. Selecione a função "migrarPedidosLegadosParaV2" no menu
+ *   3. Clique em "Executar"
+ *   4. Verifique o log (Ctrl+Enter) para ver o resultado
+ */
+function migrarPedidosLegadosParaV2() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(CONFIG.ABAS.PEDIDOS);
+  if (!sheet) { Logger.log('Aba PEDIDOS não encontrada.'); return; }
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) { Logger.log('Nenhum dado para migrar.'); return; }
+
+  // --- Backup ---
+  var backupNome = 'BACKUP_MIGRACAO_V2';
+  var backupSheet = ss.getSheetByName(backupNome);
+  if (!backupSheet) {
+    backupSheet = ss.insertSheet(backupNome);
+    Logger.log('Aba de backup criada: ' + backupNome);
+  }
+  // Só grava backup se a aba estiver vazia (protege backup anterior)
+  if (backupSheet.getLastRow() === 0) {
+    var tudo = sheet.getDataRange().getValues();
+    backupSheet.getRange(1, 1, tudo.length, tudo[0].length).setValues(tudo);
+    Logger.log('Backup gravado em ' + backupNome + ' (' + tudo.length + ' linhas).');
+  } else {
+    Logger.log('Backup já existia em ' + backupNome + ' — não sobrescrito.');
+  }
+
+  // --- Migração ---
+  var colG = sheet.getRange(2, 7, lastRow - 1, 1).getValues(); // coluna G (índice 7), linhas de dados
+  var novasValores = [];
+  var migradas = 0;
+  var ignoradas = 0;
+
+  for (var i = 0; i < colG.length; i++) {
+    var celula = colG[i][0];
+    var parsed = lerCelulaProdutos(celula);
+
+    if (parsed.v === 1) {
+      // Legado: envolve no envelope v2
+      var novoJson = JSON.stringify({
+        v: 2,
+        produtos: sanitizarProdutosSemEtapa(parsed.produtos),
+        etapaProducaoAtual: 'Pedido em Aberto'
+      });
+      novasValores.push([novoJson]);
+      migradas++;
+    } else {
+      // Já é v2: mantém como está
+      novasValores.push([celula]);
+      ignoradas++;
+    }
+  }
+
+  sheet.getRange(2, 7, novasValores.length, 1).setValues(novasValores);
+  SpreadsheetApp.flush();
+
+  var msg = 'Migração concluída. Migradas: ' + migradas + ' | Já v2 (ignoradas): ' + ignoradas;
+  Logger.log(msg);
+  SpreadsheetApp.getUi().alert(msg);
+}
+
+/**
+ * reverterMigracaoV2()
+ *
+ * Restaura a coluna G da aba PEDIDOS a partir do backup gerado por
+ * migrarPedidosLegadosParaV2().
+ *
+ * ATENÇÃO: apaga TODOS os dados atuais da coluna G e restaura do backup.
+ * Use apenas se a migração causou algum problema.
+ *
+ * Como executar:
+ *   1. Abra o Google Apps Script do projeto
+ *   2. Selecione a função "reverterMigracaoV2" no menu
+ *   3. Clique em "Executar"
+ */
+function reverterMigracaoV2() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var backupNome = 'BACKUP_MIGRACAO_V2';
+  var backupSheet = ss.getSheetByName(backupNome);
+  if (!backupSheet || backupSheet.getLastRow() < 2) {
+    var erro = 'Backup não encontrado ou vazio em "' + backupNome + '". Reversão cancelada.';
+    Logger.log(erro);
+    SpreadsheetApp.getUi().alert(erro);
+    return;
+  }
+
+  var sheet = ss.getSheetByName(CONFIG.ABAS.PEDIDOS);
+  if (!sheet) { Logger.log('Aba PEDIDOS não encontrada.'); return; }
+
+  // Lê apenas a coluna G do backup (coluna 7)
+  var backupLastRow = backupSheet.getLastRow();
+  if (backupLastRow < 2) {
+    SpreadsheetApp.getUi().alert('Backup está vazio. Reversão cancelada.');
+    return;
+  }
+  var colGBackup = backupSheet.getRange(2, 7, backupLastRow - 1, 1).getValues();
+
+  sheet.getRange(2, 7, colGBackup.length, 1).setValues(colGBackup);
+  SpreadsheetApp.flush();
+
+  var msg = 'Reversão concluída. Coluna G restaurada do backup (' + colGBackup.length + ' linhas).';
+  Logger.log(msg);
+  SpreadsheetApp.getUi().alert(msg);
+}
+
+// ============================================================
+
 function getStats() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.ABAS.PEDIDOS);
   const data = sheet.getDataRange().getValues();
