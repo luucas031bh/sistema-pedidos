@@ -460,7 +460,7 @@ async function carregarHome() {
 
     tbody.innerHTML = '<tr><td colspan="10">Atualizando...</td></tr>';
     try {
-        const res = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=listarPedidos&acao=listarPedidos`);
+        const res = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=listarPedidos&acao=listarPedidos&_ts=${Date.now()}`);
         const data = await res.json();
         if (!res.ok || data.sucesso === false) {
             const msg = data.erro || `Erro HTTP ${res.status}`;

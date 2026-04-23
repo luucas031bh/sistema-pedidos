@@ -634,6 +634,37 @@ function preencherFormularioCompleto(pedido) {
     calcularResumoFinanceiro();
 }
 
+async function recarregarPedidoAposSalvar() {
+    const id = String(estadoApp.idEdicao || document.getElementById('idPedido')?.value || '').trim();
+    if (!id || window.location.protocol === 'file:') return;
+    try {
+        const resposta = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=buscarPedido&acao=buscarPedido&termo=${encodeURIComponent(id)}&_ts=${Date.now()}`);
+        const texto = await resposta.text();
+        let resultado;
+        try {
+            resultado = JSON.parse(texto);
+        } catch (parseErr) {
+            console.error('buscarPedido: resposta não é JSON', texto.substring(0, 300));
+            return;
+        }
+        if (!resultado.sucesso || !resultado.pedido) throw new Error(resultado.erro || 'Pedido não encontrado');
+        estadoApp.modoEdicao = true;
+        estadoApp.idEdicao = String(resultado.pedido.id != null ? resultado.pedido.id : id);
+        preencherFormularioCompleto(resultado.pedido);
+        estadoApp.somenteLeitura = pedidoSomenteLeituraPorStatus(resultado.pedido);
+        if (estadoApp.somenteLeitura) {
+            aplicarUIModoVisualizacao();
+            aplicarSomenteLeituraIndex();
+        } else {
+            desativarSomenteLeituraIndex();
+            aplicarUIModoEdicao();
+        }
+    } catch (e) {
+        console.error(e);
+        Utils.mostrarNotificacao('Salvo. Se os dados não baterem, atualize a página (F5) ou confira o deploy do Apps Script.', 'info');
+    }
+}
+
 async function salvarPedido() {
     if (estadoApp.somenteLeitura) {
         Utils.mostrarNotificacao('Este pedido não pode ser alterado.', 'error');
@@ -663,7 +694,14 @@ async function salvarPedido() {
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify(payload)
             });
-            const resultado = await resposta.json();
+            const textoResp = await resposta.text();
+            let resultado;
+            try {
+                resultado = JSON.parse(textoResp);
+            } catch (parseJsonErr) {
+                console.error('salvarPedido: resposta não é JSON', textoResp.substring(0, 400));
+                throw new Error('Resposta inválida do servidor. Verifique URL do Apps Script e deploy.');
+            }
             if (!resultado.sucesso) throw new Error(resultado.erro || 'Falha ao salvar');
             if (resultado.operacao === 'criado') {
                 Utils.mostrarNotificacao('Atenção: foi criado um novo registro em vez de atualizar. Verifique o ID na planilha.', 'error');
@@ -677,6 +715,7 @@ async function salvarPedido() {
             if (resultado.aviso) Utils.mostrarNotificacao(resultado.aviso, 'info');
             Utils.mostrarNotificacao('Alterações salvas com sucesso!', 'success');
             atualizarSecaoImpressaoPedido();
+            await recarregarPedidoAposSalvar();
             return;
         }
 
@@ -689,7 +728,14 @@ async function salvarPedido() {
                 dados
             })
         });
-        const resultado = await resposta.json();
+        const textoRespNovo = await resposta.text();
+        let resultado;
+        try {
+            resultado = JSON.parse(textoRespNovo);
+        } catch (parseJsonErrNovo) {
+            console.error('salvarPedido: resposta não é JSON', textoRespNovo.substring(0, 400));
+            throw new Error('Resposta inválida do servidor. Verifique URL do Apps Script e deploy.');
+        }
         if (!resultado.sucesso) throw new Error(resultado.erro || 'Falha ao salvar');
         if (resultado.id != null && String(resultado.id).trim() !== '') {
             const idSrv = String(resultado.id);
@@ -707,7 +753,8 @@ async function salvarPedido() {
         atualizarSecaoImpressaoPedido();
     } catch (erro) {
         console.error(erro);
-        Utils.mostrarNotificacao(estadoApp.modoEdicao ? 'Erro ao salvar alterações.' : 'Erro ao salvar pedido.', 'error');
+        const msg = erro && erro.message ? erro.message : (estadoApp.modoEdicao ? 'Erro ao salvar alterações.' : 'Erro ao salvar pedido.');
+        Utils.mostrarNotificacao(msg, 'error');
     } finally {
         esconderLoading();
     }
@@ -721,7 +768,9 @@ function validarFormulario() {
 }
 
 function idsEtapasProducaoValidas() {
-    return (CONFIG.ETAPAS_PRODUCAO || []).map((e) => e.id);
+    const fromConfig = (CONFIG.ETAPAS_PRODUCAO || []).map((e) => e.id).filter(Boolean);
+    if (fromConfig.length) return fromConfig;
+    return ['pedido_feito', 'fechamento_arte', 'insumos', 'corte', 'estampa', 'costura', 'embalo', 'aguardando_retirada'];
 }
 
 function normalizarIdEtapaProducao(valor) {
@@ -753,6 +802,11 @@ function derivarEtapaDeFlagsLegado(sp) {
 function resolverEtapaProducaoPedido(pedido) {
     const direto = normalizarIdEtapaProducao(pedido.etapaProducaoAtual);
     if (direto) return direto;
+    const comEtapaNoItem = Array.isArray(pedido.produtos) ? pedido.produtos.find((p) => p && p.etapaProducaoAtual) : null;
+    if (comEtapaNoItem) {
+        const d2 = normalizarIdEtapaProducao(comEtapaNoItem.etapaProducaoAtual);
+        if (d2) return d2;
+    }
     return derivarEtapaDeFlagsLegado(pedido.statusProducao || {});
 }
 
@@ -803,6 +857,7 @@ function coletarDadosFormulario() {
             id: String(estadoApp.idEdicao),
             idBusca: document.getElementById('idBusca')?.value || Utils.obterIdBusca(tel) || base.idBusca,
             atualizacao: true,
+            modoEdicao: true,
             statusOperacional: document.getElementById('statusOperacionalIndex')?.value || CONFIG.STATUS_PEDIDO[0],
             etapaProducaoAtual,
             statusProducao: statusProducaoCompat

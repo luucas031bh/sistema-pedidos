@@ -246,16 +246,65 @@ function doPost(e) {
   }
 }
 
+/** Evita payload “achatado” (produtos/cliente como string) que quebra persistência. */
+function garantirEstruturaPayloadSalvar(dados) {
+  if (!dados || typeof dados !== 'object' || Array.isArray(dados)) return;
+  if (typeof dados.produtos === 'string') {
+    try {
+      dados.produtos = JSON.parse(dados.produtos);
+    } catch (prodErr) {
+      dados.produtos = [];
+    }
+  }
+  if (dados.produtos && !Array.isArray(dados.produtos)) {
+    dados.produtos = [];
+  }
+  if (typeof dados.financeiro === 'string') {
+    try {
+      dados.financeiro = JSON.parse(dados.financeiro);
+    } catch (finErr) {
+      dados.financeiro = {};
+    }
+  }
+  if (typeof dados.cliente === 'string') {
+    try {
+      dados.cliente = JSON.parse(dados.cliente);
+    } catch (cliErr) {
+      dados.cliente = {};
+    }
+  }
+  if (typeof dados.datas === 'string') {
+    try {
+      dados.datas = JSON.parse(dados.datas);
+    } catch (datErr) {
+      dados.datas = {};
+    }
+  }
+  if (typeof dados.statusProducao === 'string') {
+    try {
+      dados.statusProducao = JSON.parse(dados.statusProducao);
+    } catch (spErr) {
+      dados.statusProducao = {};
+    }
+  }
+}
+
 // ================= SALVAR =================
 function salvarPedido(dados) {
   try {
     dados = normalizarDadosObjeto(dados);
+    garantirEstruturaPayloadSalvar(dados);
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.ABAS.PEDIDOS);
     if (!sheet) return { sucesso: false, erro: 'Aba PEDIDOS não encontrada' };
 
     var eAtualizacao = dados.atualizacao === true ||
       dados.atualizacao === 'true' ||
       String(dados.atualizacao || '').toLowerCase().trim() === 'true';
+    if (dados.modoEdicao === true || dados.modoEdicao === 'true' ||
+      String(dados.modoEdicao || '').toLowerCase().trim() === 'true') {
+      eAtualizacao = true;
+      dados.atualizacao = true;
+    }
     if (eAtualizacao && !normalizarId(dados.id)) {
       return { sucesso: false, erro: 'ID obrigatório para atualizar o pedido.' };
     }
@@ -277,7 +326,17 @@ function salvarPedido(dados) {
     const vendedor = dados.responsavelAtual || dados.vendedor || 'ISABELA SIRAY';
     const tagPedido = dados.tagPedido || 'PEDIDO';
     var etapaProducaoAtual = normalizarEtapaProducaoId(dados.etapaProducaoAtual || '');
-    if (!etapaProducaoAtual) etapaProducaoAtual = 'pedido_feito';
+    if (!etapaProducaoAtual && Array.isArray(dados.produtos) && dados.produtos.length > 0) {
+      etapaProducaoAtual = normalizarEtapaProducaoId(dados.produtos[0].etapaProducaoAtual || '');
+    }
+    var spCliente = normalizarStatusProducao(dados.statusProducao || {});
+    var etapaDosFlags = etapaDeFlagsProducao(spCliente);
+    if (!etapaProducaoAtual) {
+      etapaProducaoAtual = etapaDosFlags || 'pedido_feito';
+    }
+    if (!etapaProducaoAtual) {
+      etapaProducaoAtual = 'pedido_feito';
+    }
     const statusProducao = statusProducaoDerivadoDeEtapa(etapaProducaoAtual);
     dados.produtos = normalizarProdutosParaCalculoTemporario(dados.produtos);
     const resumoProduto = extrairResumoProduto((dados.produtos && dados.produtos[0]) || {});
