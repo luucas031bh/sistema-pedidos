@@ -333,7 +333,7 @@ function salvarPedido(dados) {
     const status = normalizarStatusOperacional(dados.statusOperacional || dados.status || 'Novo pedido');
     const vendedor = dados.responsavelAtual || dados.vendedor || 'ISABELA SIRAY';
     const tagPedido = dados.tagPedido || 'PEDIDO';
-    var etapaProducaoAtual = normalizarEtapaProducaoId(dados.etapaProducaoAtual || '') || 'pedido_feito';
+    var etapaProducaoAtual = normalizarEtapaProducaoId(dados.etapaProducaoAtual || '') || 'Pedido em Aberto';
     const statusProducao = statusProducaoDerivadoDeEtapa(etapaProducaoAtual);
     dados.produtos = normalizarProdutosParaCalculoTemporario(dados.produtos);
     const resumoProduto = extrairResumoProduto((dados.produtos && dados.produtos[0]) || {});
@@ -869,28 +869,21 @@ function normalizarStatusProducao(statusProducao) {
 }
 
 var ETAPAS_PRODUCAO_VALIDAS = [
-  'pedido_feito', 'fechamento_arte', 'insumos', 'corte', 'estampa', 'costura', 'embalo', 'aguardando_retirada'
+  'Pedido em Aberto', 'Arte', 'Insumos', 'Corte', 'Estampa', 'Embalo', 'Aguardando retirada'
 ];
 
 function normalizarEtapaProducaoId(valor) {
-  var s = String(valor || '').trim().toLowerCase().replace(/\s+/g, '_');
+  var s = String(valor || '').trim();
   var i;
   for (i = 0; i < ETAPAS_PRODUCAO_VALIDAS.length; i++) {
-    if (ETAPAS_PRODUCAO_VALIDAS[i] === s) return ETAPAS_PRODUCAO_VALIDAS[i];
+    if (ETAPAS_PRODUCAO_VALIDAS[i].toLowerCase() === s.toLowerCase()) return ETAPAS_PRODUCAO_VALIDAS[i];
   }
-  var mapa = {
-    'pedido feito': 'pedido_feito',
-    'fechamento de arte': 'fechamento_arte',
-    'aguardando retirada': 'aguardando_retirada',
-    'aguardando_retirar': 'aguardando_retirada'
-  };
-  if (mapa[s]) return mapa[s];
   return '';
 }
 
 function statusProducaoDerivadoDeEtapa(etapaId) {
-  var id = normalizarEtapaProducaoId(etapaId) || 'pedido_feito';
-  var ordem = ['pedido_feito', 'fechamento_arte', 'insumos', 'corte', 'estampa', 'costura', 'embalo', 'aguardando_retirada'];
+  var id = normalizarEtapaProducaoId(etapaId) || 'Pedido em Aberto';
+  var ordem = ['Pedido em Aberto', 'Arte', 'Insumos', 'Corte', 'Estampa', 'Embalo', 'Aguardando retirada'];
   var idx = ordem.indexOf(id);
   if (idx < 0) idx = 0;
   return {
@@ -898,20 +891,19 @@ function statusProducaoDerivadoDeEtapa(etapaId) {
     os: idx >= 2,
     corte: idx >= 3,
     estampa: idx >= 4,
-    costura: idx >= 5,
-    prontoParaEnvio: idx >= 7
+    costura: false,
+    prontoParaEnvio: idx >= 6
   };
 }
 
 function etapaDeFlagsProducao(sp) {
-  if (!sp || typeof sp !== 'object') return 'pedido_feito';
-  if (asBoolean(sp.prontoParaEnvio)) return 'aguardando_retirada';
-  if (asBoolean(sp.costura)) return 'costura';
-  if (asBoolean(sp.estampa)) return 'estampa';
-  if (asBoolean(sp.corte)) return 'corte';
-  if (asBoolean(sp.os)) return 'insumos';
-  if (asBoolean(sp.arte)) return 'fechamento_arte';
-  return 'pedido_feito';
+  if (!sp || typeof sp !== 'object') return 'Pedido em Aberto';
+  if (asBoolean(sp.prontoParaEnvio)) return 'Aguardando retirada';
+  if (asBoolean(sp.estampa)) return 'Estampa';
+  if (asBoolean(sp.corte)) return 'Corte';
+  if (asBoolean(sp.os)) return 'Insumos';
+  if (asBoolean(sp.arte)) return 'Arte';
+  return 'Pedido em Aberto';
 }
 
 function sanitizarProdutosSemEtapa(produtosArr) {
@@ -962,7 +954,7 @@ function lerCelulaProdutos(valor) {
 }
 
 function gravarCelulaProdutos(produtosArr, etapaProducaoAtual) {
-  var et = normalizarEtapaProducaoId(etapaProducaoAtual) || 'pedido_feito';
+  var et = normalizarEtapaProducaoId(etapaProducaoAtual) || 'Pedido em Aberto';
   return JSON.stringify({
     v: 2,
     produtos: sanitizarProdutosSemEtapa(produtosArr),

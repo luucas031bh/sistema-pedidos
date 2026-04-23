@@ -194,92 +194,6 @@ function obterIdBuscaExibicaoPedido(p) {
     return t.length >= 4 ? t.slice(-4) : '—';
 }
 
-const LIMITE_DIAS_ETAPA_FILA = {
-    pedido_feito: 2,
-    fechamento_arte: 4,
-    insumos: 7,
-    corte: 13,
-    estampa: 17,
-    costura: 24,
-    embalo: 26
-};
-
-const IDS_ETAPA_PRODUCAO_FALLBACK = ['pedido_feito', 'fechamento_arte', 'insumos', 'corte', 'estampa', 'costura', 'embalo', 'aguardando_retirada'];
-
-function idsEtapasProducaoValidasHome() {
-    const fromConfig = (CONFIG.ETAPAS_PRODUCAO || []).map((e) => e.id).filter(Boolean);
-    if (fromConfig.length) return fromConfig;
-    return IDS_ETAPA_PRODUCAO_FALLBACK.slice();
-}
-
-function normalizarIdEtapaProducaoHome(valor) {
-    const s = String(valor || '').trim().toLowerCase().replace(/\s+/g, '_');
-    const valid = idsEtapasProducaoValidasHome();
-    if (valid.includes(s)) return s;
-    const mapa = {
-        'pedido feito': 'pedido_feito',
-        'fechamento de arte': 'fechamento_arte',
-        'fechamento_arte': 'fechamento_arte',
-        'aguardando retirada': 'aguardando_retirada',
-        'aguardando_retirar': 'aguardando_retirada'
-    };
-    const m = mapa[s];
-    return valid.includes(m) ? m : '';
-}
-
-function labelEtapaProducaoHome(id) {
-    const nid = normalizarIdEtapaProducaoHome(id);
-    const lista = CONFIG.ETAPAS_PRODUCAO || [];
-    const found = lista.find((e) => e.id === nid);
-    return found ? found.label : nid;
-}
-
-function diasCorridosDesdeDataPedidoHome(dataPedido) {
-    const ref = parseDataEntregaLocal(dataPedido);
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    if (!ref) return 0;
-    ref.setHours(0, 0, 0, 0);
-    return Math.floor((hoje.getTime() - ref.getTime()) / 86400000);
-}
-
-/** Ordem: etapa canônica do pedido; se vazia/ inválida, flags legados (planilha antiga). */
-function resolverEtapaParaExibicao(pedido) {
-    const topo = normalizarIdEtapaProducaoHome(pedido.etapaProducaoAtual);
-    if (topo) return topo;
-    const sp = pedido.statusProducao || {};
-    if (sp.prontoParaEnvio) return 'aguardando_retirada';
-    if (sp.costura) return 'costura';
-    if (sp.estampa) return 'estampa';
-    if (sp.corte) return 'corte';
-    if (sp.os) return 'insumos';
-    if (sp.arte) return 'fechamento_arte';
-    return 'pedido_feito';
-}
-
-function classeCorEtapaProducaoFila(pedido) {
-    const etapa = resolverEtapaParaExibicao(pedido);
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-
-    // Vermelho para todos: data de entrega já passou
-    const ent = parseDataEntregaLocal(pedido.datas?.entrega);
-    if (ent) {
-        ent.setHours(0, 0, 0, 0);
-        if (hoje.getTime() > ent.getTime()) return 'home-etapa-badge--vermelho';
-    }
-
-    // Aguardando retirada sem data de entrega: neutro
-    if (etapa === 'aguardando_retirada') {
-        return ent ? 'home-etapa-badge--verde' : 'home-etapa-badge--neutro';
-    }
-
-    const lim = LIMITE_DIAS_ETAPA_FILA[etapa];
-    if (lim == null) return 'home-etapa-badge--verde';
-    const dias = diasCorridosDesdeDataPedidoHome(pedido.datas?.pedido);
-    if (dias > lim) return 'home-etapa-badge--amarelo';
-    return 'home-etapa-badge--verde';
-}
 
 function pedidoContaNosIndicadores(pedido) {
     const s = String(pedido?.statusOperacional || '').trim().toLowerCase();
@@ -440,9 +354,7 @@ function renderizarFilaHome(abertos) {
         const tipoRes = resumirTipoPeca(resumo.tipoPeca, resumo.detalhePeca);
         const nome = escapeHtmlHome(pedido.cliente?.nome || '-');
         const idBusca = escapeHtmlHome(obterIdBuscaExibicaoPedido(pedido));
-        const etapaId = resolverEtapaParaExibicao(pedido);
-        const etapaLabel = escapeHtmlHome(labelEtapaProducaoHome(etapaId));
-        const etapaCls = classeCorEtapaProducaoFila({ ...pedido, etapaProducaoAtual: etapaId });
+        const statusProd = escapeHtmlHome(String(pedido.etapaProducaoAtual || '—'));
         return `
             <tr>
                 <td><a class="cliente-link" href="${link}" target="_blank" rel="noopener noreferrer">${nome}</a></td>
@@ -454,7 +366,7 @@ function renderizarFilaHome(abertos) {
                 <td>${escapeHtmlHome(resumo.tipoMalha || '—')}</td>
                 <td>${escapeHtmlHome(resumo.corMalha || '—')}</td>
                 <td>${escapeHtmlHome(resumo.estampaResumo || '—')}</td>
-                <td><span class="home-etapa-badge ${etapaCls}">${etapaLabel}</span></td>
+                <td>${statusProd}</td>
             </tr>
         `;
     }).join('');

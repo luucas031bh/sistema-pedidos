@@ -16,6 +16,7 @@ async function inicializarApp() {
     configurarBotaoVoltarPrincipal();
     configurarValoresPadraoFormulario();
     popularOpcoesStatusOperacionalIndex();
+    popularOpcoesStatusProducaoIndex();
     configurarEventListeners();
     const idUrl = (new URLSearchParams(window.location.search).get('id') || '').trim();
     if (!idUrl) adicionarProduto();
@@ -435,6 +436,25 @@ function garantirOpcaoStatusIndex(valorPlanilha) {
     }
 }
 
+function popularOpcoesStatusProducaoIndex() {
+    const select = document.getElementById('etapaProducaoAtual');
+    if (!select || select.options.length > 0) return;
+    select.innerHTML = (CONFIG.STATUS_PRODUCAO || []).map((s) => `<option value="${escapeAttrIndex(s)}">${escapeHtmlIndex(s)}</option>`).join('');
+}
+
+function garantirOpcaoStatusProducaoIndex(valorPlanilha) {
+    const select = document.getElementById('etapaProducaoAtual');
+    if (!select || !valorPlanilha) return;
+    const v = String(valorPlanilha);
+    const existe = Array.from(select.options).some((opt) => opt.value === v);
+    if (!existe) {
+        const opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = v;
+        select.appendChild(opt);
+    }
+}
+
 function pedidoSomenteLeituraPorStatus(pedido) {
     const s = String(pedido?.statusOperacional || '').trim().toLowerCase();
     if (s === 'entregue' || s === 'finalizado') return true;
@@ -600,7 +620,11 @@ function preencherFormularioCompleto(pedido) {
     const selStatus = document.getElementById('statusOperacionalIndex');
     if (selStatus) selStatus.value = statusAtual;
 
-    aplicarEtapaNoFormulario(pedido);
+    popularOpcoesStatusProducaoIndex();
+    const statusProd = pedido.etapaProducaoAtual || (CONFIG.STATUS_PRODUCAO && CONFIG.STATUS_PRODUCAO[0]) || '';
+    garantirOpcaoStatusProducaoIndex(statusProd);
+    const selProd = document.getElementById('etapaProducaoAtual');
+    if (selProd) selProd.value = statusProd;
 
     const listaProdutos = Array.isArray(pedido.produtos) && pedido.produtos.length ? pedido.produtos : [{}];
     listaProdutos.forEach((p) => {
@@ -764,70 +788,10 @@ function validarFormulario() {
     return estadoApp.produtos.length > 0;
 }
 
-function idsEtapasProducaoValidas() {
-    const fromConfig = (CONFIG.ETAPAS_PRODUCAO || []).map((e) => e.id).filter(Boolean);
-    if (fromConfig.length) return fromConfig;
-    return ['pedido_feito', 'fechamento_arte', 'insumos', 'corte', 'estampa', 'costura', 'embalo', 'aguardando_retirada'];
-}
-
-function normalizarIdEtapaProducao(valor) {
-    const s = String(valor || '').trim().toLowerCase().replace(/\s+/g, '_');
-    const valid = idsEtapasProducaoValidas();
-    if (valid.includes(s)) return s;
-    const mapa = {
-        'pedido feito': 'pedido_feito',
-        'fechamento de arte': 'fechamento_arte',
-        'fechamento_arte': 'fechamento_arte',
-        'aguardando retirada': 'aguardando_retirada',
-        'aguardando_retirar': 'aguardando_retirada'
-    };
-    const m = mapa[s];
-    return valid.includes(m) ? m : '';
-}
-
-function derivarEtapaDeFlagsLegado(sp) {
-    if (!sp || typeof sp !== 'object') return 'pedido_feito';
-    if (sp.prontoParaEnvio) return 'aguardando_retirada';
-    if (sp.costura) return 'costura';
-    if (sp.estampa) return 'estampa';
-    if (sp.corte) return 'corte';
-    if (sp.os) return 'insumos';
-    if (sp.arte) return 'fechamento_arte';
-    return 'pedido_feito';
-}
-
-/** Etapa persistida no pedido (API) ou inferida por flags legados. */
-function resolverEtapaPedidoCarregado(pedido) {
-    const topo = normalizarIdEtapaProducao(pedido.etapaProducaoAtual);
-    if (topo) return topo;
-    return derivarEtapaDeFlagsLegado(pedido.statusProducao || {});
-}
 
 function lerEtapaDoFormulario() {
     const sel = document.getElementById('etapaProducaoAtual');
-    const id = sel ? normalizarIdEtapaProducao(sel.value) : '';
-    return id || 'pedido_feito';
-}
-
-function aplicarEtapaNoFormulario(pedido) {
-    const etapaId = resolverEtapaPedidoCarregado(pedido);
-    const sel = document.getElementById('etapaProducaoAtual');
-    if (sel) sel.value = etapaId;
-}
-
-function statusProducaoDerivadoDaEtapaNoFrontend(etapaId) {
-    const etapa = normalizarIdEtapaProducao(etapaId) || 'pedido_feito';
-    const ordem = ['pedido_feito', 'fechamento_arte', 'insumos', 'corte', 'estampa', 'costura', 'embalo', 'aguardando_retirada'];
-    const idx = ordem.indexOf(etapa);
-    const pos = idx >= 0 ? idx : 0;
-    return {
-        arte: pos >= 1,
-        os: pos >= 2,
-        corte: pos >= 3,
-        estampa: pos >= 4,
-        costura: pos >= 5,
-        prontoParaEnvio: pos >= 7
-    };
+    return sel ? (sel.value || (CONFIG.STATUS_PRODUCAO && CONFIG.STATUS_PRODUCAO[0]) || '') : '';
 }
 
 function coletarDadosFormulario() {
@@ -835,7 +799,6 @@ function coletarDadosFormulario() {
     const valorEntrada = parseFloat(document.getElementById('valorEntrada').value || '0');
     const tel = document.getElementById('telefone').value;
     const etapaProducaoAtual = lerEtapaDoFormulario();
-    const statusProducaoCompat = statusProducaoDerivadoDaEtapaNoFrontend(etapaProducaoAtual);
     const produtosLimpos = estadoApp.produtos.map((p) => coletarProduto(p.id));
     const base = {
         id: document.getElementById('idPedido').value || Utils.gerarID(tel),
@@ -858,16 +821,14 @@ function coletarDadosFormulario() {
             atualizacao: true,
             modoEdicao: true,
             statusOperacional: document.getElementById('statusOperacionalIndex')?.value || CONFIG.STATUS_PEDIDO[0],
-            etapaProducaoAtual,
-            statusProducao: statusProducaoCompat
+            etapaProducaoAtual
         };
     }
 
     return {
         ...base,
         statusOperacional: 'Novo pedido',
-        etapaProducaoAtual,
-        statusProducao: statusProducaoCompat
+        etapaProducaoAtual
     };
 }
 
