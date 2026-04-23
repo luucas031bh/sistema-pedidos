@@ -276,7 +276,9 @@ function salvarPedido(dados) {
     const status = normalizarStatusOperacional(dados.statusOperacional || dados.status || 'Novo pedido');
     const vendedor = dados.responsavelAtual || dados.vendedor || 'ISABELA SIRAY';
     const tagPedido = dados.tagPedido || 'PEDIDO';
-    const statusProducao = normalizarStatusProducao(dados.statusProducao || {});
+    var etapaProducaoAtual = normalizarEtapaProducaoId(dados.etapaProducaoAtual || '');
+    if (!etapaProducaoAtual) etapaProducaoAtual = 'pedido_feito';
+    const statusProducao = statusProducaoDerivadoDeEtapa(etapaProducaoAtual);
     dados.produtos = normalizarProdutosParaCalculoTemporario(dados.produtos);
     const resumoProduto = extrairResumoProduto((dados.produtos && dados.produtos[0]) || {});
 
@@ -310,7 +312,7 @@ function salvarPedido(dados) {
         var linhaVals = montarLinhaValoresPedido(
           idGravar, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
           dados.produtos || [], observacoes, valorTotal, valorEntrada, restante, status,
-          linhaAtual[12], new Date(), statusProducao, resumoProduto, vendedor, tagPedido,
+          linhaAtual[12], new Date(), statusProducao, etapaProducaoAtual, resumoProduto, vendedor, tagPedido,
           idBuscaVal, temCostura
         );
         sheet.getRange(i + 1, 1, 1, colunas).setValues([linhaVals]);
@@ -338,7 +340,7 @@ function salvarPedido(dados) {
       var linhaVals0 = montarLinhaValoresPedido(
         idGravar0, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
         dados.produtos || [], observacoes, valorTotal, valorEntrada, restante, status,
-        linhaAtual0[12], new Date(), statusProducao, resumoProduto, vendedor, tagPedido,
+        linhaAtual0[12], new Date(), statusProducao, etapaProducaoAtual, resumoProduto, vendedor, tagPedido,
         idBuscaVal, temCostura
       );
       sheet.getRange(i0 + 1, 1, 1, colunas).setValues([linhaVals0]);
@@ -353,7 +355,7 @@ function salvarPedido(dados) {
     var linhaNova = montarLinhaValoresPedido(
       idPedido, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
       dados.produtos || [], observacoes, valorTotal, valorEntrada, restante, status,
-      new Date(), new Date(), statusProducao, resumoProduto, vendedor, tagPedido,
+      new Date(), new Date(), statusProducao, etapaProducaoAtual, resumoProduto, vendedor, tagPedido,
       idBuscaVal, temCostura
     );
     sheet.appendRow(linhaNova);
@@ -480,8 +482,8 @@ function planilhaPedidosTemColunaCostura(sheet) {
   }
 }
 
-function montarLinhaValoresPedido(idGravar, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas, produtosArr, observacoes, valorTotal, valorEntrada, restante, status, dataCriacao, dataModificacao, statusProducao, resumoProduto, vendedor, tagPedido, idBusca, temCostura) {
-  var produtosJson = JSON.stringify(produtosArr);
+function montarLinhaValoresPedido(idGravar, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas, produtosArr, observacoes, valorTotal, valorEntrada, restante, status, dataCriacao, dataModificacao, statusProducao, etapaProducaoAtual, resumoProduto, vendedor, tagPedido, idBusca, temCostura) {
+  var produtosJson = serializarEnvelopeProdutos(produtosArr, etapaProducaoAtual);
   var sp = normalizarStatusProducao(statusProducao);
   var a = sp.arte;
   var o = sp.os;
@@ -509,6 +511,7 @@ function montarLinhaValoresPedido(idGravar, nomeCliente, telefone, dataPedido, d
 function linhaParaPedido(row, temCostura) {
   var sp;
   var rp;
+  var envProd = extrairEnvelopeProdutosColuna(row[6]);
   if (temCostura) {
     sp = {
       arte: asBoolean(row[14]),
@@ -525,16 +528,19 @@ function linhaParaPedido(row, temCostura) {
       detalhePeca: row[23] || '',
       estampaResumo: row[24] || ''
     };
+    var etapaAtual = normalizarEtapaProducaoId(envProd.etapaProducaoAtual);
+    if (!etapaAtual) etapaAtual = etapaDeFlagsProducao(sp);
     return {
       id: row[0],
       cliente: { nome: row[1], telefone: row[2] },
       datas: { pedido: row[3], entrega: row[4] },
       totalPecas: row[5],
-      produtos: parseProdutosSeguro(row[6]),
+      produtos: envProd.produtos,
       observacoes: row[7],
       financeiro: { totalPedido: row[8], valorEntrada: row[9], restante: row[10] },
       statusOperacional: row[11],
       statusProducao: sp,
+      etapaProducaoAtual: etapaAtual,
       resumoProduto: rp,
       responsavelAtual: row[25] || 'ISABELA SIRAY',
       tagPedido: row[26] || 'PEDIDO',
@@ -558,16 +564,19 @@ function linhaParaPedido(row, temCostura) {
     detalhePeca: row[22] || '',
     estampaResumo: row[23] || ''
   };
+  var etapaAtualLeg = normalizarEtapaProducaoId(envProd.etapaProducaoAtual);
+  if (!etapaAtualLeg) etapaAtualLeg = etapaDeFlagsProducao(sp);
   return {
     id: row[0],
     cliente: { nome: row[1], telefone: row[2] },
     datas: { pedido: row[3], entrega: row[4] },
     totalPecas: row[5],
-    produtos: parseProdutosSeguro(row[6]),
+    produtos: envProd.produtos,
     observacoes: row[7],
     financeiro: { totalPedido: row[8], valorEntrada: row[9], restante: row[10] },
     statusOperacional: row[11],
     statusProducao: sp,
+    etapaProducaoAtual: etapaAtualLeg,
     resumoProduto: rp,
     responsavelAtual: row[24] || 'ISABELA SIRAY',
     tagPedido: row[25] || 'PEDIDO',
@@ -679,14 +688,7 @@ function asBoolean(valor) {
 }
 
 function parseProdutosSeguro(valor) {
-  if (!valor) return [];
-  if (Array.isArray(valor)) return valor;
-  try {
-    var parsed = JSON.parse(valor);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (erro) {
-    return [];
-  }
+  return extrairEnvelopeProdutosColuna(valor).produtos;
 }
 
 function normalizarId(valor) {
@@ -775,6 +777,84 @@ function normalizarStatusProducao(statusProducao) {
     estampa: asBoolean(s.estampa),
     prontoParaEnvio: asBoolean(s.prontoParaEnvio)
   };
+}
+
+var ETAPAS_PRODUCAO_VALIDAS = [
+  'pedido_feito', 'fechamento_arte', 'insumos', 'corte', 'estampa', 'costura', 'embalo', 'aguardando_retirada'
+];
+
+function normalizarEtapaProducaoId(valor) {
+  var s = String(valor || '').trim().toLowerCase().replace(/\s+/g, '_');
+  var i;
+  for (i = 0; i < ETAPAS_PRODUCAO_VALIDAS.length; i++) {
+    if (ETAPAS_PRODUCAO_VALIDAS[i] === s) return ETAPAS_PRODUCAO_VALIDAS[i];
+  }
+  var mapa = {
+    'pedido feito': 'pedido_feito',
+    'fechamento de arte': 'fechamento_arte',
+    'aguardando retirada': 'aguardando_retirada',
+    'aguardando_retirar': 'aguardando_retirada'
+  };
+  if (mapa[s]) return mapa[s];
+  return '';
+}
+
+function statusProducaoDerivadoDeEtapa(etapaId) {
+  var id = normalizarEtapaProducaoId(etapaId) || 'pedido_feito';
+  var ordem = ['pedido_feito', 'fechamento_arte', 'insumos', 'corte', 'estampa', 'costura', 'embalo', 'aguardando_retirada'];
+  var idx = ordem.indexOf(id);
+  if (idx < 0) idx = 0;
+  return {
+    arte: idx >= 1,
+    os: idx >= 2,
+    corte: idx >= 3,
+    estampa: idx >= 4,
+    costura: idx >= 5,
+    prontoParaEnvio: idx >= 7
+  };
+}
+
+function etapaDeFlagsProducao(sp) {
+  if (!sp || typeof sp !== 'object') return 'pedido_feito';
+  if (asBoolean(sp.prontoParaEnvio)) return 'aguardando_retirada';
+  if (asBoolean(sp.costura)) return 'costura';
+  if (asBoolean(sp.estampa)) return 'estampa';
+  if (asBoolean(sp.corte)) return 'corte';
+  if (asBoolean(sp.os)) return 'insumos';
+  if (asBoolean(sp.arte)) return 'fechamento_arte';
+  return 'pedido_feito';
+}
+
+function extrairEnvelopeProdutosColuna(valor) {
+  if (valor === null || valor === undefined || valor === '') {
+    return { produtos: [], etapaProducaoAtual: '' };
+  }
+  if (Array.isArray(valor)) {
+    return { produtos: valor, etapaProducaoAtual: '' };
+  }
+  var raw = String(valor).trim();
+  if (!raw) return { produtos: [], etapaProducaoAtual: '' };
+  try {
+    var parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return { produtos: parsed, etapaProducaoAtual: '' };
+    if (parsed && typeof parsed === 'object' && Array.isArray(parsed.produtos)) {
+      return {
+        produtos: parsed.produtos,
+        etapaProducaoAtual: String(parsed.etapaProducaoAtual || '').trim()
+      };
+    }
+  } catch (e1) {
+    return { produtos: [], etapaProducaoAtual: '' };
+  }
+  return { produtos: [], etapaProducaoAtual: '' };
+}
+
+function serializarEnvelopeProdutos(produtosArr, etapaProducaoAtual) {
+  var et = normalizarEtapaProducaoId(etapaProducaoAtual) || 'pedido_feito';
+  return JSON.stringify({
+    produtos: Array.isArray(produtosArr) ? produtosArr : [],
+    etapaProducaoAtual: et
+  });
 }
 
 function extrairResumoProduto(produto) {

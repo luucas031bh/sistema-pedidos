@@ -600,18 +600,9 @@ function preencherFormularioCompleto(pedido) {
     const selStatus = document.getElementById('statusOperacionalIndex');
     if (selStatus) selStatus.value = statusAtual;
 
-    const sp = pedido.statusProducao || {};
-    const mapChk = [
-        ['statusArteIndex', 'arte'],
-        ['statusOSIndex', 'os'],
-        ['statusCorteIndex', 'corte'],
-        ['statusCosturaIndex', 'costura'],
-        ['statusEstampaOkIndex', 'estampa'],
-        ['statusProntoEnvioIndex', 'prontoParaEnvio']
-    ];
-    mapChk.forEach(([id, key]) => {
-        const el = document.getElementById(id);
-        if (el) el.checked = !!sp[key];
+    const etapaId = resolverEtapaProducaoPedido(pedido);
+    document.querySelectorAll('input[name="etapaProducaoAtual"]').forEach((r) => {
+        r.checked = r.value === etapaId;
     });
 
     const listaProdutos = Array.isArray(pedido.produtos) && pedido.produtos.length ? pedido.produtos : [{}];
@@ -729,15 +720,46 @@ function validarFormulario() {
     return estadoApp.produtos.length > 0;
 }
 
-function obterStatusProducaoDoFormulario() {
-    return {
-        arte: Boolean(document.getElementById('statusArteIndex')?.checked),
-        os: Boolean(document.getElementById('statusOSIndex')?.checked),
-        corte: Boolean(document.getElementById('statusCorteIndex')?.checked),
-        costura: Boolean(document.getElementById('statusCosturaIndex')?.checked),
-        estampa: Boolean(document.getElementById('statusEstampaOkIndex')?.checked),
-        prontoParaEnvio: Boolean(document.getElementById('statusProntoEnvioIndex')?.checked)
+function idsEtapasProducaoValidas() {
+    return (CONFIG.ETAPAS_PRODUCAO || []).map((e) => e.id);
+}
+
+function normalizarIdEtapaProducao(valor) {
+    const s = String(valor || '').trim().toLowerCase().replace(/\s+/g, '_');
+    const valid = idsEtapasProducaoValidas();
+    if (valid.includes(s)) return s;
+    const mapa = {
+        'pedido feito': 'pedido_feito',
+        'fechamento de arte': 'fechamento_arte',
+        'fechamento_arte': 'fechamento_arte',
+        'aguardando retirada': 'aguardando_retirada',
+        'aguardando_retirar': 'aguardando_retirada'
     };
+    const m = mapa[s];
+    return valid.includes(m) ? m : '';
+}
+
+function derivarEtapaDeFlagsLegado(sp) {
+    if (!sp || typeof sp !== 'object') return 'pedido_feito';
+    if (sp.prontoParaEnvio) return 'aguardando_retirada';
+    if (sp.costura) return 'costura';
+    if (sp.estampa) return 'estampa';
+    if (sp.corte) return 'corte';
+    if (sp.os) return 'insumos';
+    if (sp.arte) return 'fechamento_arte';
+    return 'pedido_feito';
+}
+
+function resolverEtapaProducaoPedido(pedido) {
+    const direto = normalizarIdEtapaProducao(pedido.etapaProducaoAtual);
+    if (direto) return direto;
+    return derivarEtapaDeFlagsLegado(pedido.statusProducao || {});
+}
+
+function obterEtapaProducaoDoFormulario() {
+    const sel = document.querySelector('input[name="etapaProducaoAtual"]:checked');
+    const id = sel ? normalizarIdEtapaProducao(sel.value) : '';
+    return id || 'pedido_feito';
 }
 
 function coletarDadosFormulario() {
@@ -764,21 +786,14 @@ function coletarDadosFormulario() {
             idBusca: document.getElementById('idBusca')?.value || Utils.obterIdBusca(tel) || base.idBusca,
             atualizacao: true,
             statusOperacional: document.getElementById('statusOperacionalIndex')?.value || CONFIG.STATUS_PEDIDO[0],
-            statusProducao: obterStatusProducaoDoFormulario()
+            etapaProducaoAtual: obterEtapaProducaoDoFormulario()
         };
     }
 
     return {
         ...base,
         statusOperacional: 'Novo pedido',
-        statusProducao: {
-            arte: false,
-            os: false,
-            corte: false,
-            costura: false,
-            estampa: false,
-            prontoParaEnvio: false
-        }
+        etapaProducaoAtual: 'pedido_feito'
     };
 }
 

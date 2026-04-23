@@ -131,6 +131,18 @@ const CONFIG = {
         'Algodão com Elastano (98% Algodão 2% Elastano)'
     ],
     
+    // Etapa única de produção (valor gravado em etapaProducaoAtual)
+    ETAPAS_PRODUCAO: [
+        { id: 'pedido_feito', label: 'Pedido Feito' },
+        { id: 'fechamento_arte', label: 'Fechamento de Arte' },
+        { id: 'insumos', label: 'Insumos' },
+        { id: 'corte', label: 'Corte' },
+        { id: 'estampa', label: 'Estampa' },
+        { id: 'costura', label: 'Costura' },
+        { id: 'embalo', label: 'Embalo' },
+        { id: 'aguardando_retirada', label: 'Aguardando Retirada' }
+    ],
+    
     // Status operacionais (select único; valores gravados na planilha como texto)
     STATUS_PEDIDO: [
         'Novo pedido',
