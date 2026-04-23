@@ -374,6 +374,7 @@ function salvarPedido(dados) {
         sheet.getRange(i + 1, 1, 1, colunas).setValues([linhaVals]);
         idResposta = normalizarId(idGravar) || idPedido;
       }
+      SpreadsheetApp.flush();
       var respEdicao = {
         sucesso: true,
         mensagem: 'Pedido atualizado',
@@ -400,6 +401,7 @@ function salvarPedido(dados) {
         idBuscaVal, temCostura
       );
       sheet.getRange(i0 + 1, 1, 1, colunas).setValues([linhaVals0]);
+      SpreadsheetApp.flush();
       return {
         sucesso: true,
         mensagem: 'Pedido atualizado',
@@ -415,6 +417,7 @@ function salvarPedido(dados) {
       idBuscaVal, temCostura
     );
     sheet.appendRow(linhaNova);
+    SpreadsheetApp.flush();
 
     return { sucesso: true, mensagem: 'Pedido salvo', id: idPedido, operacao: 'criado' };
   } catch (erro) {
@@ -432,37 +435,46 @@ function buscarPedido(termo) {
     const termoId = normalizarId(termo);
     var i;
     var temCosturaBusca = planilhaPedidosTemColunaCostura(sheet);
+
+    // Coleta todos os índices que batem por ID, depois escolhe a linha mais recente
+    var indicesPorId = [];
     for (i = 1; i < dados.length; i++) {
-      if (idsCorrespondem(dados[i][0], termoId)) {
-        return { sucesso: true, pedido: linhaParaPedido(dados[i], temCosturaBusca) };
-      }
+      if (idsCorrespondem(dados[i][0], termoId)) indicesPorId.push(i);
+    }
+    if (indicesPorId.length > 0) {
+      var linhaId = escolherLinhaMaisRecente(dados, indicesPorId);
+      return { sucesso: true, pedido: linhaParaPedido(dados[linhaId], temCosturaBusca) };
     }
 
     var termoSoDigitos = normalizarTelefone(termo);
     if (termoSoDigitos.length === 4) {
       var idxIdBusca = temCosturaBusca ? 27 : 26;
+      var indicesIb = [];
       for (i = 1; i < dados.length; i++) {
         var rowIb = dados[i];
         var celIb = rowIb.length > idxIdBusca ? rowIb[idxIdBusca] : '';
-        if (normalizarIdBuscaPlanilha(celIb) === termoSoDigitos) {
-          return { sucesso: true, pedido: linhaParaPedido(rowIb, temCosturaBusca) };
-        }
+        if (normalizarIdBuscaPlanilha(celIb) === termoSoDigitos) indicesIb.push(i);
+      }
+      if (indicesIb.length > 0) {
+        var linhaIb = escolherLinhaMaisRecente(dados, indicesIb);
+        return { sucesso: true, pedido: linhaParaPedido(dados[linhaIb], temCosturaBusca) };
       }
     }
 
     const termoStr = String(termo || '').toLowerCase();
     const termoTelefone = normalizarTelefone(termo);
+    var indicesNomeFone = [];
     for (i = 1; i < dados.length; i++) {
       const row = dados[i];
       const rowNome = String(row[1] || '').toLowerCase();
       const rowTelefone = normalizarTelefone(row[2]);
       var matchNome = termoStr.length > 0 && rowNome.indexOf(termoStr) !== -1;
       var matchFone = termoTelefone.length > 0 && rowTelefone === termoTelefone;
-      if (matchNome || matchFone) {
-        return { sucesso: true, pedido: linhaParaPedido(row, temCosturaBusca) };
-      }
+      if (matchNome || matchFone) indicesNomeFone.push(i);
     }
-    return { sucesso: false, erro: 'Pedido não encontrado' };
+    if (indicesNomeFone.length === 0) return { sucesso: false, erro: 'Pedido não encontrado' };
+    var linhaNf = escolherLinhaMaisRecente(dados, indicesNomeFone);
+    return { sucesso: true, pedido: linhaParaPedido(dados[linhaNf], temCosturaBusca) };
   } catch (erro) {
     return { sucesso: false, erro: erro.toString() };
   }
@@ -780,6 +792,28 @@ function obterTimestampSeguro(valorData) {
   var data = valorData instanceof Date ? valorData : new Date(valorData);
   var timestamp = data.getTime();
   return Number.isNaN(timestamp) ? 0 : timestamp;
+}
+
+/**
+ * Entre várias linhas da planilha (índices 1..n em dados), escolhe a mais recente
+ * por Data Modificação (col 14 / índice 13); se vazia, Data Criação (índice 12).
+ * Em empate, a última candidata vence (mesma regra de listarPedidos).
+ */
+function escolherLinhaMaisRecente(dadosPlanilha, indicesLinha) {
+  if (!indicesLinha || indicesLinha.length === 0) return -1;
+  if (indicesLinha.length === 1) return indicesLinha[0];
+  var best = indicesLinha[0];
+  var bestTs = obterTimestampSeguro(dadosPlanilha[best][13] || dadosPlanilha[best][12]);
+  var k;
+  for (k = 1; k < indicesLinha.length; k++) {
+    var idx = indicesLinha[k];
+    var ts = obterTimestampSeguro(dadosPlanilha[idx][13] || dadosPlanilha[idx][12]);
+    if (ts >= bestTs) {
+      best = idx;
+      bestTs = ts;
+    }
+  }
+  return best;
 }
 
 /**
