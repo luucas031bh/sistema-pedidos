@@ -869,7 +869,7 @@ function normalizarStatusProducao(statusProducao) {
 }
 
 var ETAPAS_PRODUCAO_VALIDAS = [
-  'Pedido em Aberto', 'Arte', 'Insumos', 'Corte', 'Estampa', 'Embalo', 'Aguardando retirada'
+  'Pedido em Aberto', 'Arte', 'Insumos', 'Corte', 'Estampa', 'Costura', 'Embalo', 'Aguardando retirada'
 ];
 
 function normalizarEtapaProducaoId(valor) {
@@ -883,7 +883,7 @@ function normalizarEtapaProducaoId(valor) {
 
 function statusProducaoDerivadoDeEtapa(etapaId) {
   var id = normalizarEtapaProducaoId(etapaId) || 'Pedido em Aberto';
-  var ordem = ['Pedido em Aberto', 'Arte', 'Insumos', 'Corte', 'Estampa', 'Embalo', 'Aguardando retirada'];
+  var ordem = ['Pedido em Aberto', 'Arte', 'Insumos', 'Corte', 'Estampa', 'Costura', 'Embalo', 'Aguardando retirada'];
   var idx = ordem.indexOf(id);
   if (idx < 0) idx = 0;
   return {
@@ -891,14 +891,15 @@ function statusProducaoDerivadoDeEtapa(etapaId) {
     os: idx >= 2,
     corte: idx >= 3,
     estampa: idx >= 4,
-    costura: false,
-    prontoParaEnvio: idx >= 6
+    costura: idx >= 5,
+    prontoParaEnvio: idx >= 7
   };
 }
 
 function etapaDeFlagsProducao(sp) {
   if (!sp || typeof sp !== 'object') return 'Pedido em Aberto';
   if (asBoolean(sp.prontoParaEnvio)) return 'Aguardando retirada';
+  if (asBoolean(sp.costura)) return 'Costura';
   if (asBoolean(sp.estampa)) return 'Estampa';
   if (asBoolean(sp.corte)) return 'Corte';
   if (asBoolean(sp.os)) return 'Insumos';

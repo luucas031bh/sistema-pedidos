@@ -138,6 +138,7 @@ const CONFIG = {
         'Insumos',
         'Corte',
         'Estampa',
+        'Costura',
         'Embalo',
         'Aguardando retirada'
     ],

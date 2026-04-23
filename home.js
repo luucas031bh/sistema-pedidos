@@ -111,6 +111,68 @@ function textoDiasParaEntrega(dataEntrega) {
     return `Atrasado (${atraso} ${atraso === 1 ? 'dia' : 'dias'})`;
 }
 
+/** Dias corridos desde a data do pedido (0 = mesmo dia); null se data inválida. */
+function diasCorridosDesdeDataPedido(dataPedido) {
+    const d = parseDataEntregaLocal(dataPedido);
+    if (!d) return null;
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    d.setHours(0, 0, 0, 0);
+    return Math.round((hoje.getTime() - d.getTime()) / 86400000);
+}
+
+/**
+ * Alinha texto da etapa ao vocabulário de CONFIG.STATUS_PRODUCAO (case-insensitive).
+ * Aceita "Aguardando retirar" etc.
+ */
+function normalizarEtapaProducaoHome(raw) {
+    const s = String(raw || '').trim().toLowerCase();
+    if (!s) return '';
+    if (s === 'aguardando retirar' || s.indexOf('aguardando retir') === 0) {
+        return 'Aguardando retirada';
+    }
+    const lista = (typeof CONFIG !== 'undefined' && Array.isArray(CONFIG.STATUS_PRODUCAO)) ? CONFIG.STATUS_PRODUCAO : [];
+    for (let i = 0; i < lista.length; i++) {
+        if (String(lista[i]).toLowerCase() === s) return lista[i];
+    }
+    return '';
+}
+
+/**
+ * Sufixo de classe para .home-etapa-badge--{verde|amarelo|vermelho|neutro} na fila.
+ * Regras: dias desde data do pedido, exceto Aguardando retirada (compara com data de entrega).
+ */
+function classeBadgeStatusProd(pedido) {
+    const etapa = normalizarEtapaProducaoHome(pedido?.etapaProducaoAtual);
+    if (!etapa) return 'neutro';
+
+    if (etapa === 'Aguardando retirada') {
+        const entrega = parseDataEntregaLocal(pedido.datas?.entrega);
+        if (!entrega) return 'neutro';
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        entrega.setHours(0, 0, 0, 0);
+        return hoje.getTime() > entrega.getTime() ? 'vermelho' : 'verde';
+    }
+
+    const dias = diasCorridosDesdeDataPedido(pedido.datas?.pedido);
+    if (dias === null) return 'neutro';
+
+    const regras = {
+        'Pedido em Aberto': { limite: 2, alerta: 'amarelo' },
+        Arte: { limite: 4, alerta: 'vermelho' },
+        Insumos: { limite: 7, alerta: 'amarelo' },
+        Corte: { limite: 13, alerta: 'amarelo' },
+        Estampa: { limite: 17, alerta: 'amarelo' },
+        Costura: { limite: 24, alerta: 'amarelo' },
+        Embalo: { limite: 26, alerta: 'amarelo' }
+    };
+    const cfg = regras[etapa];
+    if (!cfg) return 'neutro';
+    if (dias >= cfg.limite) return cfg.alerta;
+    return 'verde';
+}
+
 function formatarDataEntregaBR(data) {
     if (!data) return '—';
     if (typeof data === 'string') {
@@ -354,7 +416,9 @@ function renderizarFilaHome(abertos) {
         const tipoRes = resumirTipoPeca(resumo.tipoPeca, resumo.detalhePeca);
         const nome = escapeHtmlHome(pedido.cliente?.nome || '-');
         const idBusca = escapeHtmlHome(obterIdBuscaExibicaoPedido(pedido));
-        const statusProd = escapeHtmlHome(String(pedido.etapaProducaoAtual || '—'));
+        const textoSt = String(pedido.etapaProducaoAtual || '—');
+        const badgeClass = classeBadgeStatusProd(pedido);
+        const statusProd = `<span class="home-etapa-badge home-etapa-badge--${badgeClass}">${escapeHtmlHome(textoSt)}</span>`;
         return `
             <tr>
                 <td><a class="cliente-link" href="${link}" target="_blank" rel="noopener noreferrer">${nome}</a></td>
