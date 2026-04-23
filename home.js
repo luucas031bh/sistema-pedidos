@@ -204,18 +204,27 @@ const LIMITE_DIAS_ETAPA_FILA = {
     embalo: 26
 };
 
+const IDS_ETAPA_PRODUCAO_FALLBACK = ['pedido_feito', 'fechamento_arte', 'insumos', 'corte', 'estampa', 'costura', 'embalo', 'aguardando_retirada'];
+
+function idsEtapasProducaoValidasHome() {
+    const fromConfig = (CONFIG.ETAPAS_PRODUCAO || []).map((e) => e.id).filter(Boolean);
+    if (fromConfig.length) return fromConfig;
+    return IDS_ETAPA_PRODUCAO_FALLBACK.slice();
+}
+
 function normalizarIdEtapaProducaoHome(valor) {
     const s = String(valor || '').trim().toLowerCase().replace(/\s+/g, '_');
-    const valid = (CONFIG.ETAPAS_PRODUCAO || []).map((e) => e.id);
+    const valid = idsEtapasProducaoValidasHome();
     if (valid.includes(s)) return s;
     const mapa = {
         'pedido feito': 'pedido_feito',
         'fechamento de arte': 'fechamento_arte',
+        'fechamento_arte': 'fechamento_arte',
         'aguardando retirada': 'aguardando_retirada',
         'aguardando_retirar': 'aguardando_retirada'
     };
     const m = mapa[s];
-    return valid.includes(m) ? m : 'pedido_feito';
+    return valid.includes(m) ? m : '';
 }
 
 function labelEtapaProducaoHome(id) {
@@ -234,14 +243,10 @@ function diasCorridosDesdeDataPedidoHome(dataPedido) {
     return Math.floor((hoje.getTime() - ref.getTime()) / 86400000);
 }
 
-function resolverEtapaPedidoHome(pedido) {
-    if (pedido.etapaProducaoAtual != null && String(pedido.etapaProducaoAtual).trim() !== '') {
-        return normalizarIdEtapaProducaoHome(pedido.etapaProducaoAtual);
-    }
-    const etapaNoProduto = Array.isArray(pedido.produtos) ? pedido.produtos.find((p) => p && p.etapaProducaoAtual) : null;
-    if (etapaNoProduto && etapaNoProduto.etapaProducaoAtual) {
-        return normalizarIdEtapaProducaoHome(etapaNoProduto.etapaProducaoAtual);
-    }
+/** Ordem: etapa canônica do pedido; se vazia/ inválida, flags legados (planilha antiga). */
+function resolverEtapaParaExibicao(pedido) {
+    const topo = normalizarIdEtapaProducaoHome(pedido.etapaProducaoAtual);
+    if (topo) return topo;
     const sp = pedido.statusProducao || {};
     if (sp.prontoParaEnvio) return 'aguardando_retirada';
     if (sp.costura) return 'costura';
@@ -253,7 +258,7 @@ function resolverEtapaPedidoHome(pedido) {
 }
 
 function classeCorEtapaProducaoFila(pedido) {
-    const etapa = resolverEtapaPedidoHome(pedido);
+    const etapa = resolverEtapaParaExibicao(pedido);
     if (etapa === 'aguardando_retirada') {
         const ent = parseDataEntregaLocal(pedido.datas?.entrega);
         const hoje = new Date();
@@ -429,7 +434,7 @@ function renderizarFilaHome(abertos) {
         const tipoRes = resumirTipoPeca(resumo.tipoPeca, resumo.detalhePeca);
         const nome = escapeHtmlHome(pedido.cliente?.nome || '-');
         const idBusca = escapeHtmlHome(obterIdBuscaExibicaoPedido(pedido));
-        const etapaId = resolverEtapaPedidoHome(pedido);
+        const etapaId = resolverEtapaParaExibicao(pedido);
         const etapaLabel = escapeHtmlHome(labelEtapaProducaoHome(etapaId));
         const etapaCls = classeCorEtapaProducaoFila({ ...pedido, etapaProducaoAtual: etapaId });
         return `

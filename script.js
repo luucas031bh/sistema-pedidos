@@ -600,10 +600,7 @@ function preencherFormularioCompleto(pedido) {
     const selStatus = document.getElementById('statusOperacionalIndex');
     if (selStatus) selStatus.value = statusAtual;
 
-    const etapaId = resolverEtapaProducaoPedido(pedido);
-    document.querySelectorAll('input[name="etapaProducaoAtual"]').forEach((r) => {
-        r.checked = r.value === etapaId;
-    });
+    aplicarEtapaNoFormulario(pedido);
 
     const listaProdutos = Array.isArray(pedido.produtos) && pedido.produtos.length ? pedido.produtos : [{}];
     listaProdutos.forEach((p) => {
@@ -799,21 +796,24 @@ function derivarEtapaDeFlagsLegado(sp) {
     return 'pedido_feito';
 }
 
-function resolverEtapaProducaoPedido(pedido) {
-    const direto = normalizarIdEtapaProducao(pedido.etapaProducaoAtual);
-    if (direto) return direto;
-    const comEtapaNoItem = Array.isArray(pedido.produtos) ? pedido.produtos.find((p) => p && p.etapaProducaoAtual) : null;
-    if (comEtapaNoItem) {
-        const d2 = normalizarIdEtapaProducao(comEtapaNoItem.etapaProducaoAtual);
-        if (d2) return d2;
-    }
+/** Etapa persistida no pedido (API) ou inferida por flags legados. */
+function resolverEtapaPedidoCarregado(pedido) {
+    const topo = normalizarIdEtapaProducao(pedido.etapaProducaoAtual);
+    if (topo) return topo;
     return derivarEtapaDeFlagsLegado(pedido.statusProducao || {});
 }
 
-function obterEtapaProducaoDoFormulario() {
+function lerEtapaDoFormulario() {
     const sel = document.querySelector('input[name="etapaProducaoAtual"]:checked');
     const id = sel ? normalizarIdEtapaProducao(sel.value) : '';
     return id || 'pedido_feito';
+}
+
+function aplicarEtapaNoFormulario(pedido) {
+    const etapaId = resolverEtapaPedidoCarregado(pedido);
+    document.querySelectorAll('input[name="etapaProducaoAtual"]').forEach((r) => {
+        r.checked = r.value === etapaId;
+    });
 }
 
 function statusProducaoDerivadoDaEtapaNoFrontend(etapaId) {
@@ -835,9 +835,9 @@ function coletarDadosFormulario() {
     const totalPedido = Utils.limparMoeda(document.getElementById('resumoTotalPedido').textContent);
     const valorEntrada = parseFloat(document.getElementById('valorEntrada').value || '0');
     const tel = document.getElementById('telefone').value;
-    const etapaProducaoAtual = obterEtapaProducaoDoFormulario();
+    const etapaProducaoAtual = lerEtapaDoFormulario();
     const statusProducaoCompat = statusProducaoDerivadoDaEtapaNoFrontend(etapaProducaoAtual);
-    const produtosComEtapa = estadoApp.produtos.map((p) => ({ ...coletarProduto(p.id), etapaProducaoAtual }));
+    const produtosLimpos = estadoApp.produtos.map((p) => coletarProduto(p.id));
     const base = {
         id: document.getElementById('idPedido').value || Utils.gerarID(tel),
         idBusca: Utils.obterIdBusca(tel),
@@ -848,7 +848,7 @@ function coletarDadosFormulario() {
         responsavelAtual: document.getElementById('responsavelAtual')?.value || 'ISABELA SIRAY',
         tagPedido: document.getElementById('tagPedido')?.value || 'PEDIDO',
         financeiro: { totalPedido, valorEntrada, restante: totalPedido - valorEntrada },
-        produtos: produtosComEtapa
+        produtos: produtosLimpos
     };
 
     if (estadoApp.modoEdicao && estadoApp.idEdicao) {
