@@ -41,8 +41,8 @@ const CONFIG = {
     // Tamanhos disponíveis
     TAMANHOS: [
         '2', '4', '6', '8', '10', '12', '14',
-        'PP', 'P', 'M', 'G', 'GG', 'EG', 'XX',
-        'PP (BL)', 'P (BL)', 'M (BL)', 'G (BL)', 'GG (BL)'
+        'PP', 'P', 'M', 'G', 'GG', 'G1', 'G2', 'G3', 'G4',
+        'PP (BL)', 'P (BL)', 'M (BL)', 'G (BL)', 'GG (BL)', 'G1 (BL)', 'G2 (BL)', 'G3 (BL)', 'G4 (BL)'
     ],
     
     // Tipos de Estampas
@@ -124,6 +124,7 @@ const CONFIG = {
         'DryFit (100% Poliéster)',
         'Dry Poliamida (100% Poliamida)',
         'Helanca Light (100% Poliéster)',
+        'Tricoline Ibiza (Composição)',
         'Piquet (50% Algodão 50% Poliéster)',
         'Moletom (50% Algodão 50% Poliéster)',
         'Malha PP (100% Poliéster)',

@@ -155,8 +155,8 @@ function adicionarProduto() {
           <div class="custo-item"><span class="custo-label">Total unitário:</span><span class="custo-valor" id="custoTotal-${produtoId}">R$ 0,00</span></div>
         </div>
         <div class="form-row mt-2">
-          <div class="form-group"><label class="form-label required">Margem (%)</label><input type="number" class="form-input" id="margemLucro-${produtoId}" min="0" value="${CONFIG.CALCULOS.margemLucroPadrao}" onchange="calcularCustosProduto(${produtoId})"></div>
-          <div class="form-group"><label class="form-label">Preço unitário</label><input type="text" class="form-input" id="precoUnitario-${produtoId}" disabled></div>
+          <div class="form-group"><label class="form-label required">Margem (%)</label><input type="number" class="form-input" id="margemLucro-${produtoId}" min="0" step="0.01" value="${CONFIG.CALCULOS.margemLucroPadrao}" onchange="calcularCustosProduto(${produtoId}, 'margem')"></div>
+          <div class="form-group"><label class="form-label">Preço unitário</label><input type="number" class="form-input" id="precoUnitario-${produtoId}" min="0" step="0.01" onchange="calcularCustosProduto(${produtoId}, 'precoUnitario')"></div>
           <div class="form-group"><label class="form-label">Valor total</label><input type="text" class="form-input" id="valorTotalProduto-${produtoId}" disabled></div>
         </div>
       </div>
@@ -247,7 +247,58 @@ function atualizarLocalidadesEstampa(selectTipo) {
     }
 }
 
-function calcularCustosProduto(produtoId) {
+function normalizarTipoMalhaParaCalculo(tipoMalha) {
+    const aliases = {
+        'Tricoline Ibiza (Composição)': 'Piquet (50% Algodão 50% Poliéster)'
+    };
+    return aliases[tipoMalha] || tipoMalha;
+}
+
+function normalizarTamanhoParaCalculo(tamanho) {
+    const aliases = {
+        G1: 'EG',
+        G2: 'EG',
+        G3: 'EG',
+        G4: 'EG',
+        'G1 (BL)': 'EG',
+        'G2 (BL)': 'EG',
+        'G3 (BL)': 'EG',
+        'G4 (BL)': 'EG'
+    };
+    return aliases[tamanho] || tamanho;
+}
+
+function calcularFatorTamanhoProduto(produtoId) {
+    // Fatores atuais mantidos em 1; novos tamanhos herdam a base de EG temporariamente.
+    const fatorPorTamanho = {
+        '2': 1, '4': 1, '6': 1, '8': 1, '10': 1, '12': 1, '14': 1,
+        PP: 1, P: 1, M: 1, G: 1, GG: 1, EG: 1, XX: 1,
+        'PP (BL)': 1, 'P (BL)': 1, 'M (BL)': 1, 'G (BL)': 1, 'GG (BL)': 1
+    };
+    let totalQtd = 0;
+    let somaPonderada = 0;
+    document.querySelectorAll(`#tamanhosBody-${produtoId} tr`).forEach((tr) => {
+        const tamanhoRaw = tr.querySelector('select')?.value || '';
+        const tamanho = normalizarTamanhoParaCalculo(tamanhoRaw);
+        const quantidade = parseInt(tr.querySelector('input[type="number"]')?.value || '0', 10) || 0;
+        if (!quantidade) return;
+        const fator = fatorPorTamanho[tamanho] || 1;
+        totalQtd += quantidade;
+        somaPonderada += fator * quantidade;
+    });
+    if (!totalQtd) return 1;
+    return somaPonderada / totalQtd;
+}
+
+function obterValorNumericoInput(input) {
+    if (!input) return NaN;
+    const bruto = String(input.value || '').trim();
+    if (!bruto) return NaN;
+    const normalizado = bruto.replace(',', '.');
+    return parseFloat(normalizado);
+}
+
+function calcularCustosProduto(produtoId, origem = 'margem') {
     const custoMalhaMap = {
         'PV (65% Poliéster 35% Viscose)': 8.91, 'Algodão Peteado (100% Algodão)': 8.25,
         'Piquet (50% Algodão 50% Poliéster)': 11.79, 'DryFit (100% Poliéster)': 7.30,
@@ -257,17 +308,32 @@ function calcularCustosProduto(produtoId) {
     };
     const custoMaoObraMap = { 'Camisas Comum': 4.50, 'Camisas POLO': 16.00, Moletons: 19.50, 'Camisa Social': 4.50 };
 
-    const tipoMalha = document.getElementById(`tipoMalha-${produtoId}`)?.value || '';
+    const tipoMalha = normalizarTipoMalhaParaCalculo(document.getElementById(`tipoMalha-${produtoId}`)?.value || '');
     const tipoPeca = document.getElementById(`tipoPeca-${produtoId}`)?.value || '';
-    const margem = parseFloat(document.getElementById(`margemLucro-${produtoId}`)?.value || '100');
+    const margemInput = document.getElementById(`margemLucro-${produtoId}`);
+    const precoUnitarioInput = document.getElementById(`precoUnitario-${produtoId}`);
+    const margem = parseFloat(margemInput?.value || '100');
     const quantidade = obterQuantidadeProduto(produtoId);
+    const fatorTamanho = calcularFatorTamanhoProduto(produtoId);
 
-    const custoMalha = custoMalhaMap[tipoMalha] || 0;
+    const custoMalha = (custoMalhaMap[tipoMalha] || 0) * fatorTamanho;
     const custoMaoObra = custoMaoObraMap[tipoPeca] || 0;
     const custoEstampas = calcularCustoEstampas(produtoId);
     const custoFixo = 10;
     const custoTotal = custoMalha + custoMaoObra + custoEstampas + custoFixo;
-    const precoUnitario = custoTotal * (1 + margem / 100);
+    let precoUnitario = custoTotal * (1 + margem / 100);
+
+    if (origem === 'precoUnitario') {
+        const precoDigitado = obterValorNumericoInput(precoUnitarioInput);
+        if (!Number.isNaN(precoDigitado) && precoDigitado >= 0) {
+            precoUnitario = precoDigitado;
+            if (custoTotal > 0 && margemInput) {
+                const margemCalculada = ((precoUnitario / custoTotal) - 1) * 100;
+                margemInput.value = Utils.arredondar(margemCalculada).toFixed(2);
+            }
+        }
+    }
+
     const valorTotal = precoUnitario * quantidade;
 
     document.getElementById(`custoMalha-${produtoId}`).textContent = Utils.formatarMoeda(custoMalha);
@@ -275,7 +341,7 @@ function calcularCustosProduto(produtoId) {
     document.getElementById(`custoEstampas-${produtoId}`).textContent = Utils.formatarMoeda(custoEstampas);
     document.getElementById(`custoFixo-${produtoId}`).textContent = Utils.formatarMoeda(custoFixo);
     document.getElementById(`custoTotal-${produtoId}`).textContent = Utils.formatarMoeda(custoTotal);
-    document.getElementById(`precoUnitario-${produtoId}`).value = Utils.formatarMoeda(precoUnitario);
+    if (precoUnitarioInput) precoUnitarioInput.value = Utils.arredondar(precoUnitario).toFixed(2);
     document.getElementById(`valorTotalProduto-${produtoId}`).value = Utils.formatarMoeda(valorTotal);
 
     const item = estadoApp.produtos.find((p) => p.id === produtoId);
@@ -414,7 +480,7 @@ function desativarSomenteLeituraIndex() {
         const n = document.getElementById(id);
         if (n) n.disabled = true;
     });
-    document.querySelectorAll('[id^="precoUnitario-"], [id^="valorTotalProduto-"]').forEach((el) => {
+    document.querySelectorAll('[id^="valorTotalProduto-"]').forEach((el) => {
         el.disabled = true;
     });
 }
@@ -717,6 +783,8 @@ function coletarDadosFormulario() {
 }
 
 function coletarProduto(produtoId) {
+    const precoUnitarioInput = document.getElementById(`precoUnitario-${produtoId}`);
+    const precoUnitarioNumero = obterValorNumericoInput(precoUnitarioInput);
     const produto = {
         numero: produtoId,
         tipoPeca: document.getElementById(`tipoPeca-${produtoId}`)?.value || '',
@@ -724,7 +792,7 @@ function coletarProduto(produtoId) {
         tipoMalha: document.getElementById(`tipoMalha-${produtoId}`)?.value || '',
         corMalha: document.getElementById(`corMalha-${produtoId}`)?.value || '',
         margemLucro: parseFloat(document.getElementById(`margemLucro-${produtoId}`)?.value || '0'),
-        precoUnitario: Utils.limparMoeda(document.getElementById(`precoUnitario-${produtoId}`)?.value || '0'),
+        precoUnitario: Number.isNaN(precoUnitarioNumero) ? 0 : precoUnitarioNumero,
         valorTotal: Utils.limparMoeda(document.getElementById(`valorTotalProduto-${produtoId}`)?.value || '0'),
         custos: {
             malha: Utils.limparMoeda(document.getElementById(`custoMalha-${produtoId}`)?.textContent || '0'),

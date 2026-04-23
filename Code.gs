@@ -277,6 +277,7 @@ function salvarPedido(dados) {
     const vendedor = dados.responsavelAtual || dados.vendedor || 'ISABELA SIRAY';
     const tagPedido = dados.tagPedido || 'PEDIDO';
     const statusProducao = normalizarStatusProducao(dados.statusProducao || {});
+    dados.produtos = normalizarProdutosParaCalculoTemporario(dados.produtos);
     const resumoProduto = extrairResumoProduto((dados.produtos && dados.produtos[0]) || {});
 
     const dadosPlanilha = sheet.getDataRange().getValues();
@@ -790,6 +791,46 @@ function extrairResumoProduto(produto) {
     detalhePeca: produto.detalhesPeca || produto.detalhePeca || '',
     estampaResumo: estampaResumo
   };
+}
+
+function normalizarTipoMalhaParaCalculoTemporario(tipoMalha) {
+  var valor = String(tipoMalha || '');
+  if (valor === 'Tricoline Ibiza (Composição)') return 'Piquet (50% Algodão 50% Poliéster)';
+  return valor;
+}
+
+function normalizarTamanhoParaCalculoTemporario(tamanho) {
+  var valor = String(tamanho || '');
+  var aliases = {
+    'G1': 'EG',
+    'G2': 'EG',
+    'G3': 'EG',
+    'G4': 'EG',
+    'G1 (BL)': 'EG',
+    'G2 (BL)': 'EG',
+    'G3 (BL)': 'EG',
+    'G4 (BL)': 'EG'
+  };
+  return aliases[valor] || valor;
+}
+
+function normalizarProdutosParaCalculoTemporario(produtos) {
+  if (!Array.isArray(produtos)) return [];
+  return produtos.map(function(produto) {
+    var p = produto && typeof produto === 'object' ? produto : {};
+    var tamanhos = Array.isArray(p.tamanhos) ? p.tamanhos : [];
+    var tamanhosCalculo = tamanhos.map(function(item) {
+      return {
+        tamanhoOriginal: item && item.tamanho ? item.tamanho : '',
+        tamanhoCalculo: normalizarTamanhoParaCalculoTemporario(item && item.tamanho),
+        quantidade: Number(item && item.quantidade) || 0
+      };
+    });
+    return Object.assign({}, p, {
+      tipoMalhaCalculo: normalizarTipoMalhaParaCalculoTemporario(p.tipoMalha),
+      tamanhosCalculo: tamanhosCalculo
+    });
+  });
 }
 
 function getStats() {
