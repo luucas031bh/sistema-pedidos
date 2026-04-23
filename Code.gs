@@ -5,6 +5,8 @@ const CONFIG = {
     CUSTOS_MALHAS: 'CUSTOS_MALHAS',
     CUSTOS_MAO_OBRA: 'CUSTOS_MAO_OBRA',
     CUSTOS_ESTAMPAS: 'CUSTOS_ESTAMPAS',
+    CUSTOS_TAMANHOS: 'CUSTOS_TAMANHOS',
+    CONFIG_CALC_GERAL: 'CONFIG_CALC_GERAL',
     LOCALIDADES_ESTAMPAS: 'LOCALIDADES_ESTAMPAS',
     DASHBOARD_DATA: 'DASHBOARD_DATA'
   }
@@ -122,6 +124,7 @@ function doGet(e) {
     if (acao === 'buscarPedido') return resposta(buscarPedido((e.parameter && e.parameter.termo) || ''));
     if (acao === 'buscarPedidos') return resposta(buscarPedidos((e.parameter && e.parameter.termo) || ''));
     if (acao === 'obterDados') return resposta(obterDados());
+    if (acao === 'obterConfigCalculo') return resposta(obterConfigCalculo());
     if (acao === 'listarPedidos' || acao === 'obterFila') return resposta(listarPedidos((e.parameter && e.parameter.filtro) || ''));
     if (acao === 'getStats') return resposta({ sucesso: true, stats: getStats() });
 
@@ -238,6 +241,8 @@ function doPost(e) {
       return resposta(buscarPedidos(termoBusca));
     }
     if (acao === 'obterDados') return resposta(obterDados());
+    if (acao === 'obterConfigCalculo') return resposta(obterConfigCalculo());
+    if (acao === 'salvarConfigCalculo') return resposta(salvarConfigCalculo(dados));
     if (acao === 'listarPedidos' || acao === 'obterFila') return resposta(listarPedidos(dados.filtro || ''));
 
     return resposta({ sucesso: false, erro: 'Ação inválida: ' + acao });
@@ -690,13 +695,372 @@ function listarPedidos(filtro) {
 
 // ================= OBTER DADOS =================
 function obterDados() {
+  var cfg = obterConfigCalculo();
+  if (!cfg.sucesso) {
+    return {
+      sucesso: true,
+      custosMalhas: [],
+      custosMaoObra: [],
+      custosEstampas: [],
+      localidadesEstampas: [],
+      aviso: cfg.erro || ''
+    };
+  }
   return {
     sucesso: true,
-    custosMalhas: [],
-    custosMaoObra: [],
-    custosEstampas: [],
-    localidadesEstampas: []
+    custosMalhas: cfg.malhas || [],
+    custosMaoObra: cfg.maoObra || [],
+    custosEstampas: cfg.estampas || [],
+    localidadesEstampas: [],
+    configCalculo: cfg
   };
+}
+
+// ================= CONFIG CÁLCULO (planilha) =================
+
+function garantirAbasConfigCalculo() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var nomes = [
+    CONFIG.ABAS.CUSTOS_MALHAS,
+    CONFIG.ABAS.CUSTOS_MAO_OBRA,
+    CONFIG.ABAS.CUSTOS_ESTAMPAS,
+    CONFIG.ABAS.CUSTOS_TAMANHOS,
+    CONFIG.ABAS.CONFIG_CALC_GERAL
+  ];
+  var i;
+  for (i = 0; i < nomes.length; i++) {
+    if (!ss.getSheetByName(nomes[i])) ss.insertSheet(nomes[i]);
+  }
+}
+
+function garantirCabecalhoConfigSheets() {
+  garantirAbasConfigCalculo();
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh;
+  sh = ss.getSheetByName(CONFIG.ABAS.CUSTOS_MALHAS);
+  if (sh.getLastRow() === 0) {
+    sh.appendRow(['identificador', 'valor']);
+  } else if (String(sh.getRange(1, 1).getValue() || '').trim() === '') {
+    sh.getRange(1, 1, 1, 2).setValues([['identificador', 'valor']]);
+  }
+  sh = ss.getSheetByName(CONFIG.ABAS.CUSTOS_MAO_OBRA);
+  if (sh.getLastRow() === 0) {
+    sh.appendRow(['identificador', 'valor']);
+  } else if (String(sh.getRange(1, 1).getValue() || '').trim() === '') {
+    sh.getRange(1, 1, 1, 2).setValues([['identificador', 'valor']]);
+  }
+  sh = ss.getSheetByName(CONFIG.ABAS.CUSTOS_ESTAMPAS);
+  if (sh.getLastRow() === 0) {
+    sh.appendRow(['tipo', 'valor_10x10', 'valor_10x6', 'valor_a4', 'valor_a3', 'valor_full_print']);
+  } else if (String(sh.getRange(1, 1).getValue() || '').trim() === '') {
+    sh.getRange(1, 1, 1, 6).setValues([['tipo', 'valor_10x10', 'valor_10x6', 'valor_a4', 'valor_a3', 'valor_full_print']]);
+  }
+  sh = ss.getSheetByName(CONFIG.ABAS.CUSTOS_TAMANHOS);
+  if (sh.getLastRow() === 0) {
+    sh.appendRow(['tamanho', 'valor']);
+  } else if (String(sh.getRange(1, 1).getValue() || '').trim() === '') {
+    sh.getRange(1, 1, 1, 2).setValues([['tamanho', 'valor']]);
+  }
+  sh = ss.getSheetByName(CONFIG.ABAS.CONFIG_CALC_GERAL);
+  if (sh.getLastRow() === 0) {
+    sh.appendRow(['chave', 'valor']);
+  } else if (String(sh.getRange(1, 1).getValue() || '').trim() === '') {
+    sh.getRange(1, 1, 1, 2).setValues([['chave', 'valor']]);
+  }
+}
+
+function numeroSeguroConfig(v) {
+  var n = typeof v === 'number' ? v : parseFloat(String(v || '').replace(',', '.'));
+  if (isNaN(n) || !isFinite(n)) return null;
+  return n;
+}
+
+function obterConfigCalculoPadraoObjeto() {
+  return {
+    malhas: [
+      { identificador: 'PV (65% Poliéster 35% Viscose)', valor: 8.91 },
+      { identificador: 'Algodão Peteado (100% Algodão)', valor: 8.25 },
+      { identificador: 'Piquet (50% Algodão 50% Poliéster)', valor: 11.79 },
+      { identificador: 'Tricoline Ibiza (Composição)', valor: 11.79 },
+      { identificador: 'DryFit (100% Poliéster)', valor: 7.30 },
+      { identificador: 'Dry Poliamida (100% Poliamida)', valor: 17.35 },
+      { identificador: 'Moletom (50% Algodão 50% Poliéster)', valor: 20.56 },
+      { identificador: 'Malha PP (100% Poliéster)', valor: 7.48 },
+      { identificador: 'Algodão com Elastano (98% Algodão 2% Elastano)', valor: 8.25 },
+      { identificador: 'Helanca Light (100% Poliéster)', valor: 7.48 }
+    ],
+    maoObra: [
+      { identificador: 'Camisas Comum', valor: 4.50 },
+      { identificador: 'Camisas POLO', valor: 16.00 },
+      { identificador: 'Moletons', valor: 19.50 },
+      { identificador: 'Camisa Social', valor: 4.50 }
+    ],
+    estampas: [
+      { tipo: 'Silk Screen', valor_10x10: 0.88, valor_10x6: 0.88, valor_a4: 3.88, valor_a3: 6.75, valor_full_print: 0 },
+      { tipo: 'DTF (Direct to Film)', valor_10x10: 1.40, valor_10x6: 0.84, valor_a4: 8.74, valor_a3: 17.48, valor_full_print: 0 },
+      { tipo: 'Bordado', valor_10x10: 5.00, valor_10x6: 6.00, valor_a4: 15.00, valor_a3: 15.00, valor_full_print: 0 },
+      { tipo: 'Sublimação Localizada', valor_10x10: 0.30, valor_10x6: 0.30, valor_a4: 1.00, valor_a3: 1.00, valor_full_print: 0 },
+      { tipo: 'Sublimação Total (Full Print)', valor_10x10: 0, valor_10x6: 0, valor_a4: 0, valor_a3: 0, valor_full_print: 5.27 }
+    ],
+    tamanhos: [
+      { tamanho: '2', valor: 1 }, { tamanho: '4', valor: 1 }, { tamanho: '6', valor: 1 }, { tamanho: '8', valor: 1 },
+      { tamanho: '10', valor: 1 }, { tamanho: '12', valor: 1 }, { tamanho: '14', valor: 1 },
+      { tamanho: 'PP', valor: 1 }, { tamanho: 'P', valor: 1 }, { tamanho: 'M', valor: 1 }, { tamanho: 'G', valor: 1 },
+      { tamanho: 'GG', valor: 1 }, { tamanho: 'G1', valor: 1 }, { tamanho: 'G2', valor: 1 }, { tamanho: 'G3', valor: 1 }, { tamanho: 'G4', valor: 1 },
+      { tamanho: 'PP (BL)', valor: 1 }, { tamanho: 'P (BL)', valor: 1 }, { tamanho: 'M (BL)', valor: 1 }, { tamanho: 'G (BL)', valor: 1 },
+      { tamanho: 'GG (BL)', valor: 1 }, { tamanho: 'G1 (BL)', valor: 1 }, { tamanho: 'G2 (BL)', valor: 1 }, { tamanho: 'G3 (BL)', valor: 1 }, { tamanho: 'G4 (BL)', valor: 1 },
+      { tamanho: 'EG', valor: 1 }
+    ],
+    geral: {
+      custo_fixo: 10,
+      margem_padrao: 100,
+      adicional_por_cor_silk: 0.25
+    }
+  };
+}
+
+/** Executar uma vez no editor se as abas estiverem vazias. Também chamado quando leitura não encontra dados. */
+function popularConfigCalculoPadrao() {
+  garantirCabecalhoConfigSheets();
+  var pad = obterConfigCalculoPadraoObjeto();
+  var r = salvarConfigCalculoInternal(pad, false);
+  return r;
+}
+
+function lerMalhasSheet() {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.ABAS.CUSTOS_MALHAS);
+  if (!sh || sh.getLastRow() < 2) return [];
+  var vals = sh.getRange(2, 1, sh.getLastRow(), 2).getValues();
+  var out = [];
+  var i;
+  for (i = 0; i < vals.length; i++) {
+    var id = String(vals[i][0] || '').trim();
+    if (!id) continue;
+    out.push({ identificador: id, valor: numeroSeguroConfig(vals[i][1]) || 0 });
+  }
+  return out;
+}
+
+function lerMaoObraSheet() {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.ABAS.CUSTOS_MAO_OBRA);
+  if (!sh || sh.getLastRow() < 2) return [];
+  var vals = sh.getRange(2, 1, sh.getLastRow(), 2).getValues();
+  var out = [];
+  var i;
+  for (i = 0; i < vals.length; i++) {
+    var id = String(vals[i][0] || '').trim();
+    if (!id) continue;
+    out.push({ identificador: id, valor: numeroSeguroConfig(vals[i][1]) || 0 });
+  }
+  return out;
+}
+
+function lerEstampasSheet() {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.ABAS.CUSTOS_ESTAMPAS);
+  if (!sh || sh.getLastRow() < 2) return [];
+  var vals = sh.getRange(2, 1, sh.getLastRow(), 6).getValues();
+  var out = [];
+  var i;
+  for (i = 0; i < vals.length; i++) {
+    var tipo = String(vals[i][0] || '').trim();
+    if (!tipo) continue;
+    out.push({
+      tipo: tipo,
+      valor_10x10: numeroSeguroConfig(vals[i][1]) || 0,
+      valor_10x6: numeroSeguroConfig(vals[i][2]) || 0,
+      valor_a4: numeroSeguroConfig(vals[i][3]) || 0,
+      valor_a3: numeroSeguroConfig(vals[i][4]) || 0,
+      valor_full_print: numeroSeguroConfig(vals[i][5]) || 0
+    });
+  }
+  return out;
+}
+
+function lerTamanhosSheet() {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.ABAS.CUSTOS_TAMANHOS);
+  if (!sh || sh.getLastRow() < 2) return [];
+  var vals = sh.getRange(2, 1, sh.getLastRow(), 2).getValues();
+  var out = [];
+  var i;
+  for (i = 0; i < vals.length; i++) {
+    var tam = String(vals[i][0] || '').trim();
+    if (!tam) continue;
+    out.push({ tamanho: tam, valor: numeroSeguroConfig(vals[i][1]) });
+    if (out[out.length - 1].valor === null) out[out.length - 1].valor = 1;
+  }
+  return out;
+}
+
+function lerGeralSheet() {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.ABAS.CONFIG_CALC_GERAL);
+  var g = { custo_fixo: 10, margem_padrao: 100, adicional_por_cor_silk: 0.25 };
+  if (!sh || sh.getLastRow() < 2) return g;
+  var vals = sh.getRange(2, 1, sh.getLastRow(), 2).getValues();
+  var i;
+  for (i = 0; i < vals.length; i++) {
+    var k = String(vals[i][0] || '').trim().toLowerCase();
+    var n = numeroSeguroConfig(vals[i][1]);
+    if (n === null) continue;
+    if (k === 'custo_fixo') g.custo_fixo = n;
+    if (k === 'margem_padrao') g.margem_padrao = n;
+    if (k === 'adicional_por_cor_silk') g.adicional_por_cor_silk = n;
+  }
+  return g;
+}
+
+function obterConfigCalculo() {
+  try {
+    garantirCabecalhoConfigSheets();
+    var malhas = lerMalhasSheet();
+    var maoObra = lerMaoObraSheet();
+    var estampas = lerEstampasSheet();
+    var tamanhos = lerTamanhosSheet();
+    var geral = lerGeralSheet();
+    if (malhas.length === 0 && maoObra.length === 0 && estampas.length === 0) {
+      var pad = obterConfigCalculoPadraoObjeto();
+      return { sucesso: true, vazio: true, malhas: pad.malhas, maoObra: pad.maoObra, estampas: pad.estampas, tamanhos: pad.tamanhos, geral: pad.geral };
+    }
+    return { sucesso: true, malhas: malhas, maoObra: maoObra, estampas: estampas, tamanhos: tamanhos, geral: geral };
+  } catch (err) {
+    return { sucesso: false, erro: err.toString() };
+  }
+}
+
+function validarPayloadConfigCalculo(d) {
+  if (!d || typeof d !== 'object') return 'Payload inválido';
+  var malhas = d.malhas;
+  var maoObra = d.maoObra;
+  var estampas = d.estampas;
+  var tamanhos = d.tamanhos;
+  var geral = d.geral;
+  if (!Array.isArray(malhas) || !Array.isArray(maoObra) || !Array.isArray(estampas) || !Array.isArray(tamanhos)) {
+    return 'malhas, maoObra, estampas e tamanhos devem ser arrays';
+  }
+  if (!geral || typeof geral !== 'object') return 'geral obrigatório';
+  var seen = {};
+  var i;
+  for (i = 0; i < malhas.length; i++) {
+    var id = String(malhas[i].identificador || '').trim();
+    if (!id) return 'Malha com identificador vazio';
+    if (seen['m:' + id]) return 'Malha duplicada: ' + id;
+    seen['m:' + id] = 1;
+    var vm = numeroSeguroConfig(malhas[i].valor);
+    if (vm === null || vm < 0) return 'Valor inválido na malha: ' + id;
+  }
+  seen = {};
+  for (i = 0; i < maoObra.length; i++) {
+    id = String(maoObra[i].identificador || '').trim();
+    if (!id) return 'Mão de obra com identificador vazio';
+    if (seen['o:' + id]) return 'Mão de obra duplicada: ' + id;
+    seen['o:' + id] = 1;
+    vm = numeroSeguroConfig(maoObra[i].valor);
+    if (vm === null || vm < 0) return 'Valor inválido em mão de obra: ' + id;
+  }
+  seen = {};
+  for (i = 0; i < estampas.length; i++) {
+    var tp = String(estampas[i].tipo || '').trim();
+    if (!tp) return 'Estampa com tipo vazio';
+    if (seen['e:' + tp]) return 'Estampa duplicada: ' + tp;
+    seen['e:' + tp] = 1;
+    var cols = ['valor_10x10', 'valor_10x6', 'valor_a4', 'valor_a3', 'valor_full_print'];
+    var j;
+    for (j = 0; j < cols.length; j++) {
+      vm = numeroSeguroConfig(estampas[i][cols[j]]);
+      if (vm === null || vm < 0) return 'Valor inválido em estampa ' + tp + ' (' + cols[j] + ')';
+    }
+  }
+  seen = {};
+  for (i = 0; i < tamanhos.length; i++) {
+    var tt = String(tamanhos[i].tamanho || '').trim();
+    if (!tt) return 'Tamanho vazio';
+    if (seen['t:' + tt]) return 'Tamanho duplicado: ' + tt;
+    seen['t:' + tt] = 1;
+    vm = numeroSeguroConfig(tamanhos[i].valor);
+    if (vm === null || vm < 0) return 'Fator inválido para tamanho: ' + tt;
+  }
+  var cf = numeroSeguroConfig(geral.custo_fixo);
+  var mp = numeroSeguroConfig(geral.margem_padrao);
+  var ads = numeroSeguroConfig(geral.adicional_por_cor_silk);
+  if (cf === null || cf < 0) return 'custo_fixo inválido';
+  if (mp === null || mp < 0) return 'margem_padrao inválida';
+  if (ads === null || ads < 0) return 'adicional_por_cor_silk inválido';
+  return '';
+}
+
+function salvarConfigCalculoInternal(d, validar) {
+  var err = validar ? validarPayloadConfigCalculo(d) : '';
+  if (err) return { sucesso: false, erro: err };
+  try {
+    garantirCabecalhoConfigSheets();
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sh;
+    var rows;
+    var i;
+
+    sh = ss.getSheetByName(CONFIG.ABAS.CUSTOS_MALHAS);
+    var lr = sh.getLastRow();
+    if (lr > 1) sh.getRange(2, 1, lr, 2).clearContent();
+    rows = [];
+    for (i = 0; i < d.malhas.length; i++) {
+      rows.push([d.malhas[i].identificador, Number(d.malhas[i].valor)]);
+    }
+    if (rows.length) sh.getRange(2, 1, rows.length + 1, 2).setValues(rows);
+
+    sh = ss.getSheetByName(CONFIG.ABAS.CUSTOS_MAO_OBRA);
+    lr = sh.getLastRow();
+    if (lr > 1) sh.getRange(2, 1, lr, 2).clearContent();
+    rows = [];
+    for (i = 0; i < d.maoObra.length; i++) {
+      rows.push([d.maoObra[i].identificador, Number(d.maoObra[i].valor)]);
+    }
+    if (rows.length) sh.getRange(2, 1, rows.length + 1, 2).setValues(rows);
+
+    sh = ss.getSheetByName(CONFIG.ABAS.CUSTOS_ESTAMPAS);
+    lr = sh.getLastRow();
+    if (lr > 1) sh.getRange(2, 1, lr, 6).clearContent();
+    rows = [];
+    for (i = 0; i < d.estampas.length; i++) {
+      var e = d.estampas[i];
+      rows.push([
+        e.tipo,
+        Number(e.valor_10x10),
+        Number(e.valor_10x6),
+        Number(e.valor_a4),
+        Number(e.valor_a3),
+        Number(e.valor_full_print)
+      ]);
+    }
+    if (rows.length) sh.getRange(2, 1, rows.length + 1, 6).setValues(rows);
+
+    sh = ss.getSheetByName(CONFIG.ABAS.CUSTOS_TAMANHOS);
+    lr = sh.getLastRow();
+    if (lr > 1) sh.getRange(2, 1, lr, 2).clearContent();
+    rows = [];
+    for (i = 0; i < d.tamanhos.length; i++) {
+      rows.push([d.tamanhos[i].tamanho, Number(d.tamanhos[i].valor)]);
+    }
+    if (rows.length) sh.getRange(2, 1, rows.length + 1, 2).setValues(rows);
+
+    sh = ss.getSheetByName(CONFIG.ABAS.CONFIG_CALC_GERAL);
+    lr = sh.getLastRow();
+    if (lr > 1) sh.getRange(2, 1, lr, 2).clearContent();
+    rows = [
+      ['custo_fixo', Number(d.geral.custo_fixo)],
+      ['margem_padrao', Number(d.geral.margem_padrao)],
+      ['adicional_por_cor_silk', Number(d.geral.adicional_por_cor_silk)]
+    ];
+    sh.getRange(2, 1, 4, 2).setValues(rows);
+
+    SpreadsheetApp.flush();
+    return { sucesso: true, mensagem: 'Configuração salva' };
+  } catch (err2) {
+    return { sucesso: false, erro: err2.toString() };
+  }
+}
+
+function salvarConfigCalculo(dados) {
+  var d = normalizarDadosObjeto(dados);
+  return salvarConfigCalculoInternal(d, true);
 }
 
 // ================= UTIL =================

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1a1a1a">
+    <title>Configuração de custos | Adonay Confecção</title>
+    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👕</text></svg>">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="page-home">
+    <header class="header header--home">
+        <div class="header-content">
+            <h1 class="empresa-nome">ADONAY CONFECÇÃO</h1>
+            <p class="text-center" style="color: var(--texto-secundario); margin-top: 8px;">Parâmetros de cálculo de pedidos (malha, mão de obra, estampas, tamanhos)</p>
+            <div class="relogio" id="relogio">Carregando...</div>
+        </div>
+    </header>
+
+    <main class="container container--home">
+        <section class="card">
+            <div class="flex-between flex-wrap gap-1">
+                <h2 class="card-title">Configuração dinâmica de custos</h2>
+                <div class="btn-group flex-wrap" style="margin-top: 0;">
+                    <button type="button" id="btnRecarregarConfig" class="btn btn-secondary">Recarregar</button>
+                    <button type="button" id="btnSalvarConfig" class="btn btn-success">Salvar na planilha</button>
+                    <a href="index.html" class="btn btn-primary">Novo pedido</a>
+                    <a href="home.html" class="btn btn-info">Fila (HOME)</a>
+                </div>
+            </div>
+            <p class="home-busca-ajuda" style="margin-top: 12px;">Identificadores de malha e tipo de peça devem coincidir com as opções do cadastro. Valores numéricos não podem ser negativos. Na primeira vez, use <strong>Salvar</strong> para gravar o padrão na planilha.</p>
+        </section>
+
+        <section class="card">
+            <h2 class="card-title">Configurações gerais</h2>
+            <div class="form-row" id="wrapGeral">
+                <div class="form-group">
+                    <label class="form-label" for="geralCustoFixo">Custo fixo (R$ por peça / unitário do bloco)</label>
+                    <input type="number" id="geralCustoFixo" class="form-input" min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="geralMargem">Margem padrão (%)</label>
+                    <input type="number" id="geralMargem" class="form-input" min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="geralAdicSilk">Adicional por cor (Silk, × número de cores quando &gt; 1)</label>
+                    <input type="number" id="geralAdicSilk" class="form-input" min="0" step="0.01">
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="flex-between flex-wrap gap-1 mb-2">
+                <h2 class="card-title" style="margin-bottom: 0;">Malhas (identificador = texto do tipo de malha)</h2>
+                <button type="button" id="btnAddMalha" class="btn btn-small btn-secondary">+ Linha</button>
+            </div>
+            <div class="tabela-dinamica config-calc-scroll">
+                <table>
+                    <thead>
+                        <tr><th>Identificador</th><th>Valor (R$)</th><th></th></tr>
+                    </thead>
+                    <tbody id="tbodyMalhas"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="flex-between flex-wrap gap-1 mb-2">
+                <h2 class="card-title" style="margin-bottom: 0;">Mão de obra (identificador = tipo de peça)</h2>
+                <button type="button" id="btnAddMaoObra" class="btn btn-small btn-secondary">+ Linha</button>
+            </div>
+            <div class="tabela-dinamica config-calc-scroll">
+                <table>
+                    <thead>
+                        <tr><th>Identificador</th><th>Valor (R$)</th><th></th></tr>
+                    </thead>
+                    <tbody id="tbodyMaoObra"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="flex-between flex-wrap gap-1 mb-2">
+                <h2 class="card-title" style="margin-bottom: 0;">Estampas por dimensão</h2>
+                <button type="button" id="btnAddEstampa" class="btn btn-small btn-secondary">+ Tipo</button>
+            </div>
+            <div class="tabela-dinamica config-calc-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>10×10</th>
+                            <th>10×6</th>
+                            <th>A4</th>
+                            <th>A3</th>
+                            <th>Full print</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyEstampas"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="flex-between flex-wrap gap-1 mb-2">
+                <h2 class="card-title" style="margin-bottom: 0;">Tamanhos (fator multiplicador do custo de malha; 1 = neutro)</h2>
+                <button type="button" id="btnAddTamanho" class="btn btn-small btn-secondary">+ Linha</button>
+            </div>
+            <div class="tabela-dinamica config-calc-scroll">
+                <table>
+                    <thead>
+                        <tr><th>Tamanho</th><th>Fator</th><th></th></tr>
+                    </thead>
+                    <tbody id="tbodyTamanhos"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="config.js?v=6"></script>
+    <script src="utils.js"></script>
+    <script src="config-calculos.js?v=1"></script>
+</body>
+</html>

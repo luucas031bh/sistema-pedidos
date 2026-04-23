@@ -8,9 +8,123 @@ const estadoApp = {
     somenteLeitura: false
 };
 
+/** Fallback local (mesmos números que o sistema usava antes da config dinâmica). */
+const CONFIG_CALCULO_FALLBACK = {
+    malhas: {
+        'PV (65% Poliéster 35% Viscose)': 8.91,
+        'Algodão Peteado (100% Algodão)': 8.25,
+        'Piquet (50% Algodão 50% Poliéster)': 11.79,
+        'Tricoline Ibiza (Composição)': 11.79,
+        'DryFit (100% Poliéster)': 7.30,
+        'Dry Poliamida (100% Poliamida)': 17.35,
+        'Moletom (50% Algodão 50% Poliéster)': 20.56,
+        'Malha PP (100% Poliéster)': 7.48,
+        'Algodão com Elastano (98% Algodão 2% Elastano)': 8.25,
+        'Helanca Light (100% Poliéster)': 7.48
+    },
+    maoObra: { 'Camisas Comum': 4.50, 'Camisas POLO': 16.00, Moletons: 19.50, 'Camisa Social': 4.50 },
+    estampas: {
+        'Silk Screen': { valor_10x10: 0.88, valor_10x6: 0.88, valor_a4: 3.88, valor_a3: 6.75, valor_full_print: 0 },
+        'DTF (Direct to Film)': { valor_10x10: 1.40, valor_10x6: 0.84, valor_a4: 8.74, valor_a3: 17.48, valor_full_print: 0 },
+        Bordado: { valor_10x10: 5.00, valor_10x6: 6.00, valor_a4: 15.00, valor_a3: 15.00, valor_full_print: 0 },
+        'Sublimação Localizada': { valor_10x10: 0.30, valor_10x6: 0.30, valor_a4: 1.00, valor_a3: 1.00, valor_full_print: 0 },
+        'Sublimação Total (Full Print)': { valor_10x10: 0, valor_10x6: 0, valor_a4: 0, valor_a3: 0, valor_full_print: 5.27 }
+    },
+    tamanhos: {},
+    geral: { custo_fixo: 10, margem_padrao: 100, adicional_por_cor_silk: 0.25 }
+};
+
+(function preencherFallbackTamanhos() {
+    const um = (CONFIG && CONFIG.TAMANHOS) ? CONFIG.TAMANHOS : [];
+    um.forEach((t) => { CONFIG_CALCULO_FALLBACK.tamanhos[t] = 1; });
+    CONFIG_CALCULO_FALLBACK.tamanhos.EG = 1;
+})();
+
+window.CONFIG_CALCULO = null;
+
+function aplicarConfigCalculoRuntime(data) {
+    const geral = { ...CONFIG_CALCULO_FALLBACK.geral, ...(data.geral || {}) };
+    const dm = data.malhas || [];
+    const dmo = data.maoObra || [];
+    const de = data.estampas || [];
+    const dt = data.tamanhos || [];
+
+    const malhas = dm.length === 0 ? { ...CONFIG_CALCULO_FALLBACK.malhas } : {};
+    dm.forEach((m) => {
+        if (m.identificador) malhas[m.identificador] = Number(m.valor) || 0;
+    });
+
+    const maoObra = dmo.length === 0 ? { ...CONFIG_CALCULO_FALLBACK.maoObra } : {};
+    dmo.forEach((m) => {
+        if (m.identificador) maoObra[m.identificador] = Number(m.valor) || 0;
+    });
+
+    const estampas = de.length === 0 ? JSON.parse(JSON.stringify(CONFIG_CALCULO_FALLBACK.estampas)) : {};
+    de.forEach((e) => {
+        if (e.tipo) {
+            estampas[e.tipo] = {
+                valor_10x10: Number(e.valor_10x10) || 0,
+                valor_10x6: Number(e.valor_10x6) || 0,
+                valor_a4: Number(e.valor_a4) || 0,
+                valor_a3: Number(e.valor_a3) || 0,
+                valor_full_print: Number(e.valor_full_print) || 0
+            };
+        }
+    });
+
+    const tamanhos = dt.length === 0 ? { ...CONFIG_CALCULO_FALLBACK.tamanhos } : {};
+    dt.forEach((t) => {
+        if (t.tamanho) tamanhos[t.tamanho] = Number(t.valor) || 1;
+    });
+
+    window.CONFIG_CALCULO = { malhas, maoObra, estampas, tamanhos, geral };
+}
+
+async function carregarConfigCalculo() {
+    aplicarConfigCalculoRuntime({ malhas: [], maoObra: [], estampas: [], tamanhos: [], geral: {} });
+    if (window.location.protocol === 'file:') return;
+    if (!CONFIG.APPS_SCRIPT_URL) return;
+    try {
+        const res = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=obterConfigCalculo&acao=obterConfigCalculo&_ts=${Date.now()}`);
+        const data = await res.json();
+        if (data.sucesso && Array.isArray(data.malhas)) {
+            aplicarConfigCalculoRuntime(data);
+        }
+    } catch (err) {
+        console.warn('carregarConfigCalculo', err);
+    }
+}
+
+function obterMargemPadraoCalc() {
+    const g = window.CONFIG_CALCULO && window.CONFIG_CALCULO.geral;
+    if (g && g.margem_padrao != null) return Number(g.margem_padrao);
+    return CONFIG.CALCULOS.margemLucroPadrao;
+}
+
+function obterCustoFixoCalc() {
+    const g = window.CONFIG_CALCULO && window.CONFIG_CALCULO.geral;
+    if (g && g.custo_fixo != null) return Number(g.custo_fixo);
+    return CONFIG_CALCULO_FALLBACK.geral.custo_fixo;
+}
+
+function obterAdicionalCorSilkCalc() {
+    const g = window.CONFIG_CALCULO && window.CONFIG_CALCULO.geral;
+    if (g && g.adicional_por_cor_silk != null) return Number(g.adicional_por_cor_silk);
+    return CONFIG_CALCULO_FALLBACK.geral.adicional_por_cor_silk;
+}
+
+function obterFatorTamanhoDaConfig(tamanhoRaw) {
+    const map = (window.CONFIG_CALCULO && window.CONFIG_CALCULO.tamanhos) || CONFIG_CALCULO_FALLBACK.tamanhos;
+    const tNorm = normalizarTamanhoParaCalculo(tamanhoRaw);
+    if (map[tamanhoRaw] != null && map[tamanhoRaw] !== '') return Number(map[tamanhoRaw]) || 1;
+    if (map[tNorm] != null && map[tNorm] !== '') return Number(map[tNorm]) || 1;
+    return 1;
+}
+
 document.addEventListener('DOMContentLoaded', () => inicializarApp());
 
 async function inicializarApp() {
+    await carregarConfigCalculo();
     atualizarRelogio();
     setInterval(atualizarRelogio, 1000);
     configurarBotaoVoltarPrincipal();
@@ -156,7 +270,7 @@ function adicionarProduto() {
           <div class="custo-item"><span class="custo-label">Total unitário:</span><span class="custo-valor" id="custoTotal-${produtoId}">R$ 0,00</span></div>
         </div>
         <div class="form-row mt-2">
-          <div class="form-group"><label class="form-label required">Margem (%)</label><input type="number" class="form-input" id="margemLucro-${produtoId}" min="0" step="0.01" value="${CONFIG.CALCULOS.margemLucroPadrao}" onchange="calcularCustosProduto(${produtoId}, 'margem')"></div>
+          <div class="form-group"><label class="form-label required">Margem (%)</label><input type="number" class="form-input" id="margemLucro-${produtoId}" min="0" step="0.01" value="${obterMargemPadraoCalc()}" onchange="calcularCustosProduto(${produtoId}, 'margem')"></div>
           <div class="form-group"><label class="form-label">Preço unitário</label><input type="number" class="form-input" id="precoUnitario-${produtoId}" min="0" step="0.01" onchange="calcularCustosProduto(${produtoId}, 'precoUnitario')"></div>
           <div class="form-group"><label class="form-label">Valor total</label><input type="text" class="form-input" id="valorTotalProduto-${produtoId}" disabled></div>
         </div>
@@ -270,20 +384,13 @@ function normalizarTamanhoParaCalculo(tamanho) {
 }
 
 function calcularFatorTamanhoProduto(produtoId) {
-    // Fatores atuais mantidos em 1; novos tamanhos herdam a base de EG temporariamente.
-    const fatorPorTamanho = {
-        '2': 1, '4': 1, '6': 1, '8': 1, '10': 1, '12': 1, '14': 1,
-        PP: 1, P: 1, M: 1, G: 1, GG: 1, EG: 1, XX: 1,
-        'PP (BL)': 1, 'P (BL)': 1, 'M (BL)': 1, 'G (BL)': 1, 'GG (BL)': 1
-    };
     let totalQtd = 0;
     let somaPonderada = 0;
     document.querySelectorAll(`#tamanhosBody-${produtoId} tr`).forEach((tr) => {
         const tamanhoRaw = tr.querySelector('select')?.value || '';
-        const tamanho = normalizarTamanhoParaCalculo(tamanhoRaw);
         const quantidade = parseInt(tr.querySelector('input[type="number"]')?.value || '0', 10) || 0;
         if (!quantidade) return;
-        const fator = fatorPorTamanho[tamanho] || 1;
+        const fator = obterFatorTamanhoDaConfig(tamanhoRaw);
         totalQtd += quantidade;
         somaPonderada += fator * quantidade;
     });
@@ -300,14 +407,9 @@ function obterValorNumericoInput(input) {
 }
 
 function calcularCustosProduto(produtoId, origem = 'margem') {
-    const custoMalhaMap = {
-        'PV (65% Poliéster 35% Viscose)': 8.91, 'Algodão Peteado (100% Algodão)': 8.25,
-        'Piquet (50% Algodão 50% Poliéster)': 11.79, 'DryFit (100% Poliéster)': 7.30,
-        'Dry Poliamida (100% Poliamida)': 17.35, 'Moletom (50% Algodão 50% Poliéster)': 20.56,
-        'Malha PP (100% Poliéster)': 7.48, 'Algodão com Elastano (98% Algodão 2% Elastano)': 8.25,
-        'Helanca Light (100% Poliéster)': 7.48
-    };
-    const custoMaoObraMap = { 'Camisas Comum': 4.50, 'Camisas POLO': 16.00, Moletons: 19.50, 'Camisa Social': 4.50 };
+    const cfg = window.CONFIG_CALCULO || { malhas: {}, maoObra: {} };
+    const custoMalhaMap = cfg.malhas;
+    const custoMaoObraMap = cfg.maoObra;
 
     const tipoMalha = normalizarTipoMalhaParaCalculo(document.getElementById(`tipoMalha-${produtoId}`)?.value || '');
     const tipoPeca = document.getElementById(`tipoPeca-${produtoId}`)?.value || '';
@@ -320,7 +422,7 @@ function calcularCustosProduto(produtoId, origem = 'margem') {
     const custoMalha = (custoMalhaMap[tipoMalha] || 0) * fatorTamanho;
     const custoMaoObra = custoMaoObraMap[tipoPeca] || 0;
     const custoEstampas = calcularCustoEstampas(produtoId);
-    const custoFixo = 10;
+    const custoFixo = obterCustoFixoCalc();
     const custoTotal = custoMalha + custoMaoObra + custoEstampas + custoFixo;
     let precoUnitario = custoTotal * (1 + margem / 100);
 
@@ -360,7 +462,8 @@ function obterQuantidadeProduto(produtoId) {
 }
 
 function calcularCustoEstampas(produtoId) {
-    const valores = { silk_10x10: 0.88, silk_10x6: 0.88, silk_a4: 3.88, silk_a3: 6.75, dtf_10x10: 1.40, dtf_10x6: 0.84, dtf_a4: 8.74, dtf_a3: 17.48, bordado_10x10: 5.00, bordado_10x6: 6.00, bordado_a4: 15.00, bordado_a3: 15.00, sub_10x10: 0.30, sub_10x6: 0.30, sub_a4: 1.00, sub_a3: 1.00, sub_total: 5.27 };
+    const est = (window.CONFIG_CALCULO && window.CONFIG_CALCULO.estampas) || CONFIG_CALCULO_FALLBACK.estampas;
+    const adicSilk = obterAdicionalCorSilkCalc();
     let total = 0;
     document.querySelectorAll(`#estampasBody-${produtoId} tr`).forEach((tr) => {
         const selects = tr.querySelectorAll('select');
@@ -368,19 +471,20 @@ function calcularCustoEstampas(produtoId) {
         const local = selects[1]?.value || '';
         const corSilk = tr.querySelector('.quantidade-cores')?.value || '';
         if (!tipo || !local) return;
+        const ev = est[tipo] || { valor_10x10: 0, valor_10x6: 0, valor_a4: 0, valor_a3: 0, valor_full_print: 0 };
         const localLower = local.toLowerCase();
         const isA3 = localLower.includes('a3');
         const isA4 = localLower.includes('a4');
         const is10x6 = localLower.includes('10x6') || localLower.includes('manga') || localLower.includes('ombro') || localLower.includes('pescoço');
         let valor = 0;
         if (tipo === 'Silk Screen') {
-            valor = isA3 ? valores.silk_a3 : isA4 ? valores.silk_a4 : is10x6 ? valores.silk_10x6 : valores.silk_10x10;
+            valor = isA3 ? ev.valor_a3 : isA4 ? ev.valor_a4 : is10x6 ? ev.valor_10x6 : ev.valor_10x10;
             const numCores = parseInt(corSilk, 10);
-            if (!Number.isNaN(numCores) && numCores > 1) valor += numCores * 0.25;
-        } else if (tipo === 'DTF (Direct to Film)') valor = isA3 ? valores.dtf_a3 : isA4 ? valores.dtf_a4 : is10x6 ? valores.dtf_10x6 : valores.dtf_10x10;
-        else if (tipo === 'Bordado') valor = isA3 ? valores.bordado_a3 : isA4 ? valores.bordado_a4 : is10x6 ? valores.bordado_10x6 : valores.bordado_10x10;
-        else if (tipo === 'Sublimação Localizada') valor = isA3 ? valores.sub_a3 : isA4 ? valores.sub_a4 : is10x6 ? valores.sub_10x6 : valores.sub_10x10;
-        else if (tipo === 'Sublimação Total (Full Print)') valor = valores.sub_total;
+            if (!Number.isNaN(numCores) && numCores > 1) valor += numCores * adicSilk;
+        } else if (tipo === 'DTF (Direct to Film)') valor = isA3 ? ev.valor_a3 : isA4 ? ev.valor_a4 : is10x6 ? ev.valor_10x6 : ev.valor_10x10;
+        else if (tipo === 'Bordado') valor = isA3 ? ev.valor_a3 : isA4 ? ev.valor_a4 : is10x6 ? ev.valor_10x6 : ev.valor_10x10;
+        else if (tipo === 'Sublimação Localizada') valor = isA3 ? ev.valor_a3 : isA4 ? ev.valor_a4 : is10x6 ? ev.valor_10x6 : ev.valor_10x10;
+        else if (tipo === 'Sublimação Total (Full Print)') valor = ev.valor_full_print;
         total += valor;
     });
     return total;
@@ -645,7 +749,7 @@ function preencherFormularioCompleto(pedido) {
         const margem = document.getElementById(`margemLucro-${pid}`);
         if (margem) {
             const m = p.margemLucro;
-            margem.value = m != null && m !== '' ? String(m) : String(CONFIG.CALCULOS.margemLucroPadrao);
+            margem.value = m != null && m !== '' ? String(m) : String(obterMargemPadraoCalc());
         }
         calcularCustosProduto(pid);
     });
