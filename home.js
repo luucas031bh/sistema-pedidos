@@ -194,6 +194,78 @@ function obterIdBuscaExibicaoPedido(p) {
     return t.length >= 4 ? t.slice(-4) : '—';
 }
 
+const LIMITE_DIAS_ETAPA_FILA = {
+    pedido_feito: 2,
+    fechamento_arte: 4,
+    insumos: 7,
+    corte: 13,
+    estampa: 17,
+    costura: 24,
+    embalo: 26
+};
+
+function normalizarIdEtapaProducaoHome(valor) {
+    const s = String(valor || '').trim().toLowerCase().replace(/\s+/g, '_');
+    const valid = (CONFIG.ETAPAS_PRODUCAO || []).map((e) => e.id);
+    if (valid.includes(s)) return s;
+    const mapa = {
+        'pedido feito': 'pedido_feito',
+        'fechamento de arte': 'fechamento_arte',
+        'aguardando retirada': 'aguardando_retirada',
+        'aguardando_retirar': 'aguardando_retirada'
+    };
+    const m = mapa[s];
+    return valid.includes(m) ? m : 'pedido_feito';
+}
+
+function labelEtapaProducaoHome(id) {
+    const nid = normalizarIdEtapaProducaoHome(id);
+    const lista = CONFIG.ETAPAS_PRODUCAO || [];
+    const found = lista.find((e) => e.id === nid);
+    return found ? found.label : nid;
+}
+
+function diasCorridosDesdeDataPedidoHome(dataPedido) {
+    const ref = parseDataEntregaLocal(dataPedido);
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    if (!ref) return 0;
+    ref.setHours(0, 0, 0, 0);
+    return Math.floor((hoje.getTime() - ref.getTime()) / 86400000);
+}
+
+function resolverEtapaPedidoHome(pedido) {
+    if (pedido.etapaProducaoAtual != null && String(pedido.etapaProducaoAtual).trim() !== '') {
+        return normalizarIdEtapaProducaoHome(pedido.etapaProducaoAtual);
+    }
+    const sp = pedido.statusProducao || {};
+    if (sp.prontoParaEnvio) return 'aguardando_retirada';
+    if (sp.costura) return 'costura';
+    if (sp.estampa) return 'estampa';
+    if (sp.corte) return 'corte';
+    if (sp.os) return 'insumos';
+    if (sp.arte) return 'fechamento_arte';
+    return 'pedido_feito';
+}
+
+function classeCorEtapaProducaoFila(pedido) {
+    const etapa = resolverEtapaPedidoHome(pedido);
+    if (etapa === 'aguardando_retirada') {
+        const ent = parseDataEntregaLocal(pedido.datas?.entrega);
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        if (!ent) return 'home-etapa-badge--neutro';
+        ent.setHours(0, 0, 0, 0);
+        if (hoje.getTime() > ent.getTime()) return 'home-etapa-badge--amarelo';
+        return 'home-etapa-badge--verde';
+    }
+    const lim = LIMITE_DIAS_ETAPA_FILA[etapa];
+    if (lim == null) return 'home-etapa-badge--verde';
+    const dias = diasCorridosDesdeDataPedidoHome(pedido.datas?.pedido);
+    if (dias > lim) return 'home-etapa-badge--vermelho';
+    return 'home-etapa-badge--verde';
+}
+
 function pedidoContaNosIndicadores(pedido) {
     const s = String(pedido?.statusOperacional || '').trim().toLowerCase();
     return s !== 'orçamento' && s !== 'orcamento';
@@ -344,7 +416,7 @@ function renderizarFilaHome(abertos) {
     const tbody = document.getElementById('homeFilaBody');
     if (!tbody) return;
     if (!abertos.length) {
-        tbody.innerHTML = '<tr><td colspan="9">Nenhum pedido em aberto.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10">Nenhum pedido em aberto.</td></tr>';
         return;
     }
     tbody.innerHTML = abertos.map((pedido) => {
@@ -353,6 +425,9 @@ function renderizarFilaHome(abertos) {
         const tipoRes = resumirTipoPeca(resumo.tipoPeca, resumo.detalhePeca);
         const nome = escapeHtmlHome(pedido.cliente?.nome || '-');
         const idBusca = escapeHtmlHome(obterIdBuscaExibicaoPedido(pedido));
+        const etapaId = resolverEtapaPedidoHome(pedido);
+        const etapaLabel = escapeHtmlHome(labelEtapaProducaoHome(etapaId));
+        const etapaCls = classeCorEtapaProducaoFila({ ...pedido, etapaProducaoAtual: etapaId });
         return `
             <tr>
                 <td><a class="cliente-link" href="${link}" target="_blank" rel="noopener noreferrer">${nome}</a></td>
@@ -364,6 +439,7 @@ function renderizarFilaHome(abertos) {
                 <td>${escapeHtmlHome(resumo.tipoMalha || '—')}</td>
                 <td>${escapeHtmlHome(resumo.corMalha || '—')}</td>
                 <td>${escapeHtmlHome(resumo.estampaResumo || '—')}</td>
+                <td><span class="home-etapa-badge ${etapaCls}">${etapaLabel}</span></td>
             </tr>
         `;
     }).join('');
@@ -374,17 +450,17 @@ async function carregarHome() {
     if (!tbody) return;
 
     if (window.location.protocol === 'file:') {
-        tbody.innerHTML = '<tr><td colspan="9">Abra via servidor local (localhost) para carregar a fila.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10">Abra via servidor local (localhost) para carregar a fila.</td></tr>';
         return;
     }
 
-    tbody.innerHTML = '<tr><td colspan="9">Atualizando...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10">Atualizando...</td></tr>';
     try {
         const res = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=listarPedidos&acao=listarPedidos`);
         const data = await res.json();
         if (!res.ok || data.sucesso === false) {
             const msg = data.erro || `Erro HTTP ${res.status}`;
-            tbody.innerHTML = `<tr><td colspan="9">${escapeHtmlHome(msg)}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="10">${escapeHtmlHome(msg)}</td></tr>`;
             renderizarKpisHome([]);
             return;
         }
@@ -400,7 +476,7 @@ async function carregarHome() {
         renderizarFilaHome(abertos);
     } catch (err) {
         console.error(err);
-        tbody.innerHTML = '<tr><td colspan="9">Falha ao carregar dados (rede ou resposta inválida).</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10">Falha ao carregar dados (rede ou resposta inválida).</td></tr>';
         renderizarKpisHome([]);
     }
 }
