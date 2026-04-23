@@ -804,16 +804,15 @@ function resolverEtapaPedidoCarregado(pedido) {
 }
 
 function lerEtapaDoFormulario() {
-    const sel = document.querySelector('input[name="etapaProducaoAtual"]:checked');
+    const sel = document.getElementById('etapaProducaoAtual');
     const id = sel ? normalizarIdEtapaProducao(sel.value) : '';
     return id || 'pedido_feito';
 }
 
 function aplicarEtapaNoFormulario(pedido) {
     const etapaId = resolverEtapaPedidoCarregado(pedido);
-    document.querySelectorAll('input[name="etapaProducaoAtual"]').forEach((r) => {
-        r.checked = r.value === etapaId;
-    });
+    const sel = document.getElementById('etapaProducaoAtual');
+    if (sel) sel.value = etapaId;
 }
 
 function statusProducaoDerivadoDaEtapaNoFrontend(etapaId) {

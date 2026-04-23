@@ -259,19 +259,25 @@ function resolverEtapaParaExibicao(pedido) {
 
 function classeCorEtapaProducaoFila(pedido) {
     const etapa = resolverEtapaParaExibicao(pedido);
-    if (etapa === 'aguardando_retirada') {
-        const ent = parseDataEntregaLocal(pedido.datas?.entrega);
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
-        if (!ent) return 'home-etapa-badge--neutro';
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    // Vermelho para todos: data de entrega já passou
+    const ent = parseDataEntregaLocal(pedido.datas?.entrega);
+    if (ent) {
         ent.setHours(0, 0, 0, 0);
-        if (hoje.getTime() > ent.getTime()) return 'home-etapa-badge--amarelo';
-        return 'home-etapa-badge--verde';
+        if (hoje.getTime() > ent.getTime()) return 'home-etapa-badge--vermelho';
     }
+
+    // Aguardando retirada sem data de entrega: neutro
+    if (etapa === 'aguardando_retirada') {
+        return ent ? 'home-etapa-badge--verde' : 'home-etapa-badge--neutro';
+    }
+
     const lim = LIMITE_DIAS_ETAPA_FILA[etapa];
     if (lim == null) return 'home-etapa-badge--verde';
     const dias = diasCorridosDesdeDataPedidoHome(pedido.datas?.pedido);
-    if (dias > lim) return 'home-etapa-badge--vermelho';
+    if (dias > lim) return 'home-etapa-badge--amarelo';
     return 'home-etapa-badge--verde';
 }
 

@@ -251,50 +251,6 @@ body {
     height: 16px;
 }
 
-.fieldset-status-producao {
-    border: none;
-    margin: 0;
-    padding: 0;
-    min-width: 0;
-}
-
-.fieldset-status-producao legend {
-    padding: 0;
-    margin-bottom: var(--espacamento-sm);
-}
-
-.form-hint-status-producao {
-    font-size: 0.85rem;
-    color: var(--cor-texto-secundaria, #aaa);
-    margin: 0 0 var(--espacamento-sm) 0;
-}
-
-.radio-grid--etapa-producao {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: var(--espacamento-sm);
-}
-
-.radio-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
-    background-color: var(--cor-secundaria);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    border: 1px solid transparent;
-}
-
-.radio-item:hover {
-    border-color: var(--cor-terciaria);
-}
-
-.radio-item input[type="radio"] {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-}
 
 .home-etapa-badge {
     display: inline-block;

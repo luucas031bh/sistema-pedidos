@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="print.css?v=5">
     
     <!-- Preload Scripts -->
-    <link rel="preload" href="config.js" as="script">
+    <link rel="preload" href="config.js?v=5" as="script">
     <link rel="preload" href="utils.js" as="script">
     <link rel="preload" href="script.js" as="script">
 </head>
@@ -226,20 +226,19 @@
                         <select class="form-select" id="statusOperacionalIndex"></select>
                     </div>
                 </div>
-                <fieldset class="fieldset-status-producao">
-                    <legend class="card-subtitle mt-2">Etapa da produção</legend>
-                    <p class="form-hint-status-producao">Marque apenas uma etapa. Ao alterar, a etapa anterior é substituída.</p>
-                    <div class="radio-grid radio-grid--etapa-producao" role="radiogroup" aria-label="Etapa atual da produção">
-                        <label class="radio-item"><input type="radio" name="etapaProducaoAtual" value="pedido_feito" checked> Pedido Feito</label>
-                        <label class="radio-item"><input type="radio" name="etapaProducaoAtual" value="fechamento_arte"> Fechamento de Arte</label>
-                        <label class="radio-item"><input type="radio" name="etapaProducaoAtual" value="insumos"> Insumos</label>
-                        <label class="radio-item"><input type="radio" name="etapaProducaoAtual" value="corte"> Corte</label>
-                        <label class="radio-item"><input type="radio" name="etapaProducaoAtual" value="estampa"> Estampa</label>
-                        <label class="radio-item"><input type="radio" name="etapaProducaoAtual" value="costura"> Costura</label>
-                        <label class="radio-item"><input type="radio" name="etapaProducaoAtual" value="embalo"> Embalo</label>
-                        <label class="radio-item"><input type="radio" name="etapaProducaoAtual" value="aguardando_retirada"> Aguardando Retirada</label>
-                    </div>
-                </fieldset>
+                <div class="form-group">
+                    <label class="form-label" for="etapaProducaoAtual">Etapa De Produção</label>
+                    <select class="form-select" id="etapaProducaoAtual" name="etapaProducaoAtual">
+                        <option value="pedido_feito">Pedido Feito</option>
+                        <option value="fechamento_arte">Fechamento de Arte</option>
+                        <option value="insumos">Insumos</option>
+                        <option value="corte">Corte</option>
+                        <option value="estampa">Estampa</option>
+                        <option value="costura">Costura</option>
+                        <option value="embalo">Embalo</option>
+                        <option value="aguardando_retirada">Aguardando Retirada</option>
+                    </select>
+                </div>
             </section>
             
             <!-- RESUMO FINANCEIRO -->
