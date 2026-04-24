@@ -124,7 +124,7 @@ function obterFatorTamanhoDaConfig(tamanhoRaw) {
 document.addEventListener('DOMContentLoaded', () => inicializarApp());
 
 async function inicializarApp() {
-    await carregarConfigCalculo();
+    // Setup síncrono — não depende de rede
     atualizarRelogio();
     setInterval(atualizarRelogio, 1000);
     configurarBotaoVoltarPrincipal();
@@ -132,9 +132,16 @@ async function inicializarApp() {
     popularOpcoesStatusOperacionalIndex();
     popularOpcoesStatusProducaoIndex();
     configurarEventListeners();
+
     const idUrl = (new URLSearchParams(window.location.search).get('id') || '').trim();
     if (!idUrl) adicionarProduto();
-    await carregarPedidoViaURL();
+
+    // Dispara as duas requisições ao mesmo tempo em vez de sequencialmente
+    await Promise.all([
+        carregarConfigCalculo(),
+        carregarPedidoViaURL()
+    ]);
+
     atualizarSecaoImpressaoPedido();
     const container = document.getElementById('produtosContainer');
     if (container && !container.children.length) adicionarProduto();

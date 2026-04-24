@@ -910,17 +910,26 @@ function lerGeralSheet() {
 
 function obterConfigCalculo() {
   try {
+    var cache = CacheService.getScriptCache();
+    var cached = cache.get('configCalculo_v1');
+    if (cached) return JSON.parse(cached);
+
     garantirCabecalhoConfigSheets();
-    var malhas = lerMalhasSheet();
-    var maoObra = lerMaoObraSheet();
+    var malhas   = lerMalhasSheet();
+    var maoObra  = lerMaoObraSheet();
     var estampas = lerEstampasSheet();
     var tamanhos = lerTamanhosSheet();
-    var geral = lerGeralSheet();
+    var geral    = lerGeralSheet();
+
+    var resultado;
     if (malhas.length === 0 && maoObra.length === 0 && estampas.length === 0) {
       var pad = obterConfigCalculoPadraoObjeto();
-      return { sucesso: true, vazio: true, malhas: pad.malhas, maoObra: pad.maoObra, estampas: pad.estampas, tamanhos: pad.tamanhos, geral: pad.geral };
+      resultado = { sucesso: true, vazio: true, malhas: pad.malhas, maoObra: pad.maoObra, estampas: pad.estampas, tamanhos: pad.tamanhos, geral: pad.geral };
+    } else {
+      resultado = { sucesso: true, malhas: malhas, maoObra: maoObra, estampas: estampas, tamanhos: tamanhos, geral: geral };
     }
-    return { sucesso: true, malhas: malhas, maoObra: maoObra, estampas: estampas, tamanhos: tamanhos, geral: geral };
+    cache.put('configCalculo_v1', JSON.stringify(resultado), 300); // TTL: 5 minutos
+    return resultado;
   } catch (err) {
     return { sucesso: false, erro: err.toString() };
   }
@@ -1052,6 +1061,7 @@ function salvarConfigCalculoInternal(d, validar) {
     sh.getRange(2, 1, 4, 2).setValues(rows);
 
     SpreadsheetApp.flush();
+    CacheService.getScriptCache().remove('configCalculo_v1'); // invalida cache após salvar
     return { sucesso: true, mensagem: 'Configuração salva' };
   } catch (err2) {
     return { sucesso: false, erro: err2.toString() };

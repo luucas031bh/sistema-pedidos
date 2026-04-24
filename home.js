@@ -11,6 +11,11 @@ document.addEventListener('DOMContentLoaded', () => {
             executarBuscaPedidoHome();
         }
     });
+    // Mantém o container do GAS aquecido: se o usuário abre um pedido em seguida,
+    // o cold start já terá ocorrido e a resposta será mais rápida.
+    if (window.location.protocol !== 'file:' && typeof CONFIG !== 'undefined' && CONFIG.APPS_SCRIPT_URL) {
+        fetch(`${CONFIG.APPS_SCRIPT_URL}?action=online`).catch(() => {});
+    }
     carregarHome();
     window.setTimeout(() => {
         homePodeRecarregarVisibilidade = true;
