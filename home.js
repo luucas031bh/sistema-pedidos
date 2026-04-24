@@ -436,16 +436,103 @@ function renderizarFilaHome(abertos) {
     }).join('');
 }
 
+function renderizarFilaMobile(abertos) {
+    const container = document.getElementById('homeFilaCards');
+    if (!container) return;
+    if (!abertos.length) {
+        container.innerHTML = '<p style="text-align:center;color:var(--texto-secundario);padding:24px 0;">Nenhum pedido em aberto.</p>';
+        return;
+    }
+    container.innerHTML = abertos.map((pedido) => {
+        const link = `index.html?id=${encodeURIComponent(pedido.id || '')}`;
+        const resumo = obterResumoProdutoPedidoHome(pedido);
+        const tipoRes = resumirTipoPeca(resumo.tipoPeca, resumo.detalhePeca);
+        const nome = escapeHtmlHome(pedido.cliente?.nome || '—');
+        const diasTexto = escapeHtmlHome(textoDiasParaEntrega(pedido.datas?.entrega));
+        const etapaTexto = escapeHtmlHome(String(pedido.etapaProducaoAtual || '—'));
+        const badgeClass = classeBadgeStatusProd(pedido);
+        const statusOp = escapeHtmlHome(String(pedido.statusOperacional || '—'));
+
+        let cardMod = '';
+        if (badgeClass === 'vermelho') cardMod = 'pedido-card-mobile--atrasado';
+        else if (badgeClass === 'amarelo') cardMod = 'pedido-card-mobile--alerta';
+        else if (badgeClass === 'verde') cardMod = 'pedido-card-mobile--ok';
+
+        return `<div class="pedido-card-mobile ${cardMod}">
+            <div class="pedido-card-header">
+                <div class="pedido-card-nome">${nome}</div>
+                <div class="pedido-card-dias">${diasTexto}</div>
+            </div>
+            <div class="pedido-card-info">
+                <div class="pedido-card-info-item">
+                    <span class="pedido-card-info-label">Tipo</span>
+                    <span class="pedido-card-info-value">${escapeHtmlHome(tipoRes)}</span>
+                </div>
+                <div class="pedido-card-info-item">
+                    <span class="pedido-card-info-label">Peças</span>
+                    <span class="pedido-card-info-value">${pedido.totalPecas ?? 0}</span>
+                </div>
+                <div class="pedido-card-info-item">
+                    <span class="pedido-card-info-label">Malha</span>
+                    <span class="pedido-card-info-value">${escapeHtmlHome(resumo.tipoMalha || '—')}</span>
+                </div>
+                <div class="pedido-card-info-item">
+                    <span class="pedido-card-info-label">Status</span>
+                    <span class="pedido-card-info-value">${statusOp}</span>
+                </div>
+            </div>
+            <div class="pedido-card-footer">
+                <span class="home-etapa-badge home-etapa-badge--${badgeClass}">${etapaTexto}</span>
+                <a class="btn btn-small btn-primary" href="${link}">Abrir →</a>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function renderizarGraficoEtapas(abertos) {
+    const container = document.getElementById('homeGraficoEtapas');
+    if (!container) return;
+    if (!abertos.length) {
+        container.innerHTML = '';
+        return;
+    }
+    const contagem = {};
+    abertos.forEach((p) => {
+        const etapa = String(p.etapaProducaoAtual || 'Pedido em Aberto').trim() || 'Pedido em Aberto';
+        contagem[etapa] = (contagem[etapa] || 0) + 1;
+    });
+    const itens = Object.entries(contagem).sort((a, b) => b[1] - a[1]);
+    const max = Math.max(1, itens[0][1]);
+    container.innerHTML = `
+        <div class="home-chart-title">Pedidos por etapa</div>
+        <div class="home-chart-bars">
+            ${itens.map(([etapa, count]) => {
+                const pct = Math.max(8, Math.round((count / max) * 100));
+                const dentroBarrinha = pct >= 22;
+                return `<div class="chart-bar-row">
+                    <div class="chart-bar-label" title="${escapeHtmlHome(etapa)}">${escapeHtmlHome(etapa)}</div>
+                    <div class="chart-bar-track">
+                        <div class="chart-bar-fill" style="width:${pct}%">${dentroBarrinha ? `<span class="chart-bar-value">${count}</span>` : ''}</div>
+                    </div>
+                    ${!dentroBarrinha ? `<span class="chart-bar-count-outside">${count}</span>` : ''}
+                </div>`;
+            }).join('')}
+        </div>`;
+}
+
 async function carregarHome() {
     const tbody = document.getElementById('homeFilaBody');
     if (!tbody) return;
+    const mobileCardsEl = document.getElementById('homeFilaCards');
 
     if (window.location.protocol === 'file:') {
         tbody.innerHTML = '<tr><td colspan="10">Abra via servidor local (localhost) para carregar a fila.</td></tr>';
+        if (mobileCardsEl) mobileCardsEl.innerHTML = '<p style="text-align:center;color:var(--texto-secundario);padding:24px 0;">Abra via servidor local para carregar.</p>';
         return;
     }
 
     tbody.innerHTML = '<tr><td colspan="10">Atualizando...</td></tr>';
+    if (mobileCardsEl) mobileCardsEl.innerHTML = '<p style="text-align:center;color:var(--texto-secundario);padding:24px 0;">Atualizando...</p>';
     try {
         const res = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=listarPedidos&acao=listarPedidos&_ts=${Date.now()}`);
         const data = await res.json();
@@ -453,6 +540,8 @@ async function carregarHome() {
             const msg = data.erro || `Erro HTTP ${res.status}`;
             tbody.innerHTML = `<tr><td colspan="10">${escapeHtmlHome(msg)}</td></tr>`;
             renderizarKpisHome([]);
+            renderizarFilaMobile([]);
+            renderizarGraficoEtapas([]);
             return;
         }
         const todos = data.pedidos || [];
@@ -465,9 +554,13 @@ async function carregarHome() {
         });
         renderizarKpisHome(abertosParaKpi);
         renderizarFilaHome(abertos);
+        renderizarFilaMobile(abertos);
+        renderizarGraficoEtapas(abertos);
     } catch (err) {
         console.error(err);
         tbody.innerHTML = '<tr><td colspan="10">Falha ao carregar dados (rede ou resposta inválida).</td></tr>';
         renderizarKpisHome([]);
+        renderizarFilaMobile([]);
+        renderizarGraficoEtapas([]);
     }
 }

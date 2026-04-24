@@ -2,10 +2,13 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="Sistema de Pedidos Adonay Confecção">
     <meta name="author" content="Adonay Confecção">
-    <meta name="theme-color" content="#1a1a1a">
+    <meta name="theme-color" content="#d4af37">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Pedidos">
     
     <title>Adonay Confecção - Sistema de Pedidos</title>
     
@@ -13,6 +16,7 @@
     <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👕</text></svg>">
     
     <!-- Stylesheets -->
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="print.css?v=5">
     
@@ -53,7 +57,7 @@
         <section class="card">
             <div class="flex-between flex-wrap gap-1">
                 <h2 class="card-title" id="tituloPrincipalIndex">🏠 Cadastro de Pedidos</h2>
-                <div class="flex flex-wrap gap-1">
+                <div class="flex flex-wrap gap-1 nav-desktop-only">
                     <a class="btn btn-info" href="home.html">Fila visual (HOME)</a>
                     <a class="btn btn-secondary" href="config-calculos.html">Custos / cálculo</a>
                 </div>
@@ -290,10 +294,47 @@
     <div id="printOsMount" class="print-doc-root" aria-hidden="true"></div>
     <div id="printGpMount" class="print-doc-root" aria-hidden="true"></div>
 
+    <nav class="bottom-nav" role="navigation" aria-label="Navegação principal">
+        <a href="home.html" class="bottom-nav-item">
+            <span class="bottom-nav-icon">🏠</span>
+            <span class="bottom-nav-label">Início</span>
+        </a>
+        <a href="index.html" class="bottom-nav-item active" aria-current="page">
+            <span class="bottom-nav-icon">➕</span>
+            <span class="bottom-nav-label">Novo Pedido</span>
+        </a>
+        <a href="config-calculos.html" class="bottom-nav-item">
+            <span class="bottom-nav-icon">⚙️</span>
+            <span class="bottom-nav-label">Custos</span>
+        </a>
+    </nav>
+
+    <button type="button" id="btnSalvarFlutuante" class="btn btn-success btn-salvar-flutuante">
+        💾 Salvar
+    </button>
+
     <script src="config.js?v=5"></script>
     <script src="utils.js"></script>
     <script src="script.js"></script>
     <script src="print-os-gp.js?v=5"></script>
+    <script>
+        (function () {
+            var flutuante = document.getElementById('btnSalvarFlutuante');
+            if (!flutuante) return;
+            flutuante.addEventListener('click', function () {
+                var btn = document.getElementById('btnSalvar');
+                if (btn && !btn.disabled) btn.click();
+            });
+            /* Sincroniza estado disabled com btnSalvar */
+            var btnPrincipal = document.getElementById('btnSalvar');
+            if (btnPrincipal) {
+                var observer = new MutationObserver(function () {
+                    flutuante.disabled = btnPrincipal.disabled;
+                });
+                observer.observe(btnPrincipal, { attributes: true, attributeFilter: ['disabled'] });
+            }
+        })();
+    </script>
 </body>
 </html>
 
