@@ -146,22 +146,32 @@ function classeBadgeStatusProd(pedido) {
         return hoje.getTime() > entrega.getTime() ? 'vermelho' : 'verde';
     }
 
-    const dias = diasCorridosDesdeDataPedido(pedido.datas?.pedido);
-    if (dias === null) return 'neutro';
-
-    const regras = {
-        'Pedido em Aberto': { limite: 2, alerta: 'amarelo' },
-        Arte: { limite: 4, alerta: 'vermelho' },
-        Insumos: { limite: 7, alerta: 'amarelo' },
-        Corte: { limite: 13, alerta: 'amarelo' },
-        Estampa: { limite: 17, alerta: 'amarelo' },
-        Costura: { limite: 24, alerta: 'amarelo' },
-        Embalo: { limite: 26, alerta: 'amarelo' }
+    const percentuais = {
+        'Pedido em Aberto': 0.06,
+        'Arte':             0.12,
+        'Insumos':          0.21,
+        'Corte':            0.38,
+        'Estampa':          0.50,
+        'Costura':          0.70,
+        'Embalo':           0.76,
     };
-    const cfg = regras[etapa];
-    if (!cfg) return 'neutro';
-    if (dias >= cfg.limite) return cfg.alerta;
-    return 'verde';
+    const pct = percentuais[etapa];
+    if (pct === undefined) return 'neutro';
+
+    const dataEntrega = parseDataEntregaLocal(pedido.datas?.entrega);
+    const dataPedido  = parseDataEntregaLocal(pedido.datas?.pedido);
+    if (!dataEntrega || !dataPedido) return 'neutro';
+
+    const prazoDias = Math.round(
+        (dataEntrega.getTime() - dataPedido.getTime()) / 86400000
+    );
+    if (prazoDias <= 0) return 'neutro';
+
+    const limiteEmDias = pct * prazoDias;
+    const diasCorridos = diasCorridosDesdeDataPedido(pedido.datas?.pedido);
+    if (diasCorridos === null) return 'neutro';
+
+    return diasCorridos >= limiteEmDias ? 'amarelo' : 'verde';
 }
 
 function formatarDataEntregaBR(data) {
