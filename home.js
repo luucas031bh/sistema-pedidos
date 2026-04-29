@@ -1,5 +1,3 @@
-let homePodeRecarregarVisibilidade = false;
-
 document.addEventListener('DOMContentLoaded', () => {
     atualizarRelogioHome();
     setInterval(atualizarRelogioHome, 1000);
@@ -17,20 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch(`${CONFIG.APPS_SCRIPT_URL}?action=online`).catch(() => {});
     }
     carregarHome();
-    window.setTimeout(() => {
-        homePodeRecarregarVisibilidade = true;
-    }, 800);
 });
 
-window.addEventListener('pageshow', (ev) => {
-    if (ev.persisted) carregarHome();
-});
-
-document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && homePodeRecarregarVisibilidade) {
-        carregarHome();
-    }
-});
 
 function atualizarRelogioHome() {
     const el = document.getElementById('relogio');
