@@ -764,6 +764,7 @@ function preencherFormularioCompleto(pedido) {
     sincronizarBotoesRemocaoProdutosIndex();
     calcularTotalPecas();
     calcularResumoFinanceiro();
+    preencherListaPersonalizacao(pedido.listaPersonalizacao || null);
 }
 
 async function recarregarPedidoAposSalvar() {
@@ -921,7 +922,8 @@ function coletarDadosFormulario() {
         responsavelAtual: document.getElementById('responsavelAtual')?.value || 'ISABELA SIRAY',
         tagPedido: document.getElementById('tagPedido')?.value || 'PEDIDO',
         financeiro: { totalPedido, valorEntrada, restante: totalPedido - valorEntrada },
-        produtos: produtosLimpos
+        produtos: produtosLimpos,
+        listaPersonalizacao: coletarListaPersonalizacao()
     };
 
     if (estadoApp.modoEdicao && estadoApp.idEdicao) {
@@ -1080,5 +1082,171 @@ function mostrarLoading(mensagem = 'Carregando...') {
 
 function esconderLoading() {
     document.getElementById('loadingOverlay')?.remove();
+}
+
+/* ================================================================
+   LISTA DE PERSONALIZAÇÃO DE CAMISAS
+   ================================================================ */
+
+const LISTA_TAMANHOS = [
+    'PP','P','M','G','GG','G1','G2','G3','G4','G5',
+    'PP(BL)','P(BL)','M(BL)','G(BL)','GG(BL)',
+    'G1(BL)','G2(BL)','G3(BL)','G4(BL)','G5(BL)'
+];
+
+const LISTA_TIPOS = ['POLO','GOLA O','GOLA V','MOLETOM','REGATA'];
+
+function listaCriarSelect(lista, cls) {
+    return `<select class="${cls}">${lista.map(i => `<option value="${i}">${i}</option>`).join('')}</select>`;
+}
+
+function listaAdicionarLinha(dados) {
+    const tbody = document.getElementById('lista-bodyTabela');
+    if (!tbody) return;
+    const tr = document.createElement('tr');
+    const selTam = listaCriarSelect(LISTA_TAMANHOS, 'lista-sel-tam');
+    const selTipo = listaCriarSelect(LISTA_TIPOS, 'lista-sel-tipo');
+    tr.innerHTML = `
+        <td><input type="text" placeholder="Nome completo" value="${dados?.nome || ''}"></td>
+        <td><input type="text" placeholder="Apelido" value="${dados?.apelido || ''}"></td>
+        <td>${selTam}</td>
+        <td>${selTipo}</td>
+        <td><input type="text" placeholder="Ex: Azul" value="${dados?.cor || ''}"></td>
+        <td><input type="number" value="${dados?.qtd || 1}" min="1" style="width:60px;text-align:center"></td>
+        <td><button type="button" class="lista-btn-remover" onclick="listaRemoverLinha(this)" title="Remover">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+    if (dados?.tamanho) {
+        const sel = tr.querySelector('.lista-sel-tam');
+        if (sel) sel.value = dados.tamanho;
+    }
+    if (dados?.tipo) {
+        const sel = tr.querySelector('.lista-sel-tipo');
+        if (sel) sel.value = dados.tipo;
+    }
+}
+
+function listaRemoverLinha(btn) {
+    btn.closest('tr').remove();
+}
+
+function coletarListaPersonalizacao() {
+    const linhas = [];
+    const rows = document.querySelectorAll('#lista-bodyTabela tr');
+    rows.forEach((tr) => {
+        const inputs = tr.querySelectorAll('input');
+        const selects = tr.querySelectorAll('select');
+        const nome = inputs[0]?.value?.trim() || '';
+        const apelido = inputs[1]?.value?.trim() || '';
+        const cor = inputs[2]?.value?.trim() || '';
+        const qtd = inputs[3]?.value || '1';
+        const tamanho = selects[0]?.value || '';
+        const tipo = selects[1]?.value || '';
+        if (nome || apelido || cor) {
+            linhas.push({ nome, apelido, tamanho, tipo, cor, qtd });
+        }
+    });
+    return linhas.length > 0 ? linhas : null;
+}
+
+function preencherListaPersonalizacao(listaPersonalizacao) {
+    const tbody = document.getElementById('lista-bodyTabela');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    let lista = listaPersonalizacao;
+    if (typeof lista === 'string') {
+        try { lista = JSON.parse(lista); } catch (_) { lista = []; }
+    }
+    if (!Array.isArray(lista) || lista.length === 0) return;
+    lista.forEach((item) => listaAdicionarLinha(item));
+}
+
+function imprimirListaPersonalizacao() {
+    const linhas = [];
+    document.querySelectorAll('#lista-bodyTabela tr').forEach((tr) => {
+        const inputs = tr.querySelectorAll('input');
+        const selects = tr.querySelectorAll('select');
+        linhas.push({
+            nome: inputs[0]?.value || '',
+            apelido: inputs[1]?.value || '',
+            tamanho: selects[0]?.value || '',
+            tipo: selects[1]?.value || '',
+            cor: inputs[2]?.value || '',
+            qtd: inputs[3]?.value || '1',
+        });
+    });
+
+    const nomeCliente = document.getElementById('nomeCliente')?.value || '—';
+    const telefoneCliente = document.getElementById('telefone')?.value || '—';
+    const agora = new Date();
+    const diasSemana = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+    const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const diaSemana = diasSemana[agora.getDay()];
+    const data = `${String(agora.getDate()).padStart(2,'0')} de ${meses[agora.getMonth()]} de ${agora.getFullYear()}`;
+    const hora = [agora.getHours(), agora.getMinutes(), agora.getSeconds()].map(n => String(n).padStart(2,'0')).join(':');
+    const emissao = `${diaSemana}, ${data} - ${hora}`;
+
+    const linhasHTML = linhas.map((l, i) => `
+        <tr style="background:${i % 2 === 0 ? '#ffffff' : '#f4f4f4'};">
+            <td style="border:1px solid #bbb;padding:7px 10px;font-size:13px;">${l.nome}</td>
+            <td style="border:1px solid #bbb;padding:7px 10px;font-size:13px;">${l.apelido}</td>
+            <td style="border:1px solid #bbb;padding:7px 10px;font-size:13px;text-align:center;">${l.tamanho}</td>
+            <td style="border:1px solid #bbb;padding:7px 10px;font-size:13px;text-align:center;">${l.tipo}</td>
+            <td style="border:1px solid #bbb;padding:7px 10px;font-size:13px;text-align:center;">${l.cor}</td>
+            <td style="border:1px solid #bbb;padding:7px 10px;font-size:13px;text-align:center;">${l.qtd}</td>
+        </tr>
+    `).join('');
+
+    const templateHTML = `
+        <div style="font-family:Arial,sans-serif;background:#fff;color:#111;padding:28px 32px;max-width:800px;margin:0 auto;">
+            <div style="text-align:center;border-bottom:3px solid #1a1a1a;padding-bottom:16px;margin-bottom:18px;">
+                <div style="font-size:26px;font-weight:900;letter-spacing:2px;color:#b8922a;text-transform:uppercase;margin-bottom:6px;">ADONAY CONFECÇÃO</div>
+                <div style="font-size:12px;color:#444;line-height:1.9;">
+                    CNPJ: 42.522.845/0001-97<br>
+                    Rua Geraldo Teixeira da Costa, São Benedito, Santa Luzia - MG<br>
+                    ☎ (31) 3950-3089 &nbsp;|&nbsp; @adonayconfeccao
+                </div>
+                <div style="margin-top:8px;font-size:11px;color:#777;font-style:italic;">Emitido em: ${emissao}</div>
+            </div>
+            <div style="display:flex;gap:32px;margin-bottom:18px;padding:10px 14px;background:#f9f9f9;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+                <div><span style="font-weight:700;color:#333;">Cliente:</span> ${nomeCliente}</div>
+                <div><span style="font-weight:700;color:#333;">Telefone:</span> ${telefoneCliente}</div>
+            </div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#555;margin-bottom:6px;">Lista de Personalização de Camisas</div>
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                <thead>
+                    <tr style="background:#1a1a1a;color:#ffffff;">
+                        <th style="border:1px solid #1a1a1a;padding:9px 10px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;">Nome do Aluno</th>
+                        <th style="border:1px solid #1a1a1a;padding:9px 10px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;">Nome / Apelido</th>
+                        <th style="border:1px solid #1a1a1a;padding:9px 10px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;">Tamanho</th>
+                        <th style="border:1px solid #1a1a1a;padding:9px 10px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;">Tipo</th>
+                        <th style="border:1px solid #1a1a1a;padding:9px 10px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;">Cor</th>
+                        <th style="border:1px solid #1a1a1a;padding:9px 10px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;">Qtd</th>
+                    </tr>
+                </thead>
+                <tbody>${linhasHTML}</tbody>
+            </table>
+            <div style="margin-top:16px;font-size:11px;color:#999;text-align:center;border-top:1px solid #ddd;padding-top:10px;">
+                Adonay Confecção &mdash; Santa Luzia/MG &mdash; (31) 3950-3089
+            </div>
+        </div>
+    `;
+
+    const win = window.open('', '_blank');
+    if (!win) {
+        Utils.mostrarNotificacao('Pop-up bloqueado. Permita pop-ups neste site e tente novamente.', 'error');
+        return;
+    }
+    win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head>
+        <meta charset="UTF-8"><title>Lista Personalização — Adonay</title>
+        <style>
+            *{box-sizing:border-box;margin:0;padding:0}
+            body{font-family:Arial,sans-serif;background:#fff}
+            @media print{@page{margin:8mm;size:A4}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+        </style></head><body>
+        ${templateHTML}
+        <script>window.onload=function(){setTimeout(function(){window.print();},350)}<\/script>
+    </body></html>`);
+    win.document.close();
 }
 

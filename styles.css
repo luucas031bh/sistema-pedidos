@@ -1380,4 +1380,145 @@ body {
     }
 }
 
+/* ================================================================
+   LISTA DE PERSONALIZAÇÃO DE CAMISAS (seção opcional no pedido)
+   ================================================================ */
+
+.lista-badge-opcional {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--cor-texto-secundario, #aaa);
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+.lista-descricao {
+    font-size: 0.85rem;
+    color: var(--cor-texto-secundario, #aaa);
+    margin-bottom: 14px;
+    line-height: 1.5;
+}
+
+.lista-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--border-radius, 6px);
+    border: 1px solid var(--cor-borda, #2a2a2a);
+    margin-bottom: 12px;
+}
+
+.lista-personalizacao-section table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 520px;
+}
+
+.lista-personalizacao-section thead tr {
+    background: rgba(0, 0, 0, 0.35);
+}
+
+.lista-personalizacao-section th {
+    padding: 10px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--dourado, #d4af37);
+    text-align: center;
+    border-bottom: 1px solid var(--cor-borda, #2a2a2a);
+    white-space: nowrap;
+}
+
+.lista-personalizacao-section td {
+    padding: 5px 4px;
+    border-bottom: 1px solid var(--cor-borda, #2a2a2a);
+    text-align: center;
+    vertical-align: middle;
+}
+
+.lista-personalizacao-section tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.lista-personalizacao-section tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.lista-personalizacao-section td input[type="text"],
+.lista-personalizacao-section td input[type="number"] {
+    width: 100%;
+    padding: 7px 6px;
+    background: var(--cor-terciaria, #1a1a1a);
+    border: 1px solid var(--cor-borda, #2a2a2a);
+    color: var(--cor-texto, #e8e8e8);
+    border-radius: 5px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.lista-personalizacao-section td input[type="text"]:focus,
+.lista-personalizacao-section td input[type="number"]:focus {
+    border-color: var(--dourado, #d4af37);
+}
+
+.lista-personalizacao-section td select {
+    width: 100%;
+    padding: 7px 24px 7px 6px;
+    background: var(--cor-terciaria, #1a1a1a);
+    border: 1px solid var(--cor-borda, #2a2a2a);
+    color: var(--cor-texto, #e8e8e8);
+    border-radius: 5px;
+    font-size: 13px;
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23d4af37' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    transition: border-color 0.2s;
+}
+
+.lista-personalizacao-section td select:focus {
+    border-color: var(--dourado, #d4af37);
+}
+
+.lista-btn-remover {
+    background: var(--cor-erro, #c0392b);
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    min-height: 34px;
+    padding: 0 10px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: filter 0.15s;
+    line-height: 1;
+}
+
+.lista-btn-remover:hover {
+    filter: brightness(1.2);
+}
+
+.lista-btn-add {
+    width: 100%;
+    margin-top: 4px;
+}
+
+.lista-btn-imprimir {
+    flex-shrink: 0;
+}
+
+@media (max-width: 520px) {
+    .lista-personalizacao-section .flex-between {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .lista-btn-imprimir {
+        width: 100%;
+    }
+}
 

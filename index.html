@@ -186,6 +186,39 @@
                 </div>
             </section>
             
+            <!-- LISTA DE PERSONALIZAÇÃO DE CAMISAS (OPCIONAL) -->
+            <section class="card lista-personalizacao-section">
+                <div class="flex-between mb-2">
+                    <h2 class="card-title">
+                        📋 Lista de Personalização de Camisas
+                        <span class="lista-badge-opcional">(Opcional)</span>
+                    </h2>
+                    <button type="button" class="btn btn-secondary lista-btn-imprimir" onclick="imprimirListaPersonalizacao()" title="Imprimir lista de personalização">
+                        🖨️ Imprimir Lista
+                    </button>
+                </div>
+                <p class="lista-descricao">Preencha abaixo quando o pedido incluir personalização individual por aluno/membro. Deixe vazio caso não se aplique.</p>
+                <div class="lista-table-wrap">
+                    <table id="lista-tabela">
+                        <thead>
+                            <tr>
+                                <th>Nome do Aluno</th>
+                                <th>Nome / Apelido</th>
+                                <th>Tamanho</th>
+                                <th>Tipo</th>
+                                <th>Cor</th>
+                                <th>Qtd</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-bodyTabela"></tbody>
+                    </table>
+                </div>
+                <button type="button" class="btn btn-primary lista-btn-add" onclick="listaAdicionarLinha()">
+                    ➕ Adicionar Linha
+                </button>
+            </section>
+
             <!-- OBSERVAÇÕES -->
             <section class="card">
                 <h2 class="card-title">📝 Observações</h2>

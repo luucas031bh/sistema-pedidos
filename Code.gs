@@ -27,7 +27,7 @@ function criarTodasAbas() {
       'Restante', 'Status', 'Data Criação', 'Data Modificação',
       'ARTE', 'OS', 'CORTE', 'COSTURA', 'ESTAMPA PRODUÇÃO', 'PRONTO PARA ENVIO',
       'Tipo Peça', 'Tipo Malha', 'Cor Malha', 'Detalhe Peça', 'Estampa Resumo',
-      'Vendedor', 'Tag Pedido', 'ID BUSCA'
+      'Vendedor', 'Tag Pedido', 'ID BUSCA', 'Lista Personalização'
     ]);
   }
   return { sucesso: true, mensagem: 'Banco criado com sucesso' };
@@ -42,7 +42,7 @@ function criarTodasAbas() {
 var CABECALHO_PEDIDOS_COLUNAS_EXTRAS = [
   'ARTE', 'OS', 'CORTE', 'COSTURA', 'ESTAMPA PRODUÇÃO', 'PRONTO PARA ENVIO',
   'Tipo Peça', 'Tipo Malha', 'Cor Malha', 'Detalhe Peça', 'Estampa Resumo',
-  'Vendedor', 'Tag Pedido', 'ID BUSCA'
+  'Vendedor', 'Tag Pedido', 'ID BUSCA', 'Lista Personalização'
 ];
 
 /** Preenche O1:AA1 com os títulos oficiais. Não apaga A1:N1. Se lastColumn < 15, grava o bloco inteiro. */
@@ -342,10 +342,16 @@ function salvarPedido(dados) {
     const statusProducao = statusProducaoDerivadoDeEtapa(etapaProducaoAtual);
     dados.produtos = normalizarProdutosParaCalculoTemporario(dados.produtos);
     const resumoProduto = extrairResumoProduto((dados.produtos && dados.produtos[0]) || {});
+    var listaPersonalizacao = '';
+    if (dados.listaPersonalizacao !== undefined && dados.listaPersonalizacao !== null) {
+      listaPersonalizacao = typeof dados.listaPersonalizacao === 'string'
+        ? dados.listaPersonalizacao
+        : JSON.stringify(dados.listaPersonalizacao);
+    }
 
     const dadosPlanilha = sheet.getDataRange().getValues();
     var temCostura = planilhaPedidosTemColunaCostura(sheet);
-    var colunas = temCostura ? 28 : 27;
+    var colunas = temCostura ? 29 : 28;
 
     var indicesMatch = [];
     var j;
@@ -374,7 +380,7 @@ function salvarPedido(dados) {
           idGravar, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
           dados.produtos || [], observacoes, valorTotal, valorEntrada, restante, status,
           linhaAtual[12], new Date(), statusProducao, etapaProducaoAtual, resumoProduto, vendedor, tagPedido,
-          idBuscaVal, temCostura
+          idBuscaVal, temCostura, listaPersonalizacao
         );
         sheet.getRange(i + 1, 1, 1, colunas).setValues([linhaVals]);
         idResposta = normalizarId(idGravar) || idPedido;
@@ -403,7 +409,7 @@ function salvarPedido(dados) {
         idGravar0, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
         dados.produtos || [], observacoes, valorTotal, valorEntrada, restante, status,
         linhaAtual0[12], new Date(), statusProducao, etapaProducaoAtual, resumoProduto, vendedor, tagPedido,
-        idBuscaVal, temCostura
+        idBuscaVal, temCostura, listaPersonalizacao
       );
       sheet.getRange(i0 + 1, 1, 1, colunas).setValues([linhaVals0]);
       SpreadsheetApp.flush();
@@ -419,7 +425,7 @@ function salvarPedido(dados) {
       idPedido, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
       dados.produtos || [], observacoes, valorTotal, valorEntrada, restante, status,
       new Date(), new Date(), statusProducao, etapaProducaoAtual, resumoProduto, vendedor, tagPedido,
-      idBuscaVal, temCostura
+      idBuscaVal, temCostura, listaPersonalizacao
     );
     sheet.appendRow(linhaNova);
     SpreadsheetApp.flush();
@@ -555,7 +561,7 @@ function planilhaPedidosTemColunaCostura(sheet) {
   }
 }
 
-function montarLinhaValoresPedido(idGravar, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas, produtosArr, observacoes, valorTotal, valorEntrada, restante, status, dataCriacao, dataModificacao, statusProducao, etapaProducaoAtual, resumoProduto, vendedor, tagPedido, idBusca, temCostura) {
+function montarLinhaValoresPedido(idGravar, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas, produtosArr, observacoes, valorTotal, valorEntrada, restante, status, dataCriacao, dataModificacao, statusProducao, etapaProducaoAtual, resumoProduto, vendedor, tagPedido, idBusca, temCostura, listaPersonalizacao) {
   var produtosJson = gravarCelulaProdutos(produtosArr, etapaProducaoAtual);
   var sp = normalizarStatusProducao(statusProducao);
   var a = sp.arte;
@@ -565,6 +571,7 @@ function montarLinhaValoresPedido(idGravar, nomeCliente, telefone, dataPedido, d
   var e = sp.estampa;
   var p = sp.prontoParaEnvio;
   var ib = normalizarIdBuscaPlanilha(idBusca);
+  var lp = listaPersonalizacao !== undefined && listaPersonalizacao !== null ? listaPersonalizacao : '';
   var base = [
     idGravar, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
     produtosJson, observacoes, valorTotal, valorEntrada, restante, status, dataCriacao, dataModificacao
@@ -572,12 +579,12 @@ function montarLinhaValoresPedido(idGravar, nomeCliente, telefone, dataPedido, d
   if (temCostura) {
     return base.concat([a, o, c, co, e, p,
       resumoProduto.tipoPeca, resumoProduto.tipoMalha, resumoProduto.corMalha, resumoProduto.detalhePeca, resumoProduto.estampaResumo,
-      vendedor, tagPedido, ib
+      vendedor, tagPedido, ib, lp
     ]);
   }
   return base.concat([a, o, c, e, p,
     resumoProduto.tipoPeca, resumoProduto.tipoMalha, resumoProduto.corMalha, resumoProduto.detalhePeca, resumoProduto.estampaResumo,
-    vendedor, tagPedido, ib
+    vendedor, tagPedido, ib, lp
   ]);
 }
 
@@ -618,6 +625,7 @@ function linhaParaPedido(row, temCostura) {
       responsavelAtual: row[25] || 'ISABELA SIRAY',
       tagPedido: row[26] || 'PEDIDO',
       idBusca: row.length > 27 ? normalizarIdBuscaPlanilha(row[27]) : sufixoIdBuscaDeTelefone(normalizarTelefone(row[2])),
+      listaPersonalizacao: row.length > 28 ? (row[28] || '') : '',
       dataCriacao: row[12],
       dataModificacao: row[13]
     };
@@ -653,6 +661,7 @@ function linhaParaPedido(row, temCostura) {
     responsavelAtual: row[24] || 'ISABELA SIRAY',
     tagPedido: row[25] || 'PEDIDO',
     idBusca: row.length > 26 ? normalizarIdBuscaPlanilha(row[26]) : sufixoIdBuscaDeTelefone(normalizarTelefone(row[2])),
+    listaPersonalizacao: row.length > 27 ? (row[27] || '') : '',
     dataCriacao: row[12],
     dataModificacao: row[13]
   };
