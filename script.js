@@ -218,7 +218,15 @@ function adicionarProduto() {
     container.insertAdjacentHTML('beforeend', `
       <div class="produto-container" id="produto-${produtoId}" data-produto-id="${produtoId}">
         <div class="produto-header">
-          <span class="produto-numero">📦 PRODUTO #${produtoId}</span>
+          <span
+            class="produto-numero produto-nome-editavel"
+            id="nomeProduto-${produtoId}"
+            contenteditable="true"
+            spellcheck="false"
+            title="Clique para renomear"
+            data-default="📦 PRODUTO #${produtoId}"
+            onblur="if(!this.textContent.trim()){this.textContent=this.dataset.default;}"
+          >📦 PRODUTO #${produtoId}</span>
           ${produtoId > 1 ? `<button type="button" class="btn-remover-produto" onclick="removerProduto(${produtoId})">🗑️ Remover</button>` : ''}
         </div>
         <div class="form-row">
@@ -741,6 +749,8 @@ function preencherFormularioCompleto(pedido) {
     listaProdutos.forEach((p) => {
         adicionarProduto();
         const pid = estadoApp.produtos[estadoApp.produtos.length - 1].id;
+        const nomeEl = document.getElementById(`nomeProduto-${pid}`);
+        if (nomeEl && p.nomeProduto) nomeEl.textContent = p.nomeProduto;
         const tipoPecaEl = document.getElementById(`tipoPeca-${pid}`);
         if (tipoPecaEl && p.tipoPeca) tipoPecaEl.value = p.tipoPeca;
         atualizarDetalhesPeca(pid);
@@ -948,8 +958,11 @@ function coletarDadosFormulario() {
 function coletarProduto(produtoId) {
     const precoUnitarioInput = document.getElementById(`precoUnitario-${produtoId}`);
     const precoUnitarioNumero = obterValorNumericoInput(precoUnitarioInput);
+    const nomeEl = document.getElementById(`nomeProduto-${produtoId}`);
+    const nomeProduto = nomeEl ? (nomeEl.textContent.trim() || nomeEl.dataset.default) : `📦 PRODUTO #${produtoId}`;
     const produto = {
         numero: produtoId,
+        nomeProduto,
         tipoPeca: document.getElementById(`tipoPeca-${produtoId}`)?.value || '',
         detalhesPeca: document.getElementById(`detalhesPeca-${produtoId}`)?.value || '',
         tipoMalha: document.getElementById(`tipoMalha-${produtoId}`)?.value || '',

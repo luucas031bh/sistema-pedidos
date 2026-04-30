@@ -420,6 +420,26 @@ body {
     color: var(--dourado-primario);
 }
 
+.produto-nome-editavel {
+    cursor: text;
+    border-radius: 4px;
+    padding: 2px 6px;
+    transition: background 0.15s, outline 0.15s;
+    outline: 2px solid transparent;
+    min-width: 40px;
+    display: inline-block;
+}
+
+.produto-nome-editavel:hover {
+    background: rgba(212, 175, 55, 0.1);
+    outline: 2px solid rgba(212, 175, 55, 0.35);
+}
+
+.produto-nome-editavel:focus {
+    background: rgba(212, 175, 55, 0.15);
+    outline: 2px solid var(--dourado-primario, #d4af37);
+}
+
 .btn-remover-produto {
     background-color: var(--cor-erro);
     color: white;
