@@ -259,7 +259,7 @@ function obterIdBuscaExibicaoPedido(p) {
 
 
 function pedidoContaNosIndicadores(pedido) {
-    const s = String(pedido?.statusOperacional || '').trim().toLowerCase();
+    const s = String(pedido?.statusOperacional || '').normalize('NFC').trim().toLowerCase();
     return s !== 'orçamento' && s !== 'orcamento';
 }
 
@@ -548,6 +548,8 @@ async function carregarHome() {
         const todos = data.pedidos || [];
         const abertos = todos.filter(pedidoEstaAberto);
         const abertosParaKpi = abertos.filter(pedidoContaNosIndicadores);
+        console.log('[DEBUG KPI] status de todos os abertos:', abertos.map(p => p.statusOperacional));
+        console.log('[DEBUG KPI] contados no KPI:', abertosParaKpi.length, 'de', abertos.length);
         abertos.sort((a, b) => {
             const da = parseDataEntregaLocal(a.datas?.entrega)?.getTime() ?? 0;
             const db = parseDataEntregaLocal(b.datas?.entrega)?.getTime() ?? 0;
