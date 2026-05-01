@@ -77,7 +77,7 @@ const CONFIG = {
     ],
     
     LOCALIDADES_MANGA: [
-        'Manga Direita 10x6',
+        'Manga Direiçta 10x6',
         'Manga Esquerda 10x6'
     ],
     
