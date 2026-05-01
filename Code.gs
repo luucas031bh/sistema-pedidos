@@ -348,7 +348,10 @@ function doPost(e) {
       return resposta({ sucesso: false, erro: 'Nenhum dado recebido' });
     }
 
-    if (acao === 'salvarPedido') return resposta(salvarPedido(dados, imagensPayload));
+    if (acao === 'salvarPedido') {
+      Logger.log('[doPost] imagens recebido: ' + (imagensPayload ? 'SIM (mockup=' + !!(imagensPayload.mockup) + ', artes=' + (Array.isArray(imagensPayload.artes) ? imagensPayload.artes.length : 0) + ')' : 'NÃO'));
+      return resposta(salvarPedido(dados, imagensPayload));
+    }
     if (acao === 'buscarPedido') return resposta(buscarPedido(dados.termo || dados.id || ''));
     if (acao === 'buscarPedidos') {
       var termoBusca = '';
@@ -474,8 +477,10 @@ function resolverUrlsImagens(imagens, nomeCliente, idBuscaVal, dataPedido, linha
     if (novasImagens.mockup) {
       try {
         var nomeM = prefixo + '_MOCKUP.' + (novasImagens.mockup.extensao || 'jpg');
+        Logger.log('[Drive] Salvando mockup: ' + nomeM + ' base64 len=' + String(novasImagens.mockup.base64 || '').length);
         urlMockup = salvarImagemNoDrive(pasta, novasImagens.mockup.base64, novasImagens.mockup.tipo, nomeM);
-      } catch (errM) { Logger.log('Erro mockup: ' + errM); }
+        Logger.log('[Drive] Mockup salvo: ' + urlMockup);
+      } catch (errM) { Logger.log('Erro mockup: ' + errM.toString()); }
     }
 
     var posicoes = Object.keys(novasArtesMap);
