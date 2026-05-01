@@ -1542,3 +1542,124 @@ body {
     }
 }
 
+/* ========== Seção de Imagens do Pedido ========== */
+.imagem-upload-bloco {
+    margin-bottom: 12px;
+}
+
+.imagem-preview-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: var(--cor-secundaria, #2d2d2d);
+    border: 1px solid var(--dourado-escuro, #b8941e);
+    border-radius: var(--radius-md, 8px);
+    flex-wrap: wrap;
+}
+
+.imagem-preview-wrap.hidden {
+    display: none;
+}
+
+.imagem-thumb {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: var(--radius-sm, 6px);
+    border: 2px solid var(--dourado-primario, #d4af37);
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.imagem-thumb:hover {
+    transform: scale(1.05);
+}
+
+.btn-remover-imagem {
+    background: var(--cor-erro, #f44336);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+.btn-remover-imagem:hover {
+    background: #c62828;
+}
+
+.imagem-link-drive {
+    font-size: 12px;
+    color: var(--dourado-secundario, #f0d98d);
+    text-decoration: underline;
+    white-space: nowrap;
+}
+
+.imagem-link-drive.hidden {
+    display: none;
+}
+
+.imagem-nome-arquivo {
+    font-size: 12px;
+    color: var(--texto-terciario, #999);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 200px;
+}
+
+.arte-upload-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--cor-secundaria, #2d2d2d);
+    border: 1px solid var(--cor-terciaria, #3a3a3a);
+    border-radius: var(--radius-md, 8px);
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.arte-upload-item .form-group {
+    flex: 1;
+    min-width: 200px;
+    margin-bottom: 0;
+}
+
+.arte-upload-item .imagem-preview-wrap {
+    border: none;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+}
+
+.arte-upload-numero {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--dourado-primario, #d4af37);
+    white-space: nowrap;
+    padding-top: 6px;
+    min-width: 55px;
+}
+
+.imagens-contador {
+    font-size: 12px;
+    color: var(--texto-terciario, #999);
+    margin-top: 6px;
+}
+
+.imagem-status-salvando {
+    font-size: 12px;
+    color: var(--dourado-secundario, #f0d98d);
+    font-style: italic;
+}
+

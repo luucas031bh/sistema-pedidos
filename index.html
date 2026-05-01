@@ -66,11 +66,11 @@
 
         <section class="card hidden" id="secaoImpressaoPedido">
             <h2 class="card-title">Impressão</h2>
-            <p class="impressao-ajuda">Uma imagem opcional (PNG ou JPG) para mockup na OS e na GP — não é salva; só na impressão.</p>
+            <p class="impressao-ajuda">O mockup salvo será usado automaticamente na impressão. Caso queira substituir só para esta impressão, selecione uma imagem abaixo.</p>
             <div class="form-row impressao-mockup-linha">
                 <div class="form-group">
-                    <label class="form-label" for="inputMockupPedido">Imagem do mockup (PNG ou JPG)</label>
-                    <input type="file" id="inputMockupPedido" class="form-input" accept=".png,.jpg,.jpeg,image/png,image/jpeg">
+                    <label class="form-label" for="inputMockupImpressao">Substituir mockup só para impressão (PNG ou JPG)</label>
+                    <input type="file" id="inputMockupImpressao" class="form-input" accept=".png,.jpg,.jpeg,image/png,image/jpeg">
                 </div>
             </div>
             <div class="btn-group flex-wrap">
@@ -186,6 +186,31 @@
                 </div>
             </section>
             
+            <!-- IMAGENS DO PEDIDO -->
+            <section class="card" id="secaoImagens">
+                <h2 class="card-title">🖼️ Imagens do Pedido</h2>
+                <p class="impressao-ajuda">Imagens salvas no Google Drive organizadas por Ano/Mês. Nenhuma obrigatória.</p>
+
+                <!-- Mockup -->
+                <div class="card-subtitle">Mockup</div>
+                <div class="imagem-upload-bloco" id="blocoMockup">
+                    <div class="form-group">
+                        <label class="form-label" for="inputMockupPedido">Imagem do Mockup (PNG ou JPG)</label>
+                        <input type="file" id="inputMockupPedido" class="form-input" accept=".png,.jpg,.jpeg,image/png,image/jpeg">
+                    </div>
+                    <div id="previewMockup" class="imagem-preview-wrap hidden">
+                        <img id="imgPreviewMockup" class="imagem-thumb" alt="Preview mockup">
+                        <button type="button" class="btn-remover-imagem" onclick="limparMockup()" title="Remover mockup">✕</button>
+                        <a id="linkMockupDrive" href="#" target="_blank" class="imagem-link-drive hidden">Ver no Drive</a>
+                    </div>
+                </div>
+
+                <!-- Artes -->
+                <div class="card-subtitle mt-2">Artes / Estampas <span class="lista-badge-opcional">(Opcional — até 10)</span></div>
+                <div id="containerArtes"></div>
+                <button type="button" id="btnAdicionarArte" class="btn btn-secondary mt-1">➕ Adicionar Arte</button>
+            </section>
+
             <!-- LISTA DE PERSONALIZAÇÃO DE CAMISAS (OPCIONAL) -->
             <section class="card lista-personalizacao-section">
                 <div class="flex-between mb-2">

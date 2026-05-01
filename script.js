@@ -5,7 +5,11 @@ const estadoApp = {
     pedidoEmEdicao: null,
     modoEdicao: false,
     idEdicao: null,
-    somenteLeitura: false
+    somenteLeitura: false,
+    imagens: {
+        mockupUrlDrive: '',
+        artesUrlDrive: []
+    }
 };
 
 /** Fallback local (mesmos números que o sistema usava antes da config dinâmica). */
@@ -174,6 +178,243 @@ function configurarEventListeners() {
     document.getElementById('valorEntrada')?.addEventListener('input', calcularResumoFinanceiro);
     document.getElementById('btnAdicionarProduto')?.addEventListener('click', adicionarProduto);
     document.getElementById('btnSalvar')?.addEventListener('click', salvarPedido);
+    inicializarSecaoImagens();
+}
+
+/* ================================================================
+   SEÇÃO DE IMAGENS DO PEDIDO (Mockup + Artes)
+   ================================================================ */
+
+const MAX_ARTES = 10;
+const MAX_TAMANHO_IMAGEM_MB = 4;
+
+function inicializarSecaoImagens() {
+    const inputMockup = document.getElementById('inputMockupPedido');
+    if (inputMockup) {
+        inputMockup.addEventListener('change', function () {
+            if (!this.files || !this.files[0]) return;
+            const file = this.files[0];
+            if (!validarArquivoImagem(file)) { this.value = ''; return; }
+            mostrarPreviewMockup(URL.createObjectURL(file), file.name, '');
+        });
+    }
+    document.getElementById('btnAdicionarArte')?.addEventListener('click', adicionarArteUpload);
+}
+
+function validarArquivoImagem(file) {
+    if (file.type !== 'image/png' && file.type !== 'image/jpeg') {
+        Utils.mostrarNotificacao('Use apenas imagem PNG ou JPG.', 'error');
+        return false;
+    }
+    if (file.size > MAX_TAMANHO_IMAGEM_MB * 1024 * 1024) {
+        Utils.mostrarNotificacao(`A imagem deve ter no máximo ${MAX_TAMANHO_IMAGEM_MB}MB.`, 'error');
+        return false;
+    }
+    return true;
+}
+
+function mostrarPreviewMockup(src, nomeArquivo, urlDrive) {
+    const wrap = document.getElementById('previewMockup');
+    const img = document.getElementById('imgPreviewMockup');
+    const link = document.getElementById('linkMockupDrive');
+    if (!wrap || !img) return;
+    img.src = src;
+    img.onclick = () => window.open(src, '_blank');
+    if (link) {
+        if (urlDrive) {
+            link.href = urlDrive;
+            link.classList.remove('hidden');
+        } else {
+            link.classList.add('hidden');
+        }
+    }
+    const nomeEl = wrap.querySelector('.imagem-nome-arquivo');
+    if (nomeEl) nomeEl.textContent = nomeArquivo || '';
+    wrap.classList.remove('hidden');
+}
+
+function limparMockup() {
+    const input = document.getElementById('inputMockupPedido');
+    const wrap = document.getElementById('previewMockup');
+    const img = document.getElementById('imgPreviewMockup');
+    if (input) input.value = '';
+    if (img) img.src = '';
+    if (wrap) wrap.classList.add('hidden');
+    estadoApp.imagens.mockupUrlDrive = '';
+}
+
+function adicionarArteUpload(urlDrive, nomeArquivo) {
+    const container = document.getElementById('containerArtes');
+    const btnAdicionar = document.getElementById('btnAdicionarArte');
+    if (!container) return;
+
+    const total = container.querySelectorAll('.arte-upload-item').length;
+    if (total >= MAX_ARTES) {
+        Utils.mostrarNotificacao(`Máximo de ${MAX_ARTES} artes atingido.`, 'error');
+        return;
+    }
+
+    const num = total + 1;
+    const itemId = `arteItem-${Date.now()}`;
+    const inputId = `inputArte-${itemId}`;
+
+    const item = document.createElement('div');
+    item.className = 'arte-upload-item';
+    item.id = itemId;
+    item.dataset.urlDrive = urlDrive || '';
+
+    item.innerHTML = `
+        <span class="arte-upload-numero">Arte ${num}</span>
+        <div class="form-group">
+            <label class="form-label" for="${inputId}">Imagem da Arte (PNG ou JPG)</label>
+            <input type="file" id="${inputId}" class="form-input arte-input" accept=".png,.jpg,.jpeg,image/png,image/jpeg">
+        </div>
+        <div class="imagem-preview-wrap hidden arte-preview">
+            <img class="imagem-thumb arte-thumb" alt="Arte ${num}">
+            ${urlDrive ? `<a href="${urlDrive}" target="_blank" class="imagem-link-drive">Ver no Drive</a>` : ''}
+        </div>
+        <button type="button" class="btn-remover-imagem" title="Remover arte" onclick="removerArteUpload('${itemId}')">✕</button>
+    `;
+
+    container.appendChild(item);
+
+    if (urlDrive && nomeArquivo) {
+        const previewWrap = item.querySelector('.arte-preview');
+        const thumb = item.querySelector('.arte-thumb');
+        if (previewWrap && thumb) {
+            thumb.src = urlDrive;
+            thumb.onclick = () => window.open(urlDrive, '_blank');
+            previewWrap.classList.remove('hidden');
+        }
+    }
+
+    const inputEl = item.querySelector('.arte-input');
+    if (inputEl) {
+        inputEl.addEventListener('change', function () {
+            if (!this.files || !this.files[0]) return;
+            const file = this.files[0];
+            if (!validarArquivoImagem(file)) { this.value = ''; return; }
+            const previewWrap = item.querySelector('.arte-preview');
+            const thumb = item.querySelector('.arte-thumb');
+            if (previewWrap && thumb) {
+                const localUrl = URL.createObjectURL(file);
+                thumb.src = localUrl;
+                thumb.onclick = () => window.open(localUrl, '_blank');
+                previewWrap.classList.remove('hidden');
+                item.dataset.urlDrive = '';
+                const driveLink = previewWrap.querySelector('.imagem-link-drive');
+                if (driveLink) driveLink.remove();
+            }
+        });
+    }
+
+    atualizarBotaoAdicionarArte();
+}
+
+function removerArteUpload(itemId) {
+    const item = document.getElementById(itemId);
+    if (!item) return;
+    item.remove();
+    renumerarArtes();
+    atualizarBotaoAdicionarArte();
+}
+
+function renumerarArtes() {
+    const container = document.getElementById('containerArtes');
+    if (!container) return;
+    container.querySelectorAll('.arte-upload-item').forEach((item, idx) => {
+        const numEl = item.querySelector('.arte-upload-numero');
+        if (numEl) numEl.textContent = `Arte ${idx + 1}`;
+        const thumb = item.querySelector('.arte-thumb');
+        if (thumb) thumb.alt = `Arte ${idx + 1}`;
+    });
+}
+
+function atualizarBotaoAdicionarArte() {
+    const container = document.getElementById('containerArtes');
+    const btn = document.getElementById('btnAdicionarArte');
+    if (!container || !btn) return;
+    const total = container.querySelectorAll('.arte-upload-item').length;
+    btn.disabled = total >= MAX_ARTES;
+    btn.title = total >= MAX_ARTES ? `Máximo de ${MAX_ARTES} artes` : '';
+}
+
+function lerArquivoBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const dataUrl = e.target.result;
+            const base64 = dataUrl.split(',')[1];
+            resolve({ base64, tipo: file.type, extensao: file.type === 'image/png' ? 'png' : 'jpg', nome: file.name });
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+async function coletarImagens() {
+    const resultado = {
+        mockup: null,
+        mockupUrlExistente: estadoApp.imagens.mockupUrlDrive || '',
+        artes: []
+    };
+
+    const inputMockup = document.getElementById('inputMockupPedido');
+    if (inputMockup && inputMockup.files && inputMockup.files[0]) {
+        try {
+            resultado.mockup = await lerArquivoBase64(inputMockup.files[0]);
+            resultado.mockupUrlExistente = '';
+        } catch (e) {
+            console.warn('Erro ao ler mockup:', e);
+        }
+    }
+
+    const container = document.getElementById('containerArtes');
+    if (container) {
+        const itens = container.querySelectorAll('.arte-upload-item');
+        for (const item of itens) {
+            const inputArte = item.querySelector('.arte-input');
+            const urlExistente = item.dataset.urlDrive || '';
+            if (inputArte && inputArte.files && inputArte.files[0]) {
+                try {
+                    const arteBase64 = await lerArquivoBase64(inputArte.files[0]);
+                    resultado.artes.push({ ...arteBase64, urlExistente: '' });
+                } catch (e) {
+                    console.warn('Erro ao ler arte:', e);
+                    resultado.artes.push({ urlExistente });
+                }
+            } else if (urlExistente) {
+                resultado.artes.push({ urlExistente });
+            }
+        }
+    }
+
+    const temAlgo = resultado.mockup !== null || resultado.mockupUrlExistente || resultado.artes.length > 0;
+    return temAlgo ? resultado : null;
+}
+
+function carregarImagensSalvas(pedido) {
+    estadoApp.imagens.mockupUrlDrive = pedido.urlMockup || '';
+    estadoApp.imagens.artesUrlDrive = pedido.urlArtes || [];
+
+    const container = document.getElementById('containerArtes');
+    if (container) container.innerHTML = '';
+
+    if (pedido.urlMockup) {
+        const input = document.getElementById('inputMockupPedido');
+        if (input) input.value = '';
+        mostrarPreviewMockup(pedido.urlMockup, 'Mockup salvo no Drive', pedido.urlMockup);
+    } else {
+        const wrap = document.getElementById('previewMockup');
+        if (wrap) wrap.classList.add('hidden');
+    }
+
+    const artes = pedido.urlArtes || [];
+    artes.forEach((url) => {
+        if (url) adicionarArteUpload(url, 'Arte salva no Drive');
+    });
+
+    atualizarBotaoAdicionarArte();
 }
 
 function configurarBotaoVoltarPrincipal() {
@@ -775,6 +1016,7 @@ function preencherFormularioCompleto(pedido) {
     calcularTotalPecas();
     calcularResumoFinanceiro();
     preencherListaPersonalizacao(pedido.listaPersonalizacao || null);
+    carregarImagensSalvas(pedido);
 }
 
 async function recarregarPedidoAposSalvar() {
@@ -823,6 +1065,12 @@ async function salvarPedido() {
     mostrarLoading(estadoApp.modoEdicao ? 'Salvando alterações...' : 'Salvando pedido...');
     try {
         const dados = coletarDadosFormulario();
+        const imagens = await coletarImagens();
+        const temImagensNovas = imagens !== null && (imagens.mockup !== null || imagens.artes.length > 0);
+
+        if (temImagensNovas) {
+            mostrarLoading('Enviando imagens... (pode demorar)');
+        }
 
         if (estadoApp.modoEdicao && estadoApp.idEdicao) {
             const payload = {
@@ -830,7 +1078,8 @@ async function salvarPedido() {
                 acao: 'salvarPedido',
                 dados,
                 modoEdicao: 'true',
-                idEdicao: String(estadoApp.idEdicao)
+                idEdicao: String(estadoApp.idEdicao),
+                imagens: temImagensNovas ? imagens : null
             };
             const resposta = await fetch(CONFIG.APPS_SCRIPT_URL, {
                 method: 'POST',
@@ -863,14 +1112,15 @@ async function salvarPedido() {
         }
 
         const resposta = await fetch(CONFIG.APPS_SCRIPT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({
-                action: 'salvarPedido',
-                acao: 'salvarPedido',
-                dados
-            })
-        });
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({
+                    action: 'salvarPedido',
+                    acao: 'salvarPedido',
+                    dados,
+                    imagens: temImagensNovas ? imagens : null
+                })
+            });
         const textoRespNovo = await resposta.text();
         let resultado;
         try {
@@ -1041,8 +1291,14 @@ function limparFormulario() {
     estadoApp.modoEdicao = false;
     estadoApp.idEdicao = null;
     estadoApp.somenteLeitura = false;
+    estadoApp.imagens = { mockupUrlDrive: '', artesUrlDrive: [] };
     document.getElementById('resumoTotalPedido').textContent = 'R$ 0,00';
     document.getElementById('resumoRestante').textContent = 'R$ 0,00';
+    const containerArtes = document.getElementById('containerArtes');
+    if (containerArtes) containerArtes.innerHTML = '';
+    const previewMockup = document.getElementById('previewMockup');
+    if (previewMockup) previewMockup.classList.add('hidden');
+    atualizarBotaoAdicionarArte();
     desativarUIModoEdicaoIndex();
     configurarValoresPadraoFormulario();
     adicionarProduto();

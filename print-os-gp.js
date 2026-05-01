@@ -263,19 +263,41 @@
         return coletarDadosFormulario();
     }
 
-    function prepararImagemInput(inputEl, notificarErro) {
-        if (!inputEl || !inputEl.files || !inputEl.files[0]) return { src: null, revoke: null };
-        const file = inputEl.files[0];
-        const ok = file.type === 'image/png' || file.type === 'image/jpeg';
-        if (!ok) {
-            if (notificarErro && typeof Utils !== 'undefined' && Utils.mostrarNotificacao) {
-                Utils.mostrarNotificacao('Use apenas imagem PNG ou JPG.', 'error');
+    function prepararImagemParaImpressao(notificarErro) {
+        // 1) Verifica campo de substituição local (secaoImpressaoPedido)
+        const inputSubst = document.getElementById('inputMockupImpressao');
+        if (inputSubst && inputSubst.files && inputSubst.files[0]) {
+            const file = inputSubst.files[0];
+            const ok = file.type === 'image/png' || file.type === 'image/jpeg';
+            if (!ok) {
+                if (notificarErro && typeof Utils !== 'undefined' && Utils.mostrarNotificacao) {
+                    Utils.mostrarNotificacao('Use apenas imagem PNG ou JPG.', 'error');
+                }
+                inputSubst.value = '';
+            } else {
+                const url = URL.createObjectURL(file);
+                return { src: url, revoke: url };
             }
-            inputEl.value = '';
-            return { src: null, revoke: null };
         }
-        const url = URL.createObjectURL(file);
-        return { src: url, revoke: url };
+
+        // 2) Verifica campo de upload principal do formulário (nova arte selecionada localmente)
+        const inputPrincipal = document.getElementById('inputMockupPedido');
+        if (inputPrincipal && inputPrincipal.files && inputPrincipal.files[0]) {
+            const file = inputPrincipal.files[0];
+            if (file.type === 'image/png' || file.type === 'image/jpeg') {
+                const url = URL.createObjectURL(file);
+                return { src: url, revoke: url };
+            }
+        }
+
+        // 3) Usa URL salva no Drive (mockup persistido)
+        const urlDrive = typeof estadoApp !== 'undefined' && estadoApp.imagens && estadoApp.imagens.mockupUrlDrive
+            ? estadoApp.imagens.mockupUrlDrive
+            : '';
+        if (urlDrive) return { src: urlDrive, revoke: null };
+
+        // 4) Sem imagem disponível
+        return { src: null, revoke: null };
     }
 
     function executarImpressao(tipo) {
@@ -290,8 +312,7 @@
         const mount = document.getElementById(tipo === 'os' ? 'printOsMount' : 'printGpMount');
         if (!mount) return;
 
-        const inputEl = document.getElementById('inputMockupPedido');
-        const { src: imgSrc, revoke } = prepararImagemInput(inputEl, true);
+        const { src: imgSrc, revoke } = prepararImagemParaImpressao(true);
 
         mount.innerHTML = tipo === 'os' ? montarHtmlOs(dados, imgSrc) : montarHtmlGp(dados, imgSrc);
 
@@ -321,7 +342,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('btnImprimirOs')?.addEventListener('click', () => executarImpressao('os'));
         document.getElementById('btnImprimirGp')?.addEventListener('click', () => executarImpressao('gp'));
-        document.getElementById('inputMockupPedido')?.addEventListener('change', function () {
+        document.getElementById('inputMockupImpressao')?.addEventListener('change', function () {
             if (!this.files || !this.files[0]) return;
             const file = this.files[0];
             if (file.type !== 'image/png' && file.type !== 'image/jpeg') {

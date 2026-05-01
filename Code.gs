@@ -12,6 +12,119 @@ const CONFIG = {
   }
 };
 
+var PASTA_RAIZ_NOME = 'SistemaPedidos';
+var MESES_PTBR = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+var COLUNAS_URL_IMAGENS = ['URL Mockup','URL Arte 1','URL Arte 2','URL Arte 3','URL Arte 4','URL Arte 5','URL Arte 6','URL Arte 7','URL Arte 8','URL Arte 9','URL Arte 10'];
+
+// ================= DRIVE: UPLOAD DE IMAGENS =================
+
+function sanitizarNomeArquivoDrive(str) {
+  return String(str || '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9\s]/g, '')
+    .replace(/\s+/g, '_')
+    .replace(/_{2,}/g, '_')
+    .slice(0, 40)
+    .replace(/^_|_$/g, '');
+}
+
+function obterOuCriarSubpasta(pastaParente, nome) {
+  var iter = pastaParente.getFoldersByName(nome);
+  if (iter.hasNext()) return iter.next();
+  return pastaParente.createFolder(nome);
+}
+
+function obterPastaRaiz() {
+  var props = PropertiesService.getScriptProperties();
+  var idSalvo = props.getProperty('PASTA_RAIZ_ID');
+  if (idSalvo) {
+    try {
+      return DriveApp.getFolderById(idSalvo);
+    } catch (e) {
+      props.deleteProperty('PASTA_RAIZ_ID');
+    }
+  }
+  var iter = DriveApp.getFoldersByName(PASTA_RAIZ_NOME);
+  var pasta = iter.hasNext() ? iter.next() : DriveApp.createFolder(PASTA_RAIZ_NOME);
+  props.setProperty('PASTA_RAIZ_ID', pasta.getId());
+  return pasta;
+}
+
+function obterPastaDestino(dataPedido) {
+  var data = dataPedido ? new Date(dataPedido) : new Date();
+  if (isNaN(data.getTime())) data = new Date();
+  var ano = String(data.getFullYear());
+  var mes = MESES_PTBR[data.getMonth()];
+  var raiz = obterPastaRaiz();
+  var pastaAno = obterOuCriarSubpasta(raiz, ano);
+  return obterOuCriarSubpasta(pastaAno, mes);
+}
+
+function urlPublicaDrive(arquivo) {
+  try {
+    arquivo.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  } catch (e) {
+    // ignora erro de permissão — arquivo ainda acessível internamente
+  }
+  return 'https://drive.google.com/uc?id=' + arquivo.getId() + '&export=view';
+}
+
+function salvarImagemNoDrive(pasta, base64, tipo, nomeArquivo) {
+  var mimeType = tipo === 'image/png' ? MimeType.PNG : MimeType.JPEG;
+  var bytes = Utilities.base64Decode(base64);
+  var blob = Utilities.newBlob(bytes, mimeType, nomeArquivo);
+  var arquivo = pasta.createFile(blob);
+  return urlPublicaDrive(arquivo);
+}
+
+function salvarImagensDrive(imagens, nomeCliente, idBusca, dataPedido) {
+  var resultado = { urlMockup: '', urlArtes: [] };
+  if (!imagens) return resultado;
+
+  try {
+    var pasta = obterPastaDestino(dataPedido);
+    var prefixoNome = sanitizarNomeArquivoDrive(nomeCliente) + '_' + String(idBusca || '0000');
+
+    if (imagens.mockup && imagens.mockup.base64) {
+      var nomeM = prefixoNome + '_MOCKUP.' + (imagens.mockup.extensao || 'jpg');
+      resultado.urlMockup = salvarImagemNoDrive(pasta, imagens.mockup.base64, imagens.mockup.tipo, nomeM);
+    }
+
+    var artes = Array.isArray(imagens.artes) ? imagens.artes : [];
+    for (var i = 0; i < artes.length && i < 10; i++) {
+      var arte = artes[i];
+      if (!arte || !arte.base64) {
+        resultado.urlArtes.push('');
+        continue;
+      }
+      var nomeA = prefixoNome + '_ARTE' + (i + 1) + '.' + (arte.extensao || 'jpg');
+      resultado.urlArtes.push(salvarImagemNoDrive(pasta, arte.base64, arte.tipo, nomeA));
+    }
+  } catch (errDrive) {
+    Logger.log('salvarImagensDrive erro: ' + errDrive.toString());
+  }
+
+  return resultado;
+}
+
+/** Adiciona colunas de URL de imagens ao final da aba PEDIDOS se ainda não existirem. Rode uma vez após o deploy. */
+function expandirCabecalhoUrlImagens() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.ABAS.PEDIDOS);
+  if (!sheet) return { sucesso: false, erro: 'Aba PEDIDOS não encontrada' };
+  var lastCol = sheet.getLastColumn();
+  var header = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  var adicionados = 0;
+  for (var i = 0; i < COLUNAS_URL_IMAGENS.length; i++) {
+    var nome = COLUNAS_URL_IMAGENS[i];
+    if (header.indexOf(nome) === -1) {
+      lastCol++;
+      sheet.getRange(1, lastCol).setValue(nome);
+      adicionados++;
+    }
+  }
+  return { sucesso: true, mensagem: 'Colunas de imagem verificadas.', adicionados: adicionados };
+}
+
 // ================= INIT =================
 function criarTodasAbas() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -27,7 +140,9 @@ function criarTodasAbas() {
       'Restante', 'Status', 'Data Criação', 'Data Modificação',
       'ARTE', 'OS', 'CORTE', 'COSTURA', 'ESTAMPA PRODUÇÃO', 'PRONTO PARA ENVIO',
       'Tipo Peça', 'Tipo Malha', 'Cor Malha', 'Detalhe Peça', 'Estampa Resumo',
-      'Vendedor', 'Tag Pedido', 'ID BUSCA', 'Lista Personalização'
+      'Vendedor', 'Tag Pedido', 'ID BUSCA', 'Lista Personalização',
+      'URL Mockup', 'URL Arte 1', 'URL Arte 2', 'URL Arte 3', 'URL Arte 4',
+      'URL Arte 5', 'URL Arte 6', 'URL Arte 7', 'URL Arte 8', 'URL Arte 9', 'URL Arte 10'
     ]);
   }
   return { sucesso: true, mensagem: 'Banco criado com sucesso' };
@@ -162,6 +277,7 @@ function doPost(e) {
     var dados = {};
     var modoEdParam = null;
     var idEdParam = null;
+    var imagensPayload = null;
 
     // Corpo JSON (ex.: edição com Content-Type text/plain): ler primeiro — payload grande fica íntegro em postData.contents.
     if (e && e.postData && e.postData.contents) {
@@ -177,6 +293,9 @@ function doPost(e) {
           acao = payload.action || payload.acao || '';
           if (payload.dados !== undefined && payload.dados !== null) {
             dados = payload.dados;
+          }
+          if (payload.imagens !== undefined && payload.imagens !== null) {
+            imagensPayload = payload.imagens;
           }
           if (payload.modoEdicao !== undefined && payload.modoEdicao !== null) {
             modoEdParam = payload.modoEdicao;
@@ -229,7 +348,7 @@ function doPost(e) {
       return resposta({ sucesso: false, erro: 'Nenhum dado recebido' });
     }
 
-    if (acao === 'salvarPedido') return resposta(salvarPedido(dados));
+    if (acao === 'salvarPedido') return resposta(salvarPedido(dados, imagensPayload));
     if (acao === 'buscarPedido') return resposta(buscarPedido(dados.termo || dados.id || ''));
     if (acao === 'buscarPedidos') {
       var termoBusca = '';
@@ -303,7 +422,77 @@ function garantirEstruturaPayloadSalvar(dados) {
 }
 
 // ================= SALVAR =================
-function salvarPedido(dados) {
+function resolverUrlsImagens(imagens, nomeCliente, idBuscaVal, dataPedido, linhaExistente, temCostura) {
+  var urlMockup = '';
+  var urlArtes = ['','','','','','','','','',''];
+
+  // Lê URLs já salvas na linha (preservação)
+  if (linhaExistente) {
+    var idxMockup = temCostura ? 29 : 28;
+    var idxArte1 = temCostura ? 30 : 29;
+    urlMockup = linhaExistente.length > idxMockup ? String(linhaExistente[idxMockup] || '') : '';
+    for (var k = 0; k < 10; k++) {
+      var idx = idxArte1 + k;
+      urlArtes[k] = linhaExistente.length > idx ? String(linhaExistente[idx] || '') : '';
+    }
+  }
+
+  if (!imagens) return { urlMockup: urlMockup, urlArtes: urlArtes };
+
+  var novasImagens = { mockup: null, artes: [] };
+  var precisaUpload = false;
+
+  // Mockup: novo arquivo ou URL existente enviada do front
+  if (imagens.mockup && imagens.mockup.base64) {
+    novasImagens.mockup = imagens.mockup;
+    precisaUpload = true;
+  } else if (imagens.mockupUrlExistente) {
+    urlMockup = imagens.mockupUrlExistente;
+  }
+
+  // Artes: resolve cada posição
+  var artesPayload = Array.isArray(imagens.artes) ? imagens.artes : [];
+  var novasArtesUpload = [];
+  var novasArtesMap = {}; // posição → índice em novasArtesUpload
+
+  for (var i = 0; i < artesPayload.length && i < 10; i++) {
+    var arte = artesPayload[i];
+    if (arte && arte.base64) {
+      novasArtesMap[i] = novasArtesUpload.length;
+      novasArtesUpload.push(arte);
+      precisaUpload = true;
+    } else if (arte && arte.urlExistente) {
+      urlArtes[i] = arte.urlExistente;
+    }
+  }
+  novasImagens.artes = novasArtesUpload;
+
+  if (precisaUpload) {
+    var pasta = obterPastaDestino(dataPedido);
+    var prefixo = sanitizarNomeArquivoDrive(nomeCliente) + '_' + String(idBuscaVal || '0000');
+
+    if (novasImagens.mockup) {
+      try {
+        var nomeM = prefixo + '_MOCKUP.' + (novasImagens.mockup.extensao || 'jpg');
+        urlMockup = salvarImagemNoDrive(pasta, novasImagens.mockup.base64, novasImagens.mockup.tipo, nomeM);
+      } catch (errM) { Logger.log('Erro mockup: ' + errM); }
+    }
+
+    var posicoes = Object.keys(novasArtesMap);
+    for (var pi = 0; pi < posicoes.length; pi++) {
+      var pos = parseInt(posicoes[pi], 10);
+      var arteUp = novasArtesUpload[novasArtesMap[pos]];
+      try {
+        var nomeA = prefixo + '_ARTE' + (pos + 1) + '.' + (arteUp.extensao || 'jpg');
+        urlArtes[pos] = salvarImagemNoDrive(pasta, arteUp.base64, arteUp.tipo, nomeA);
+      } catch (errA) { Logger.log('Erro arte ' + (pos + 1) + ': ' + errA); }
+    }
+  }
+
+  return { urlMockup: urlMockup, urlArtes: urlArtes };
+}
+
+function salvarPedido(dados, imagens) {
   try {
     dados = normalizarDadosObjeto(dados);
     garantirEstruturaPayloadSalvar(dados);
@@ -351,7 +540,7 @@ function salvarPedido(dados) {
 
     const dadosPlanilha = sheet.getDataRange().getValues();
     var temCostura = planilhaPedidosTemColunaCostura(sheet);
-    var colunas = temCostura ? 29 : 28;
+    var colunas = temCostura ? 40 : 39;
 
     var indicesMatch = [];
     var j;
@@ -376,11 +565,12 @@ function salvarPedido(dados) {
         var idGravar = linhaAtual[0] !== undefined && linhaAtual[0] !== null && String(linhaAtual[0]).trim() !== ''
           ? linhaAtual[0]
           : idPedido;
+        var urlsImagens = resolverUrlsImagens(imagens, nomeCliente, idBuscaVal, dataPedido, linhaAtual, temCostura);
         var linhaVals = montarLinhaValoresPedido(
           idGravar, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
           dados.produtos || [], observacoes, valorTotal, valorEntrada, restante, status,
           linhaAtual[12], new Date(), statusProducao, etapaProducaoAtual, resumoProduto, vendedor, tagPedido,
-          idBuscaVal, temCostura, listaPersonalizacao
+          idBuscaVal, temCostura, listaPersonalizacao, urlsImagens.urlMockup, urlsImagens.urlArtes
         );
         sheet.getRange(i + 1, 1, 1, colunas).setValues([linhaVals]);
         idResposta = normalizarId(idGravar) || idPedido;
@@ -405,11 +595,12 @@ function salvarPedido(dados) {
       var idGravar0 = linhaAtual0[0] !== undefined && linhaAtual0[0] !== null && String(linhaAtual0[0]).trim() !== ''
         ? linhaAtual0[0]
         : idPedido;
+      var urlsImagens0 = resolverUrlsImagens(imagens, nomeCliente, idBuscaVal, dataPedido, linhaAtual0, temCostura);
       var linhaVals0 = montarLinhaValoresPedido(
         idGravar0, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
         dados.produtos || [], observacoes, valorTotal, valorEntrada, restante, status,
         linhaAtual0[12], new Date(), statusProducao, etapaProducaoAtual, resumoProduto, vendedor, tagPedido,
-        idBuscaVal, temCostura, listaPersonalizacao
+        idBuscaVal, temCostura, listaPersonalizacao, urlsImagens0.urlMockup, urlsImagens0.urlArtes
       );
       sheet.getRange(i0 + 1, 1, 1, colunas).setValues([linhaVals0]);
       SpreadsheetApp.flush();
@@ -421,11 +612,12 @@ function salvarPedido(dados) {
       };
     }
 
+    var urlsImagensNovas = resolverUrlsImagens(imagens, nomeCliente, idBuscaVal, dataPedido, null, temCostura);
     var linhaNova = montarLinhaValoresPedido(
       idPedido, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
       dados.produtos || [], observacoes, valorTotal, valorEntrada, restante, status,
       new Date(), new Date(), statusProducao, etapaProducaoAtual, resumoProduto, vendedor, tagPedido,
-      idBuscaVal, temCostura, listaPersonalizacao
+      idBuscaVal, temCostura, listaPersonalizacao, urlsImagensNovas.urlMockup, urlsImagensNovas.urlArtes
     );
     sheet.appendRow(linhaNova);
     SpreadsheetApp.flush();
@@ -561,7 +753,7 @@ function planilhaPedidosTemColunaCostura(sheet) {
   }
 }
 
-function montarLinhaValoresPedido(idGravar, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas, produtosArr, observacoes, valorTotal, valorEntrada, restante, status, dataCriacao, dataModificacao, statusProducao, etapaProducaoAtual, resumoProduto, vendedor, tagPedido, idBusca, temCostura, listaPersonalizacao) {
+function montarLinhaValoresPedido(idGravar, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas, produtosArr, observacoes, valorTotal, valorEntrada, restante, status, dataCriacao, dataModificacao, statusProducao, etapaProducaoAtual, resumoProduto, vendedor, tagPedido, idBusca, temCostura, listaPersonalizacao, urlMockup, urlArtes) {
   var produtosJson = gravarCelulaProdutos(produtosArr, etapaProducaoAtual);
   var sp = normalizarStatusProducao(statusProducao);
   var a = sp.arte;
@@ -572,6 +764,9 @@ function montarLinhaValoresPedido(idGravar, nomeCliente, telefone, dataPedido, d
   var p = sp.prontoParaEnvio;
   var ib = normalizarIdBuscaPlanilha(idBusca);
   var lp = listaPersonalizacao !== undefined && listaPersonalizacao !== null ? listaPersonalizacao : '';
+  var um = urlMockup || '';
+  var ua = Array.isArray(urlArtes) ? urlArtes : [];
+  while (ua.length < 10) ua.push('');
   var base = [
     idGravar, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
     produtosJson, observacoes, valorTotal, valorEntrada, restante, status, dataCriacao, dataModificacao
@@ -579,13 +774,24 @@ function montarLinhaValoresPedido(idGravar, nomeCliente, telefone, dataPedido, d
   if (temCostura) {
     return base.concat([a, o, c, co, e, p,
       resumoProduto.tipoPeca, resumoProduto.tipoMalha, resumoProduto.corMalha, resumoProduto.detalhePeca, resumoProduto.estampaResumo,
-      vendedor, tagPedido, ib, lp
+      vendedor, tagPedido, ib, lp,
+      um, ua[0], ua[1], ua[2], ua[3], ua[4], ua[5], ua[6], ua[7], ua[8], ua[9]
     ]);
   }
   return base.concat([a, o, c, e, p,
     resumoProduto.tipoPeca, resumoProduto.tipoMalha, resumoProduto.corMalha, resumoProduto.detalhePeca, resumoProduto.estampaResumo,
-    vendedor, tagPedido, ib, lp
+    vendedor, tagPedido, ib, lp,
+    um, ua[0], ua[1], ua[2], ua[3], ua[4], ua[5], ua[6], ua[7], ua[8], ua[9]
   ]);
+}
+
+function lerUrlArtesDaLinha(row, idxInicio) {
+  var artes = [];
+  for (var i = 0; i < 10; i++) {
+    var idx = idxInicio + i;
+    artes.push(row.length > idx ? (String(row[idx] || '')) : '');
+  }
+  return artes;
 }
 
 function linhaParaPedido(row, temCostura) {
@@ -610,6 +816,7 @@ function linhaParaPedido(row, temCostura) {
       estampaResumo: row[24] || ''
     };
     if (!etapaAtual) etapaAtual = etapaDeFlagsProducao(sp);
+    // com COSTURA: lp=28, urlMockup=29, urlArte1..10=30..39
     return {
       id: row[0],
       cliente: { nome: row[1], telefone: row[2] },
@@ -626,6 +833,8 @@ function linhaParaPedido(row, temCostura) {
       tagPedido: row[26] || 'PEDIDO',
       idBusca: row.length > 27 ? normalizarIdBuscaPlanilha(row[27]) : sufixoIdBuscaDeTelefone(normalizarTelefone(row[2])),
       listaPersonalizacao: row.length > 28 ? (row[28] || '') : '',
+      urlMockup: row.length > 29 ? String(row[29] || '') : '',
+      urlArtes: lerUrlArtesDaLinha(row, 30),
       dataCriacao: row[12],
       dataModificacao: row[13]
     };
@@ -646,6 +855,7 @@ function linhaParaPedido(row, temCostura) {
     estampaResumo: row[23] || ''
   };
   if (!etapaAtual) etapaAtual = etapaDeFlagsProducao(sp);
+  // sem COSTURA: lp=27, urlMockup=28, urlArte1..10=29..38
   return {
     id: row[0],
     cliente: { nome: row[1], telefone: row[2] },
@@ -662,6 +872,8 @@ function linhaParaPedido(row, temCostura) {
     tagPedido: row[25] || 'PEDIDO',
     idBusca: row.length > 26 ? normalizarIdBuscaPlanilha(row[26]) : sufixoIdBuscaDeTelefone(normalizarTelefone(row[2])),
     listaPersonalizacao: row.length > 27 ? (row[27] || '') : '',
+    urlMockup: row.length > 28 ? String(row[28] || '') : '',
+    urlArtes: lerUrlArtesDaLinha(row, 29),
     dataCriacao: row[12],
     dataModificacao: row[13]
   };
