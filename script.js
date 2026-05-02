@@ -198,7 +198,7 @@ function inicializarSecaoImagens() {
             mostrarPreviewMockup(URL.createObjectURL(file), file.name, '');
         });
     }
-    document.getElementById('btnAdicionarArte')?.addEventListener('click', adicionarArteUpload);
+    document.getElementById('btnAdicionarArte')?.addEventListener('click', () => adicionarArteUpload());
 }
 
 function validarArquivoImagem(file) {
@@ -244,8 +244,14 @@ function limparMockup() {
 }
 
 function adicionarArteUpload(urlDrive, nomeArquivo) {
+    if (typeof urlDrive !== 'string') {
+        urlDrive = '';
+    }
+    if (typeof nomeArquivo !== 'string') {
+        nomeArquivo = '';
+    }
+
     const container = document.getElementById('containerArtes');
-    const btnAdicionar = document.getElementById('btnAdicionarArte');
     if (!container) return;
 
     const total = container.querySelectorAll('.arte-upload-item').length;
