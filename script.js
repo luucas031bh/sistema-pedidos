@@ -274,7 +274,7 @@ function adicionarArteUpload(urlDrive, nomeArquivo) {
         <span class="arte-upload-numero">Arte ${num}</span>
         <div class="form-group">
             <label class="form-label" for="${inputId}">Imagem da Arte (PNG ou JPG)</label>
-            <input type="file" id="${inputId}" class="form-input arte-input" accept=".png,.jpg,.jpeg,image/png,image/jpeg">
+            <input type="file" id="${inputId}" class="form-input arte-input arte-file-input" accept=".png,.jpg,.jpeg,image/png,image/jpeg">
         </div>
         <div class="imagem-preview-wrap hidden arte-preview">
             <img class="imagem-thumb arte-thumb" alt="Arte ${num}">
@@ -295,12 +295,21 @@ function adicionarArteUpload(urlDrive, nomeArquivo) {
         }
     }
 
-    const inputEl = item.querySelector('.arte-input');
+    const inputEl = obterInputArteDoItem(item);
+    item._arquivoArtePedido = null;
     if (inputEl) {
         inputEl.addEventListener('change', function () {
-            if (!this.files || !this.files[0]) return;
+            if (!this.files || !this.files[0]) {
+                item._arquivoArtePedido = null;
+                return;
+            }
             const file = this.files[0];
-            if (!validarArquivoImagem(file)) { this.value = ''; return; }
+            if (!validarArquivoImagem(file)) {
+                this.value = '';
+                item._arquivoArtePedido = null;
+                return;
+            }
+            item._arquivoArtePedido = file;
             const previewWrap = item.querySelector('.arte-preview');
             const thumb = item.querySelector('.arte-thumb');
             if (previewWrap && thumb) {
@@ -321,6 +330,7 @@ function adicionarArteUpload(urlDrive, nomeArquivo) {
 function removerArteUpload(itemId) {
     const item = document.getElementById(itemId);
     if (!item) return;
+    item._arquivoArtePedido = null;
     item.remove();
     renumerarArtes();
     atualizarBotaoAdicionarArte();
@@ -344,6 +354,20 @@ function atualizarBotaoAdicionarArte() {
     const total = container.querySelectorAll('.arte-upload-item').length;
     btn.disabled = total >= MAX_ARTES;
     btn.title = total >= MAX_ARTES ? `Máximo de ${MAX_ARTES} artes` : '';
+}
+
+/** Um único input file por bloco de arte; não depende só de .arte-input (minificadores podem colar classes). */
+function obterInputArteDoItem(item) {
+    if (!item) return null;
+    return item.querySelector('input.arte-file-input')
+        || item.querySelector('input.arte-input')
+        || item.querySelector('input[type="file"]');
+}
+
+function obterArquivoLocalArteItem(item, inputArte) {
+    if (item && item._arquivoArtePedido instanceof File) return item._arquivoArtePedido;
+    if (inputArte && inputArte.files && inputArte.files[0]) return inputArte.files[0];
+    return null;
 }
 
 /** Com o #containerArtes vazio, coletarImagens não encontra .arte-upload-item. Cria um slot inicial quando o pedido é editável. */
@@ -388,11 +412,12 @@ async function coletarImagens() {
     if (container) {
         const itens = container.querySelectorAll('.arte-upload-item');
         for (const item of itens) {
-            const inputArte = item.querySelector('.arte-input');
+            const inputArte = obterInputArteDoItem(item);
             const urlExistente = item.dataset.urlDrive || '';
-            if (inputArte && inputArte.files && inputArte.files[0]) {
+            const arquivoLocal = obterArquivoLocalArteItem(item, inputArte);
+            if (arquivoLocal) {
                 try {
-                    const arteBase64 = await lerArquivoBase64(inputArte.files[0]);
+                    const arteBase64 = await lerArquivoBase64(arquivoLocal);
                     resultado.artes.push({ ...arteBase64, urlExistente: '' });
                 } catch (e) {
                     console.warn('Erro ao ler arte:', e);
