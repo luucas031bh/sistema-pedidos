@@ -149,6 +149,7 @@ async function inicializarApp() {
     atualizarSecaoImpressaoPedido();
     const container = document.getElementById('produtosContainer');
     if (container && !container.children.length) adicionarProduto();
+    if (!estadoApp.somenteLeitura) garantirSlotArteMinimo();
 }
 
 function atualizarRelogio() {
@@ -343,6 +344,14 @@ function atualizarBotaoAdicionarArte() {
     const total = container.querySelectorAll('.arte-upload-item').length;
     btn.disabled = total >= MAX_ARTES;
     btn.title = total >= MAX_ARTES ? `Máximo de ${MAX_ARTES} artes` : '';
+}
+
+/** Com o #containerArtes vazio, coletarImagens não encontra .arte-upload-item. Cria um slot inicial quando o pedido é editável. */
+function garantirSlotArteMinimo() {
+    if (estadoApp.somenteLeitura) return;
+    const container = document.getElementById('containerArtes');
+    if (!container || container.querySelector('.arte-upload-item')) return;
+    adicionarArteUpload();
 }
 
 function lerArquivoBase64(file) {
@@ -1050,6 +1059,7 @@ async function recarregarPedidoAposSalvar() {
             desativarSomenteLeituraIndex();
             aplicarUIModoEdicao();
         }
+        garantirSlotArteMinimo();
     } catch (e) {
         console.error(e);
         Utils.mostrarNotificacao('Salvo. Se os dados não baterem, atualize a página (F5) ou confira o deploy do Apps Script.', 'info');
@@ -1305,6 +1315,7 @@ function limparFormulario() {
     const previewMockup = document.getElementById('previewMockup');
     if (previewMockup) previewMockup.classList.add('hidden');
     atualizarBotaoAdicionarArte();
+    garantirSlotArteMinimo();
     desativarUIModoEdicaoIndex();
     configurarValoresPadraoFormulario();
     adicionarProduto();
