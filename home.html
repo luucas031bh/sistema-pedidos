@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Fila visual - Adonay Confecção">
+    <meta name="theme-color" content="#d4af37">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Pedidos">
+    <title>HOME - Fila visual | Adonay Confecção</title>
+    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👕</text></svg>">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="page-home">
+    <header class="header header--home">
+        <div class="header-content">
+            <h1 class="empresa-nome">ADONAY CONFECÇÃO</h1>
+            <div class="empresa-info">
+                <p>CNPJ: 42.522.845/0001-97</p>
+                <p>Rua Geraldo Teixeira da Costa, São Benedito, Santa Luzia - MG</p>
+            </div>
+            <div class="empresa-contatos">
+                <span class="contato-item">💬 (31) 3950-3089</span>
+                <span class="contato-item">📷 @adonayconfeccao</span>
+                <span class="contato-item">☎ (31) 3950-3089</span>
+            </div>
+            <div class="relogio" id="relogio">Carregando...</div>
+        </div>
+    </header>
+
+    <main class="container container--home">
+        <section class="card">
+            <div class="flex-between flex-wrap gap-1">
+                <h2 class="card-title">Fila visual — pedidos em aberto</h2>
+                <div class="btn-group flex-wrap">
+                    <button type="button" id="btnAtualizarHome" class="btn btn-info">Atualizar</button>
+                    <a href="CalculadoraMalha/" class="btn btn-secondary">✂ Calculadora Malha</a>
+                    <a href="ROANTONE/" class="btn btn-secondary">🎨 ROANTONE</a>
+                    <a href="index.html" class="btn btn-primary nav-desktop-only">Novo pedido</a>
+                    <a href="config-calculos.html" class="btn btn-secondary nav-desktop-only">Custos / cálculo</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="card home-busca-pedido">
+            <h2 class="card-title">Buscar pedido salvo</h2>
+            <p class="home-busca-ajuda">Use os <strong>últimos 4 dígitos</strong> do telefone cadastrado (como no sistema antigo). Você pode colar o número completo — extraímos os 4 finais.</p>
+            <div class="form-row home-busca-linha">
+                <div class="form-group flex-grow">
+                    <label class="form-label" for="inputBuscaIdBusca">Final do telefone (4 dígitos)</label>
+                    <input type="text" id="inputBuscaIdBusca" class="form-input" inputmode="numeric" maxlength="16" placeholder="Ex.: 2490 ou (31) 98603-2490" autocomplete="off">
+                </div>
+                <div class="form-group home-busca-acoes">
+                    <span class="form-label home-busca-label-spacer">&nbsp;</span>
+                    <button type="button" id="btnBuscarPedidoHome" class="btn btn-secondary">Buscar pedido</button>
+                </div>
+            </div>
+            <p id="homeBuscaMensagem" class="home-busca-msg hidden" role="status"></p>
+            <div id="homeBuscaResultados" class="home-busca-resultados hidden"></div>
+        </section>
+
+        <section class="card">
+            <h2 class="card-title">Indicadores (pedidos em aberto)</h2>
+            <div class="form-row home-kpi-grid">
+                <div class="form-group">
+                    <label class="form-label">Pedidos em aberto</label>
+                    <div class="form-input" id="kpiPedidosAbertos">0</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Quantidade de peças (total)</label>
+                    <div class="form-input" id="kpiPecasTotal">0</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Valor recebido (entradas)</label>
+                    <div class="form-input" id="kpiValorRecebido">R$ 0,00</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Valor a receber</label>
+                    <div class="form-input" id="kpiValorReceber">R$ 0,00</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Valor total dos pedidos</label>
+                    <div class="form-input" id="kpiValorTotalPedidos">R$ 0,00</div>
+                </div>
+            </div>
+            <div class="home-chart-container" id="homeGraficoEtapas"></div>
+        </section>
+
+        <section class="card">
+            <h2 class="card-title">Fila</h2>
+            <div class="tabela-dinamica tabela-home-fila">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Dias restantes</th>
+                            <th>ID Busca</th>
+                            <th>STATUS OP</th>
+                            <th>Total peças</th>
+                            <th>Tipo de peças</th>
+                            <th>Malha</th>
+                            <th>Cor</th>
+                            <th>Tipo de estampa</th>
+                            <th>Status PROD.</th>
+                        </tr>
+                    </thead>
+                    <tbody id="homeFilaBody">
+                        <tr><td colspan="10">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="homeFilaCards" class="home-fila-cards-mobile"></div>
+        </section>
+    </main>
+
+    <nav class="bottom-nav" role="navigation" aria-label="Navegação principal">
+        <a href="home.html" class="bottom-nav-item active" aria-current="page">
+            <span class="bottom-nav-icon">🏠</span>
+            <span class="bottom-nav-label">Início</span>
+        </a>
+        <a href="index.html" class="bottom-nav-item">
+            <span class="bottom-nav-icon">➕</span>
+            <span class="bottom-nav-label">Novo Pedido</span>
+        </a>
+        <a href="config-calculos.html" class="bottom-nav-item">
+            <span class="bottom-nav-icon">⚙️</span>
+            <span class="bottom-nav-label">Custos</span>
+        </a>
+    </nav>
+
+    <script src="config.js?v=5"></script>
+    <script src="utils.js"></script>
+    <script src="home.js"></script>
+</body>
+</html>

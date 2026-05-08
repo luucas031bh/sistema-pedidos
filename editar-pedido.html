@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecionando…</title>
+    <script>
+        (function () {
+            var q = window.location.search || '';
+            var id = new URLSearchParams(q).get('id');
+            var dest = 'index.html' + (id ? '?id=' + encodeURIComponent(id) : '');
+            window.location.replace(dest);
+        })();
+    </script>
+</head>
+<body>
+    <p>Redirecionando para o formulário completo…</p>
+    <p><a id="linkFallback" href="index.html">Abrir cadastro de pedidos</a></p>
+    <script>
+        (function () {
+            var id = new URLSearchParams(window.location.search || '').get('id');
+            var a = document.getElementById('linkFallback');
+            if (a && id) a.href = 'index.html?id=' + encodeURIComponent(id);
+        })();
+    </script>
+    <noscript>
+        <p>Ative o JavaScript ou abra <a href="index.html">index.html</a> manualmente (use <code>?id=</code> com o ID do pedido para editar).</p>
+    </noscript>
+</body>
+</html>

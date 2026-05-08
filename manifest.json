@@ -1,0 +1,10 @@
+{
+  "name": "Adonay Confecção — Pedidos",
+  "short_name": "Pedidos",
+  "description": "Sistema de pedidos Adonay Confecção",
+  "start_url": "home.html",
+  "display": "standalone",
+  "background_color": "#0f0f0f",
+  "theme_color": "#d4af37",
+  "orientation": "portrait-primary"
+}

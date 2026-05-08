@@ -1,0 +1,1909 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Calculadora de Malha</title>
+    <style>
+        /* Reset e Variáveis */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --bg-primary: #0b1220;
+            --bg-secondary: rgba(17, 24, 39, 0.9);
+            --bg-tertiary: rgba(30, 41, 59, 0.9);
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent: #38bdf8;
+            --accent-hover: #67e8f9;
+            --accent-2: #22d3ee;
+            --success: #22c55e;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --border: rgba(148, 163, 184, 0.22);
+            --shadow: rgba(2, 6, 23, 0.45);
+            --radius: 14px;
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --shadow-card: 0 4px 24px rgba(2, 6, 23, 0.4);
+            --shadow-glow: 0 0 24px rgba(56, 189, 248, 0.15);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background:
+                radial-gradient(circle at top right, rgba(34, 211, 238, 0.15), transparent 45%),
+                radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 35%),
+                var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding-bottom: env(safe-area-inset-bottom);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(11, 18, 32, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+            padding: 0 1.25rem;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 8px 30px var(--shadow);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            color: var(--text-primary);
+            flex: 1;
+            margin: 0;
+        }
+
+        .logo-accent {
+            color: var(--accent);
+        }
+
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            color: #082f49;
+            font-weight: 900;
+            flex-shrink: 0;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Botões */
+        .btn {
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            min-height: 44px;
+            touch-action: manipulation;
+            box-shadow: 0 8px 20px rgba(2, 6, 23, 0.25);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+            opacity: 0.8;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: #082f49;
+            border-color: transparent;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(51, 65, 85, 0.85));
+        }
+
+        .btn-large {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+            margin-top: 1rem;
+        }
+
+        /* Container */
+        .container {
+            padding: 1rem;
+            max-width: 100%;
+        }
+
+        /* Seções */
+        .form-section,
+        .results-section {
+            background-color: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-card);
+            backdrop-filter: blur(8px);
+        }
+
+        .form-section h2,
+        .results-section h2 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--accent);
+            border-bottom: 2px solid rgba(56, 189, 248, 0.35);
+            padding-bottom: 0.5rem;
+        }
+
+        /* Formulários */
+        .form {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.875rem;
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: border-color 0.2s;
+            min-height: 44px;
+            -webkit-appearance: none;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+        }
+
+        .tooltip-text {
+            display: block;
+            margin-top: 0.3rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 0;
+            margin-top: 0.5rem;
+            background: var(--bg-primary);
+            border-radius: 10px;
+            padding: 3px;
+            border: 1px solid var(--border);
+        }
+
+        .radio-label {
+            flex: 1;
+            padding: 0.6rem 1rem;
+            border-radius: var(--radius-sm);
+            border: none;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            cursor: pointer;
+            transition: all var(--transition);
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .radio-label:active {
+            transform: scale(0.98);
+        }
+
+        .radio-label input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 1px;
+            height: 1px;
+            pointer-events: none;
+        }
+
+        .radio-label:has(input:checked) {
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: #082f49;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(56, 189, 248, 0.3);
+        }
+
+        .section-divider {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 1.5rem 0 1rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-secondary);
+        }
+
+        .section-divider::before,
+        .section-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .btn-calcular {
+            width: 100%;
+            padding: 1rem;
+            margin-top: 1.25rem;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: #082f49;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(56, 189, 248, 0.3);
+            min-height: 48px;
+            touch-action: manipulation;
+        }
+
+        .btn-calcular:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 28px rgba(56, 189, 248, 0.45);
+        }
+
+        .btn-calcular:active {
+            transform: translateY(0) scale(0.99);
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        @media (min-width: 500px) {
+            .kpi-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+
+        .kpi-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 0.875rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .kpi-card.kpi-highlight {
+            border-color: rgba(56, 189, 248, 0.4);
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(34, 211, 238, 0.05));
+            box-shadow: var(--shadow-glow);
+        }
+
+        .kpi-label {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 600;
+        }
+
+        .kpi-value {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+
+        .kpi-highlight .kpi-value {
+            color: var(--accent);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            opacity: 0.4;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-sub {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            opacity: 0.7;
+            max-width: 280px;
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+            padding: 0;
+        }
+
+        .btn-icon.btn-danger:hover {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: var(--error);
+            color: var(--error);
+        }
+
+        .td-action {
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .th-icon {
+            width: 25%;
+            text-align: center;
+        }
+
+        .input-quantidade {
+            width: 70px;
+            max-width: 100%;
+            text-align: center;
+            padding: 0.4rem 0.5rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .input-quantidade:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+            outline: none;
+        }
+
+        .input-quantidade[data-filled="true"] {
+            border-color: rgba(56, 189, 248, 0.5);
+            background: rgba(56, 189, 248, 0.05);
+        }
+
+        .tfoot-totais-row td {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.08), rgba(34, 211, 238, 0.04));
+            border-top: 2px solid rgba(56, 189, 248, 0.35);
+        }
+
+        .tfoot-totais-row .tf-destaque {
+            color: var(--accent);
+            font-size: 1.05rem;
+        }
+
+        .modal-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin: 0 0 1rem;
+            line-height: 1.45;
+        }
+
+        .mg-panel[hidden] {
+            display: none !important;
+        }
+
+        .modal-footer-btns {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .modal-footer-btns .btn {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .modal-content--sm {
+            max-width: 420px;
+        }
+
+        /* Tabelas */
+        .table-container {
+            overflow-x: auto;
+            margin: 1rem 0;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--bg-tertiary);
+            font-size: 0.85rem;
+            min-width: unset;
+        }
+
+        #tabelaResultados,
+        #tabelaReferencias {
+            min-width: 600px;
+        }
+
+        #tabelaPecas th:first-child,
+        #tabelaPecas td:first-child { width: 40%; }
+        #tabelaPecas th:nth-child(2),
+        #tabelaPecas td:nth-child(2) { width: 35%; }
+        #tabelaPecas th:last-child,
+        #tabelaPecas td:last-child { width: 25%; text-align: center; }
+
+        .table thead {
+            background-color: var(--bg-secondary);
+            position: sticky;
+            left: 0;
+        }
+
+        .table th {
+            padding: 0.75rem 0.5rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--accent);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+
+        .table td {
+            padding: 0.75rem 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table tbody tr:hover {
+            background-color: var(--bg-secondary);
+        }
+
+        .table tbody tr:nth-child(even) {
+            background-color: rgba(148, 163, 184, 0.06);
+        }
+
+        .table tfoot {
+            background-color: var(--bg-secondary);
+            font-weight: 600;
+        }
+
+        .table tfoot td {
+            border-top: 2px solid var(--accent);
+            padding: 1rem 0.5rem;
+        }
+
+        .empty-row td {
+            text-align: center;
+            color: var(--text-secondary);
+            font-style: italic;
+            padding: 2rem;
+        }
+
+        /* Controles */
+        .pecas-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .pecas-controls .btn {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        /* Mensagens */
+        .mensagem {
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .mensagem.success {
+            background-color: rgba(76, 175, 80, 0.2);
+            border: 1px solid var(--success);
+            color: var(--success);
+            display: block;
+        }
+
+        .mensagem.error {
+            background-color: rgba(244, 67, 54, 0.2);
+            border: 1px solid var(--error);
+            color: var(--error);
+            display: block;
+        }
+
+        .mensagem.warning {
+            background-color: rgba(255, 152, 0, 0.2);
+            border: 1px solid var(--warning);
+            color: var(--warning);
+            display: block;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            overflow-y: auto;
+            padding: 1rem;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .modal.show {
+            display: block;
+        }
+
+        .modal-content {
+            background-color: var(--bg-secondary);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border);
+            box-shadow: 0 16px 35px var(--shadow);
+            max-height: calc(100vh - 2rem);
+        }
+
+        .modal-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--bg-tertiary);
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: var(--accent);
+            font-size: 1.1rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .modal-close:active {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 1rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .modal-controls .btn {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        /* Inputs editáveis na tabela */
+        .table input[type="text"],
+        .table input[type="number"] {
+            width: 100%;
+            padding: 0.5rem;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            min-height: 36px;
+        }
+
+        .table input[type="text"]:focus,
+        .table input[type="number"]:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        #tabelaPecas .input-quantidade {
+            width: 70px;
+            box-sizing: border-box;
+        }
+
+        /* Dropdown */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+            z-index: 200;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: var(--bg-secondary);
+            min-width: 160px;
+            box-shadow: 0 14px 30px var(--shadow);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            z-index: 201;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+
+        .dropdown-content a {
+            color: var(--text-primary);
+            padding: 1rem;
+            text-decoration: none;
+            display: block;
+            transition: background-color 0.2s;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+        }
+
+        .dropdown-content a:active {
+            background-color: var(--bg-tertiary);
+        }
+
+        .dropdown.open .dropdown-content {
+            display: block;
+        }
+
+        /* Print Styles */
+        @media print {
+            .header,
+            .pecas-controls,
+            .btn,
+            .modal,
+            .kpi-grid,
+            .empty-state {
+                display: none !important;
+            }
+
+            body {
+                background: white;
+                color: black;
+            }
+
+            .table {
+                border: 1px solid #000;
+            }
+
+            .table th,
+            .table td {
+                border: 1px solid #000;
+                padding: 0.5rem;
+            }
+        }
+
+        /* Safe area para iPhone X e superior */
+        @supports (padding: max(0px)) {
+            .header {
+                padding-left: max(1rem, env(safe-area-inset-left));
+                padding-right: max(1rem, env(safe-area-inset-right));
+            }
+        }
+
+        @media (min-width: 900px) {
+            .container {
+                max-width: 1100px;
+                margin: 0 auto;
+                display: grid;
+                grid-template-columns: 1.2fr 1fr;
+                gap: 1rem;
+                align-items: start;
+            }
+
+            .form-section,
+            .results-section {
+                margin-bottom: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1 class="logo">
+                <span class="logo-icon" aria-hidden="true">✂</span>
+                <span><span class="logo-accent">Calculadora</span> de Malha</span>
+            </h1>
+            <div class="header-actions">
+                <button id="btnNovo" type="button" class="btn btn-secondary">Novo</button>
+                <div class="dropdown">
+                    <button type="button" id="btnExportar" class="btn btn-primary">Exportar ▼</button>
+                    <div class="dropdown-content">
+                        <a href="#" id="exportCSV">CSV</a>
+                        <a href="#" id="exportXLSX">Excel</a>
+                        <a href="#" id="exportPDF">PDF</a>
+                        <a href="#" id="exportPrint">Imprimir</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="form-section">
+            <h2>Configuração da Malha</h2>
+            <form id="formMalha" class="form">
+                <div class="form-group">
+                    <label for="largura">Largura (m) *</label>
+                    <select id="largura" name="largura" required>
+                        <option value="">Selecione...</option>
+                        <option value="0.90">0.90</option>
+                        <option value="1.00">1.00</option>
+                        <option value="1.20">1.20</option>
+                        <option value="1.60">1.60</option>
+                        <option value="1.80">1.80</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="tipo">Tipo *</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="tipo" value="ramada" required>
+                            <span>Ramada</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="tipo" value="tubular" required>
+                            <span>Tubular</span>
+                        </label>
+                    </div>
+                    <small class="tooltip-text">Ramada: malha aberta | Tubular: malha fechada</small>
+                </div>
+                <div class="form-group">
+                    <label for="rendimento">Rendimento (m por kg) *</label>
+                    <input type="text" id="rendimento" name="rendimento_m_por_kg" 
+                           placeholder="Ex: 2,20 ou 2.20" required>
+                    <small class="tooltip-text">Metros de malha por quilograma</small>
+                </div>
+                <div class="form-group">
+                    <label for="precoKg">Preço por kg (R$) *</label>
+                    <input type="text" id="precoKg" name="preco_por_kg" 
+                           placeholder="Ex: 15,00 ou 15.00" required>
+                </div>
+            </form>
+
+            <div class="section-divider"><span>Grade de Peças</span></div>
+            <div class="pecas-controls">
+                <button type="button" id="btnAbrirTabelaRendimento" class="btn btn-secondary">Tabela de Referência</button>
+                <button type="button" id="btnAdicionarPeca" class="btn btn-secondary">+ Adicionar</button>
+            </div>
+            <div class="table-container">
+                <table id="tabelaPecas" class="table">
+                    <thead>
+                        <tr>
+                            <th>Tamanho</th>
+                            <th>Quantidade</th>
+                            <th class="th-icon" aria-label="Remover linha"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyPecas">
+                    </tbody>
+                </table>
+            </div>
+            <button type="button" id="btnCalcular" class="btn-calcular">Calcular</button>
+        </section>
+
+        <section class="results-section">
+            <h2>Resultados</h2>
+            <div id="mensagemResultado" class="mensagem"></div>
+            <div id="kpiCards" class="kpi-grid" style="display: none;">
+                <div class="kpi-card">
+                    <span class="kpi-label">Total de Peças</span>
+                    <span class="kpi-value" id="kpiPecas">—</span>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-label">Metros Totais</span>
+                    <span class="kpi-value" id="kpiMetros">—</span>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-label">Peso Total</span>
+                    <span class="kpi-value" id="kpiKg">—</span>
+                </div>
+                <div class="kpi-card kpi-highlight">
+                    <span class="kpi-label">Custo Total</span>
+                    <span class="kpi-value" id="kpiCusto">—</span>
+                </div>
+            </div>
+            <div id="emptyState" class="empty-state">
+                <div class="empty-state-icon" aria-hidden="true">📊</div>
+                <p class="empty-state-title">Nenhum cálculo ainda</p>
+                <p class="empty-state-sub">Preencha os dados ao lado e clique em <strong>Calcular</strong></p>
+            </div>
+            <div id="wrapTabelaResultados" class="table-container" style="display: none;">
+                <table id="tabelaResultados" class="table table-results">
+                    <thead>
+                        <tr>
+                            <th>Tamanho</th>
+                            <th>Qtde</th>
+                            <th>Peças/m</th>
+                            <th>Metros</th>
+                            <th>KG</th>
+                            <th>Custo (R$)</th>
+                            <th>Custo/Peça</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyResultados">
+                    </tbody>
+                    <tfoot id="tfootTotais" style="display: none;">
+                    </tfoot>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <div id="modalTabelaRendimento" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Tabela de Referência</h2>
+                <button class="modal-close" id="btnFecharModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-controls">
+                    <button id="btnAdicionarReferencia" class="btn btn-secondary">+ Adicionar</button>
+                    <button id="btnSalvarReferencias" class="btn btn-primary">Salvar</button>
+                </div>
+                <div class="table-container">
+                    <table id="tabelaReferencias" class="table">
+                        <thead>
+                            <tr>
+                                <th>Largura</th>
+                                <th>Tipo</th>
+                                <th>Tamanho</th>
+                                <th>Metros/Lote</th>
+                                <th>Peças/Lote</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyReferencias">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalGenerico" class="modal" aria-hidden="true">
+        <div class="modal-content modal-content--sm">
+            <div class="modal-header">
+                <h2 id="modalGenericoTitulo">—</h2>
+                <button type="button" class="modal-close" id="btnFecharModalGenerico" aria-label="Fechar">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="modalGenericoSubtitulo" class="modal-subtitle" style="display: none;"></p>
+
+                <div id="mgPanelConfirmNovo" class="mg-panel" hidden></div>
+
+                <div id="mgPanelAddPeca" class="mg-panel" hidden>
+                    <div class="form-group">
+                        <label for="addPecaTamanho">Tamanho</label>
+                        <input type="text" id="addPecaTamanho" autocomplete="off" placeholder="Ex.: XGG">
+                    </div>
+                </div>
+
+                <div id="mgPanelAddRef" class="mg-panel" hidden>
+                    <div class="form-group">
+                        <label for="refModalLargura">Largura (m)</label>
+                        <select id="refModalLargura">
+                            <option value="0.90">0.90</option>
+                            <option value="1.00">1.00</option>
+                            <option value="1.20">1.20</option>
+                            <option value="1.60">1.60</option>
+                            <option value="1.80" selected>1.80</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="refModalTipo" value="ramada" checked>
+                                <span>Ramada</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="refModalTipo" value="tubular">
+                                <span>Tubular</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="refModalTamanho">Tamanho</label>
+                        <input type="text" id="refModalTamanho" autocomplete="off" placeholder="Ex.: M">
+                    </div>
+                    <div class="form-group">
+                        <label for="refModalMetros">Metros / lote</label>
+                        <input type="number" id="refModalMetros" step="0.01" min="0" placeholder="2,10">
+                    </div>
+                    <div class="form-group">
+                        <label for="refModalPecas">Peças / lote</label>
+                        <input type="number" id="refModalPecas" step="1" min="1" placeholder="3">
+                    </div>
+                </div>
+
+                <div class="modal-footer-btns">
+                    <button type="button" id="modalGenericoCancelar" class="btn btn-secondary">Cancelar</button>
+                    <button type="button" id="modalGenericoConfirmar" class="btn btn-primary">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        /** Chave canónica para tamanhos: aceita p/P, gg/GG, g1/G1; números (4, 10…) mantêm-se iguais. */
+        function normalizarChaveTamanho(t) {
+            return String(t == null ? '' : t).trim().toUpperCase();
+        }
+
+        // Tabela de Rendimento
+        const TabelaRendimento = {
+            dados: null,
+            STORAGE_KEY: 'tabelaRendimento',
+
+            aplicarPadraoNovosTamanhos() {
+                if (!this.dados || !Array.isArray(this.dados.dados)) return;
+
+                const garantirGrupo = (largura, tipo) => {
+                    let grupo = this.dados.dados.find(
+                        r => r.largura === largura && r.tipo.toLowerCase() === tipo.toLowerCase()
+                    );
+                    if (!grupo) {
+                        grupo = { largura, tipo: tipo.toLowerCase(), tamanhos: {} };
+                        this.dados.dados.push(grupo);
+                    }
+                    if (!grupo.tamanhos) grupo.tamanhos = {};
+                    return grupo;
+                };
+
+                const ramada180 = garantirGrupo(1.80, 'ramada');
+                delete ramada180.tamanhos.EG;
+                ramada180.tamanhos.G1 = { metros_por_lote: 1.20, pecas_por_lote: 2 };
+                ramada180.tamanhos.G2 = { metros_por_lote: 1.20, pecas_por_lote: 2 };
+                ramada180.tamanhos.G3 = { metros_por_lote: 1.30, pecas_por_lote: 2 };
+                ramada180.tamanhos.G4 = { metros_por_lote: 1.30, pecas_por_lote: 2 };
+                ramada180.tamanhos.G5 = { metros_por_lote: 1.30, pecas_por_lote: 2 };
+
+                const tubular120 = garantirGrupo(1.20, 'tubular');
+                delete tubular120.tamanhos.EG;
+                tubular120.tamanhos.G1 = { metros_por_lote: 2.40, pecas_por_lote: 3 };
+                tubular120.tamanhos.G2 = { metros_por_lote: 2.40, pecas_por_lote: 3 };
+                tubular120.tamanhos.G3 = { metros_por_lote: 2.50, pecas_por_lote: 3 };
+                tubular120.tamanhos.G4 = { metros_por_lote: 2.50, pecas_por_lote: 3 };
+                tubular120.tamanhos.G5 = { metros_por_lote: 2.60, pecas_por_lote: 3 };
+            },
+
+            carregar() {
+                try {
+                    const dadosLocal = localStorage.getItem(this.STORAGE_KEY);
+                    if (dadosLocal) {
+                        this.dados = JSON.parse(dadosLocal);
+                        this.migrarChavesTamanhosMaiusculas();
+                        this.aplicarPadraoNovosTamanhos();
+                        this.salvar();
+                        return this.dados;
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar:', error);
+                }
+
+                this.dados = {
+                    versao: "1.0",
+                    descricao: "Tabela de referência de rendimento",
+                    dados: [
+                        {
+                            largura: 1.80,
+                            tipo: "ramada",
+                            tamanhos: {
+                                "4": {metros_por_lote: 1.50, pecas_por_lote: 4},
+                                "6": {metros_por_lote: 1.50, pecas_por_lote: 4},
+                                "8": {metros_por_lote: 1.50, pecas_por_lote: 4},
+                                "10": {metros_por_lote: 1.70, pecas_por_lote: 4},
+                                "12": {metros_por_lote: 1.70, pecas_por_lote: 4},
+                                "14": {metros_por_lote: 1.70, pecas_por_lote: 4},
+                                "PP": {metros_por_lote: 2.10, pecas_por_lote: 3},
+                                "P": {metros_por_lote: 2.10, pecas_por_lote: 3},
+                                "M": {metros_por_lote: 2.10, pecas_por_lote: 3},
+                                "G": {metros_por_lote: 2.40, pecas_por_lote: 3},
+                                "GG": {metros_por_lote: 2.40, pecas_por_lote: 3},
+                                "G1": {metros_por_lote: 1.20, pecas_por_lote: 2},
+                                "G2": {metros_por_lote: 1.20, pecas_por_lote: 2},
+                                "G3": {metros_por_lote: 1.30, pecas_por_lote: 2},
+                                "G4": {metros_por_lote: 1.30, pecas_por_lote: 2},
+                                "G5": {metros_por_lote: 1.30, pecas_por_lote: 2}
+                            }
+                        },
+                        {
+                            largura: 1.20,
+                            tipo: "tubular",
+                            tamanhos: {
+                                "4": {metros_por_lote: 1.40, pecas_por_lote: 6},
+                                "6": {metros_por_lote: 1.40, pecas_por_lote: 6},
+                                "8": {metros_por_lote: 1.40, pecas_por_lote: 6},
+                                "10": {metros_por_lote: 1.70, pecas_por_lote: 5},
+                                "12": {metros_por_lote: 1.70, pecas_por_lote: 5},
+                                "14": {metros_por_lote: 1.70, pecas_por_lote: 5},
+                                "PP": {metros_por_lote: 1.00, pecas_por_lote: 2},
+                                "P": {metros_por_lote: 1.00, pecas_por_lote: 2},
+                                "M": {metros_por_lote: 1.00, pecas_por_lote: 2},
+                                "G": {metros_por_lote: 1.20, pecas_por_lote: 2},
+                                "GG": {metros_por_lote: 1.20, pecas_por_lote: 2},
+                                "G1": {metros_por_lote: 2.40, pecas_por_lote: 3},
+                                "G2": {metros_por_lote: 2.40, pecas_por_lote: 3},
+                                "G3": {metros_por_lote: 2.50, pecas_por_lote: 3},
+                                "G4": {metros_por_lote: 2.50, pecas_por_lote: 3},
+                                "G5": {metros_por_lote: 2.60, pecas_por_lote: 3}
+                            }
+                        }
+                    ]
+                };
+
+                this.aplicarPadraoNovosTamanhos();
+                this.salvar();
+                return this.dados;
+            },
+
+            salvar() {
+                if (!this.dados) throw new Error('Nenhum dado para salvar');
+                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.dados));
+            },
+
+            migrarChavesTamanhosMaiusculas() {
+                if (!this.dados || !Array.isArray(this.dados.dados)) return;
+                this.dados.dados.forEach(grupo => {
+                    if (!grupo.tamanhos || typeof grupo.tamanhos !== 'object') return;
+                    const novo = {};
+                    Object.entries(grupo.tamanhos).forEach(([k, v]) => {
+                        novo[normalizarChaveTamanho(k)] = v;
+                    });
+                    grupo.tamanhos = novo;
+                });
+            },
+
+            buscarReferencia(largura, tipo, tamanho) {
+                if (!this.dados || !this.dados.dados) return null;
+                const chave = normalizarChaveTamanho(tamanho);
+                const ref = this.dados.dados.find(
+                    r => r.largura === largura && r.tipo.toLowerCase() === tipo.toLowerCase()
+                );
+                if (!ref || !ref.tamanhos || !ref.tamanhos[chave]) return null;
+                return ref.tamanhos[chave];
+            },
+
+            adicionarReferencia(largura, tipo, tamanho, metrosPorLote, pecasPorLote) {
+                if (!this.dados) {
+                    this.dados = { versao: '1.0', descricao: 'Tabela de referência', dados: [] };
+                }
+                let grupo = this.dados.dados.find(
+                    r => r.largura === largura && r.tipo.toLowerCase() === tipo.toLowerCase()
+                );
+                if (!grupo) {
+                    grupo = { largura: parseFloat(largura), tipo: tipo.toLowerCase(), tamanhos: {} };
+                    this.dados.dados.push(grupo);
+                }
+                const chave = normalizarChaveTamanho(tamanho);
+                grupo.tamanhos[chave] = {
+                    metros_por_lote: parseFloat(metrosPorLote),
+                    pecas_por_lote: parseInt(pecasPorLote)
+                };
+                return this.dados;
+            },
+
+            removerReferencia(largura, tipo, tamanho) {
+                if (!this.dados || !this.dados.dados) return;
+                const grupo = this.dados.dados.find(
+                    r => r.largura === largura && r.tipo.toLowerCase() === tipo.toLowerCase()
+                );
+                const chave = normalizarChaveTamanho(tamanho);
+                if (grupo && grupo.tamanhos[chave]) {
+                    delete grupo.tamanhos[chave];
+                    if (Object.keys(grupo.tamanhos).length === 0) {
+                        const index = this.dados.dados.indexOf(grupo);
+                        this.dados.dados.splice(index, 1);
+                    }
+                }
+            },
+
+            renderizarTabela() {
+                const tbody = document.getElementById('tbodyReferencias');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+
+                if (!this.dados || !this.dados.dados || this.dados.dados.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="empty-row">Nenhuma referência cadastrada</td></tr>';
+                    return;
+                }
+
+                this.dados.dados.forEach(ref => {
+                    Object.keys(ref.tamanhos).forEach(tamanho => {
+                        const dados = ref.tamanhos[tamanho];
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td><input type="number" step="0.01" value="${ref.largura}" 
+                                data-field="largura" data-largura="${ref.largura}" data-tipo="${ref.tipo}" data-tamanho="${tamanho}"></td>
+                            <td>
+                                <select data-field="tipo" data-largura="${ref.largura}" data-tipo="${ref.tipo}" data-tamanho="${tamanho}">
+                                    <option value="ramada" ${ref.tipo === 'ramada' ? 'selected' : ''}>Ramada</option>
+                                    <option value="tubular" ${ref.tipo === 'tubular' ? 'selected' : ''}>Tubular</option>
+                                </select>
+                            </td>
+                            <td><input type="text" value="${tamanho}" 
+                                data-field="tamanho" data-largura="${ref.largura}" data-tipo="${ref.tipo}" data-tamanho="${tamanho}"></td>
+                            <td><input type="number" step="0.01" value="${dados.metros_por_lote}" 
+                                data-field="metros" data-largura="${ref.largura}" data-tipo="${ref.tipo}" data-tamanho="${tamanho}"></td>
+                            <td><input type="number" step="1" value="${dados.pecas_por_lote}" 
+                                data-field="pecas" data-largura="${ref.largura}" data-tipo="${ref.tipo}" data-tamanho="${tamanho}"></td>
+                            <td>
+                                <button class="btn btn-secondary" onclick="TabelaRendimento.removerLinha(this)">Remover</button>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                });
+            },
+
+            removerLinha(button) {
+                const row = button.closest('tr');
+                const largura = row.querySelector('[data-field="largura"]').getAttribute('data-largura');
+                const tipo = row.querySelector('[data-field="tipo"]').getAttribute('data-tipo');
+                const tamanho = normalizarChaveTamanho(row.querySelector('[data-field="tamanho"]').getAttribute('data-tamanho'));
+                this.removerReferencia(parseFloat(largura), tipo, tamanho);
+                this.renderizarTabela();
+            },
+
+            adicionarLinha() {
+                App.abrirModalNovaReferencia();
+            },
+
+            atualizarDadosInline(input) {
+                const field = input.getAttribute('data-field');
+                const larguraAntiga = parseFloat(input.getAttribute('data-largura'));
+                const tipoAntigo = input.getAttribute('data-tipo');
+                const tamanhoAntigo = input.getAttribute('data-tamanho');
+                const row = input.closest('tr');
+                let largura = larguraAntiga, tipo = tipoAntigo, tamanho = tamanhoAntigo;
+
+                if (field === 'largura') largura = parseFloat(input.value) || larguraAntiga;
+                else if (field === 'tipo') tipo = input.value || tipoAntigo;
+                else if (field === 'tamanho') tamanho = input.value || tamanhoAntigo;
+
+                tamanho = normalizarChaveTamanho(tamanho);
+
+                const metrosPorLote = parseFloat(row.querySelector('[data-field="metros"]').value);
+                const pecasPorLote = parseInt(row.querySelector('[data-field="pecas"]').value);
+
+                this.removerReferencia(larguraAntiga, tipoAntigo, normalizarChaveTamanho(tamanhoAntigo));
+                this.adicionarReferencia(largura, tipo, tamanho, metrosPorLote, pecasPorLote);
+
+                row.querySelectorAll('[data-largura]').forEach(el => {
+                    el.setAttribute('data-largura', largura);
+                    el.setAttribute('data-tipo', tipo);
+                    el.setAttribute('data-tamanho', tamanho);
+                });
+            }
+        };
+
+        // Cálculos
+        const Calculos = {
+            normalizarNumero(valor) {
+                if (typeof valor === 'string') {
+                    return parseFloat(valor.replace(',', '.'));
+                }
+                return parseFloat(valor);
+            },
+
+            calcularOrcamento(inputs, pecas, tabelaRendimento, opcoes = {}) {
+                const { largura, tipo, rendimento_m_por_kg, preco_por_kg } = inputs;
+                const usarCeilPorLote = opcoes.usarCeilPorLote !== false;
+                const resultados = [];
+                let metrosTotal = 0, kgTotal = 0, custoTotal = 0, totalPecas = 0;
+
+                pecas.forEach(peca => {
+                    const { tamanho: tamanhoBruto, quantidade } = peca;
+                    const tamanho = normalizarChaveTamanho(tamanhoBruto);
+                    const qtd = this.normalizarNumero(quantidade);
+                    if (qtd <= 0) return;
+
+                    const referencia = this.buscarReferencia(tabelaRendimento, largura, tipo, tamanho);
+                    if (!referencia) {
+                        resultados.push({
+                            tamanho, quantidade: qtd, pecas_por_metro: null, metros_necessarios: null,
+                            kg_necessarios: null, custo_malha: null, custo_por_peca: null,
+                            erro: 'Referência não encontrada'
+                        });
+                        return;
+                    }
+
+                    const { metros_por_lote, pecas_por_lote } = referencia;
+                    const pecasPorMetro = pecas_por_lote / metros_por_lote;
+                    let metrosNecessarios;
+                    if (usarCeilPorLote) {
+                        const lotesNecessarios = Math.ceil(qtd / pecas_por_lote);
+                        metrosNecessarios = lotesNecessarios * metros_por_lote;
+                    } else {
+                        metrosNecessarios = qtd / pecasPorMetro;
+                    }
+
+                    const kgNecessarios = metrosNecessarios / rendimento_m_por_kg;
+                    const custoMalha = kgNecessarios * preco_por_kg;
+                    const custoPorPeca = custoMalha / qtd;
+
+                    resultados.push({
+                        tamanho, quantidade: qtd, pecas_por_metro: pecasPorMetro,
+                        metros_necessarios: metrosNecessarios, kg_necessarios: kgNecessarios,
+                        custo_malha: custoMalha, custo_por_peca: custoPorPeca
+                    });
+
+                    metrosTotal += metrosNecessarios;
+                    kgTotal += kgNecessarios;
+                    custoTotal += custoMalha;
+                    totalPecas += qtd;
+                });
+
+                return {
+                    resultados,
+                    totais: {
+                        metros_total: metrosTotal, kg_total: kgTotal, custo_total: custoTotal,
+                        total_pecas: totalPecas, custo_medio_por_peca: totalPecas > 0 ? custoTotal / totalPecas : 0
+                    }
+                };
+            },
+
+            buscarReferencia(tabelaRendimento, largura, tipo, tamanho) {
+                if (!tabelaRendimento || !tabelaRendimento.dados) return null;
+                const chave = normalizarChaveTamanho(tamanho);
+                const ref = tabelaRendimento.dados.find(
+                    r => r.largura === largura && r.tipo.toLowerCase() === tipo.toLowerCase()
+                );
+                if (!ref || !ref.tamanhos || !ref.tamanhos[chave]) return null;
+                return ref.tamanhos[chave];
+            },
+
+            formatarMoeda(valor) {
+                return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+            },
+
+            formatarMetros(valor) {
+                return valor.toFixed(3).replace('.', ',');
+            },
+
+            formatarKG(valor) {
+                return valor.toFixed(3).replace('.', ',');
+            },
+
+            formatarDecimal(valor, casas = 2) {
+                return valor.toFixed(casas).replace('.', ',');
+            }
+        };
+
+        // Exportação
+        const Exportacao = {
+            exportarCSV(dadosEntrada, resultados) {
+                const linhas = ['Tamanho,Quantidade,Peças/metro,Metros,KG,Custo Malha (R$),Custo/Peça (R$)'];
+                resultados.resultados.forEach(r => {
+                    if (r.erro) {
+                        linhas.push(`${r.tamanho},${r.quantidade},ERRO,ERRO,ERRO,ERRO,ERRO`);
+                    } else {
+                        linhas.push([
+                            r.tamanho, r.quantidade, r.pecas_por_metro.toFixed(4).replace('.', ','),
+                            r.metros_necessarios.toFixed(3).replace('.', ','), r.kg_necessarios.toFixed(3).replace('.', ','),
+                            r.custo_malha.toFixed(2).replace('.', ','), r.custo_por_peca.toFixed(2).replace('.', ',')
+                        ].join(','));
+                    }
+                });
+                linhas.push([
+                    'TOTAIS', resultados.totais.total_pecas, '',
+                    resultados.totais.metros_total.toFixed(3).replace('.', ','),
+                    resultados.totais.kg_total.toFixed(3).replace('.', ','),
+                    resultados.totais.custo_total.toFixed(2).replace('.', ','),
+                    resultados.totais.custo_medio_por_peca.toFixed(2).replace('.', ',')
+                ].join(','));
+                linhas.unshift(`Data,${new Date().toLocaleDateString('pt-BR')}`, '');
+
+                const BOM = '\uFEFF';
+                const blob = new Blob([BOM + linhas.join('\n')], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `calculadora_malha_${Date.now()}.csv`;
+                link.click();
+                URL.revokeObjectURL(url);
+            },
+
+            exportarXLSX(dadosEntrada, resultados, tabelaRendimento) {
+                if (typeof XLSX === 'undefined') {
+                    alert('Biblioteca XLSX não carregada.');
+                    return;
+                }
+                const workbook = XLSX.utils.book_new();
+                const dadosResultados = [['Tamanho', 'Quantidade', 'Peças/metro', 'Metros', 'KG', 'Custo Malha (R$)', 'Custo/Peça (R$)']];
+                resultados.resultados.forEach(r => {
+                    dadosResultados.push(r.erro ? 
+                        [r.tamanho, r.quantidade, 'ERRO', 'ERRO', 'ERRO', 'ERRO', 'ERRO'] :
+                        [r.tamanho, r.quantidade, r.pecas_por_metro, r.metros_necessarios, r.kg_necessarios, r.custo_malha, r.custo_por_peca]
+                    );
+                });
+                dadosResultados.push([], ['TOTAIS', resultados.totais.total_pecas, '', resultados.totais.metros_total, resultados.totais.kg_total, resultados.totais.custo_total, resultados.totais.custo_medio_por_peca]);
+                const wsResultados = XLSX.utils.aoa_to_sheet(dadosResultados);
+                XLSX.utils.book_append_sheet(workbook, wsResultados, 'Resultados');
+                XLSX.writeFile(workbook, `calculadora_malha_${Date.now()}.xlsx`);
+            },
+
+            exportarPDF(dadosEntrada, resultados) {
+                if (typeof window.jspdf === 'undefined') {
+                    alert('Biblioteca jsPDF não carregada.');
+                    return;
+                }
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                let y = 20;
+                doc.setFontSize(18);
+                doc.text('Calculadora de Malha - Resultados', 14, y);
+                y += 10;
+                doc.setFontSize(12);
+                doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 14, y);
+                y += 10;
+                doc.setFontSize(14);
+                doc.text('Configuração', 14, y);
+                y += 7;
+                doc.setFontSize(11);
+                doc.text(`Largura: ${dadosEntrada.inputs?.largura || 'N/A'} m`, 14, y);
+                y += 6;
+                doc.text(`Tipo: ${dadosEntrada.inputs?.tipo || 'N/A'}`, 14, y);
+                y += 6;
+                doc.text(`Rendimento: ${dadosEntrada.inputs?.rendimento_m_por_kg || 'N/A'} m/kg`, 14, y);
+                y += 6;
+                doc.text(`Preço por kg: R$ ${dadosEntrada.inputs?.preco_por_kg || 'N/A'}`, 14, y);
+                y += 10;
+                doc.setFontSize(14);
+                doc.text('Resultados', 14, y);
+                y += 7;
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'bold');
+                doc.text('Tamanho', 14, y);
+                doc.text('Qtde', 40, y);
+                doc.text('Metros', 55, y);
+                doc.text('KG', 75, y);
+                doc.text('Custo Malha', 95, y);
+                doc.text('Custo/Peça', 140, y);
+                y += 5;
+                doc.setDrawColor(200, 200, 200);
+                doc.line(14, y, 190, y);
+                y += 3;
+                doc.setFont(undefined, 'normal');
+                resultados.resultados.forEach(r => {
+                    if (y > 270) { doc.addPage(); y = 20; }
+                    doc.text(r.tamanho, 14, y);
+                    doc.text(r.quantidade.toString(), 40, y);
+                    if (!r.erro) {
+                        doc.text(r.metros_necessarios.toFixed(3), 55, y);
+                        doc.text(r.kg_necessarios.toFixed(3), 75, y);
+                        doc.text(`R$ ${r.custo_malha.toFixed(2)}`, 95, y);
+                        doc.text(`R$ ${r.custo_por_peca.toFixed(2)}`, 140, y);
+                    } else {
+                        doc.text('ERRO', 55, y);
+                    }
+                    y += 6;
+                });
+                y += 3;
+                doc.line(14, y, 190, y);
+                y += 5;
+                doc.setFont(undefined, 'bold');
+                doc.text('TOTAIS', 14, y);
+                doc.text(resultados.totais.total_pecas.toString(), 40, y);
+                doc.text(resultados.totais.metros_total.toFixed(3), 55, y);
+                doc.text(resultados.totais.kg_total.toFixed(3), 75, y);
+                doc.text(`R$ ${resultados.totais.custo_total.toFixed(2)}`, 95, y);
+                doc.text(`R$ ${resultados.totais.custo_medio_por_peca.toFixed(2)}`, 140, y);
+                doc.save(`calculadora_malha_${Date.now()}.pdf`);
+            },
+
+            imprimir() {
+                window.print();
+            }
+        };
+
+        // App Principal
+        const App = {
+            dadosEntrada: { inputs: {}, pecas: [] },
+            resultados: null,
+            debounceTimer: null,
+            _gradeControlsBound: false,
+            _modalModo: null,
+
+            init() {
+                TabelaRendimento.carregar();
+                this.configurarEventListeners();
+                this.configurarModalGenerico();
+                this.inicializarGradePecas();
+            },
+
+            configurarEventListeners() {
+                const dropdown = document.getElementById('btnExportar').closest('.dropdown');
+                document.getElementById('btnExportar').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    dropdown.classList.toggle('open');
+                });
+                dropdown.addEventListener('click', (e) => e.stopPropagation());
+                document.addEventListener('click', () => dropdown.classList.remove('open'));
+
+                document.getElementById('btnNovo').addEventListener('click', () => this.abrirModalConfirmarNovo());
+                document.getElementById('exportCSV').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    dropdown.classList.remove('open');
+                    if (this.resultados) Exportacao.exportarCSV(this.dadosEntrada, this.resultados);
+                    else alert('Calcule antes de exportar.');
+                });
+                document.getElementById('exportXLSX').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    dropdown.classList.remove('open');
+                    if (this.resultados) Exportacao.exportarXLSX(this.dadosEntrada, this.resultados, TabelaRendimento.dados);
+                    else alert('Calcule antes de exportar.');
+                });
+                document.getElementById('exportPDF').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    dropdown.classList.remove('open');
+                    if (this.resultados) Exportacao.exportarPDF(this.dadosEntrada, this.resultados);
+                    else alert('Calcule antes de exportar.');
+                });
+                document.getElementById('exportPrint').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    dropdown.classList.remove('open');
+                    Exportacao.imprimir();
+                });
+                document.getElementById('formMalha').addEventListener('input', () => this.salvarDadosFormulario());
+                document.getElementById('btnCalcular').addEventListener('click', () => this.calcular());
+                document.getElementById('btnAbrirTabelaRendimento').addEventListener('click', () => this.abrirModalTabela());
+                document.getElementById('btnFecharModal').addEventListener('click', () => this.fecharModalTabela());
+                document.getElementById('btnAdicionarReferencia').addEventListener('click', () => TabelaRendimento.adicionarLinha());
+                document.getElementById('btnSalvarReferencias').addEventListener('click', () => this.salvarTabelaReferencia());
+                document.getElementById('modalTabelaRendimento').addEventListener('click', (e) => {
+                    if (e.target.id === 'modalTabelaRendimento') this.fecharModalTabela();
+                });
+                document.addEventListener('input', (e) => {
+                    if (e.target.closest('#tabelaReferencias') && e.target.hasAttribute('data-field')) {
+                        TabelaRendimento.atualizarDadosInline(e.target);
+                    }
+                });
+                document.addEventListener('change', (e) => {
+                    if (e.target.closest('#tabelaReferencias') && e.target.hasAttribute('data-field')) {
+                        TabelaRendimento.atualizarDadosInline(e.target);
+                    }
+                });
+            },
+
+            configurarModalGenerico() {
+                const modal = document.getElementById('modalGenerico');
+                const fechar = () => this.fecharModalGenerico();
+                document.getElementById('btnFecharModalGenerico').addEventListener('click', fechar);
+                document.getElementById('modalGenericoCancelar').addEventListener('click', fechar);
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) fechar();
+                });
+                document.getElementById('modalGenericoConfirmar').addEventListener('click', () => this.confirmarModalGenerico());
+            },
+
+            fecharModalGenerico() {
+                const modal = document.getElementById('modalGenerico');
+                modal.classList.remove('show');
+                modal.setAttribute('aria-hidden', 'true');
+                this._modalModo = null;
+                document.getElementById('modalGenericoSubtitulo').style.display = 'none';
+                document.getElementById('mgPanelConfirmNovo').hidden = true;
+                document.getElementById('mgPanelAddPeca').hidden = true;
+                document.getElementById('mgPanelAddRef').hidden = true;
+            },
+
+            abrirModalConfirmarNovo() {
+                this._modalModo = 'confirmNovo';
+                document.getElementById('modalGenericoTitulo').textContent = 'Iniciar novo cálculo?';
+                const sub = document.getElementById('modalGenericoSubtitulo');
+                sub.textContent = 'Todos os dados preenchidos serão apagados.';
+                sub.style.display = 'block';
+                document.getElementById('mgPanelConfirmNovo').hidden = false;
+                document.getElementById('mgPanelAddPeca').hidden = true;
+                document.getElementById('mgPanelAddRef').hidden = true;
+                document.getElementById('modalGenericoCancelar').textContent = 'Cancelar';
+                document.getElementById('modalGenericoConfirmar').textContent = 'Sim, limpar';
+                const modal = document.getElementById('modalGenerico');
+                modal.classList.add('show');
+                modal.setAttribute('aria-hidden', 'false');
+            },
+
+            abrirModalAdicionarPeca() {
+                this._modalModo = 'addPeca';
+                document.getElementById('modalGenericoTitulo').textContent = 'Adicionar tamanho';
+                document.getElementById('modalGenericoSubtitulo').style.display = 'none';
+                document.getElementById('mgPanelConfirmNovo').hidden = true;
+                document.getElementById('mgPanelAddPeca').hidden = false;
+                document.getElementById('mgPanelAddRef').hidden = true;
+                const inp = document.getElementById('addPecaTamanho');
+                inp.value = '';
+                document.getElementById('modalGenericoCancelar').textContent = 'Cancelar';
+                document.getElementById('modalGenericoConfirmar').textContent = 'Adicionar';
+                const modal = document.getElementById('modalGenerico');
+                modal.classList.add('show');
+                modal.setAttribute('aria-hidden', 'false');
+                setTimeout(() => inp.focus(), 100);
+            },
+
+            abrirModalNovaReferencia() {
+                this._modalModo = 'addRef';
+                document.getElementById('modalGenericoTitulo').textContent = 'Nova referência';
+                document.getElementById('modalGenericoSubtitulo').style.display = 'none';
+                document.getElementById('mgPanelConfirmNovo').hidden = true;
+                document.getElementById('mgPanelAddPeca').hidden = true;
+                document.getElementById('mgPanelAddRef').hidden = false;
+                document.getElementById('refModalLargura').value = '1.80';
+                document.querySelector('input[name="refModalTipo"][value="ramada"]').checked = true;
+                document.getElementById('refModalTamanho').value = '';
+                document.getElementById('refModalMetros').value = '';
+                document.getElementById('refModalPecas').value = '';
+                document.getElementById('modalGenericoCancelar').textContent = 'Cancelar';
+                document.getElementById('modalGenericoConfirmar').textContent = 'Salvar';
+                const modal = document.getElementById('modalGenerico');
+                modal.classList.add('show');
+                modal.setAttribute('aria-hidden', 'false');
+                setTimeout(() => document.getElementById('refModalTamanho').focus(), 100);
+            },
+
+            confirmarModalGenerico() {
+                if (this._modalModo === 'confirmNovo') {
+                    this.executarNovoCalculo();
+                    this.fecharModalGenerico();
+                    return;
+                }
+                if (this._modalModo === 'addPeca') {
+                    const raw = normalizarChaveTamanho(document.getElementById('addPecaTamanho').value);
+                    if (!raw) {
+                        alert('Informe o tamanho.');
+                        return;
+                    }
+                    const tbody = document.getElementById('tbodyPecas');
+                    tbody.appendChild(this.criarLinhaPeca(raw, 0));
+                    this.fecharModalGenerico();
+                    return;
+                }
+                if (this._modalModo === 'addRef') {
+                    const largura = document.getElementById('refModalLargura').value;
+                    const tipo = document.querySelector('input[name="refModalTipo"]:checked')?.value;
+                    const tamanho = normalizarChaveTamanho(document.getElementById('refModalTamanho').value);
+                    const metros = document.getElementById('refModalMetros').value;
+                    const pecas = document.getElementById('refModalPecas').value;
+                    if (!largura || !tipo || !tamanho || metros === '' || pecas === '') {
+                        alert('Preencha todos os campos da referência.');
+                        return;
+                    }
+                    TabelaRendimento.adicionarReferencia(largura, tipo, tamanho, metros, pecas);
+                    TabelaRendimento.renderizarTabela();
+                    this.fecharModalGenerico();
+                }
+            },
+
+            executarNovoCalculo() {
+                this.dadosEntrada = { inputs: {}, pecas: [] };
+                this.resultados = null;
+                document.getElementById('formMalha').reset();
+                document.getElementById('tbodyPecas').innerHTML = '';
+                this.inicializarGradePecas();
+                document.getElementById('tbodyResultados').innerHTML = '';
+                document.getElementById('tfootTotais').style.display = 'none';
+                document.getElementById('kpiCards').style.display = 'none';
+                document.getElementById('emptyState').style.display = 'flex';
+                document.getElementById('wrapTabelaResultados').style.display = 'none';
+                this.mostrarMensagem('Novo cálculo iniciado!', 'success');
+            },
+
+            inicializarGradePecas() {
+                const tamanhos = ['M'];
+                const tbody = document.getElementById('tbodyPecas');
+                tbody.innerHTML = '';
+                tamanhos.forEach(tamanho => {
+                    tbody.appendChild(this.criarLinhaPeca(tamanho, 0));
+                });
+                if (!this._gradeControlsBound) {
+                    this._gradeControlsBound = true;
+                    document.getElementById('btnAdicionarPeca').addEventListener('click', () => this.abrirModalAdicionarPeca());
+                }
+            },
+
+            criarLinhaPeca(tamanho, quantidade) {
+                const chave = normalizarChaveTamanho(tamanho);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${chave}</td>
+                    <td><input type="number" min="0" step="1" value="${quantidade}" 
+                        data-tamanho="${chave}" class="input-quantidade"></td>
+                    <td class="td-action">
+                        <button type="button" class="btn-icon btn-danger" title="Remover" aria-label="Remover linha">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
+                            </svg>
+                        </button>
+                    </td>
+                `;
+                const input = row.querySelector('.input-quantidade');
+                const btnRem = row.querySelector('.btn-icon');
+                btnRem.addEventListener('click', () => this.removerPeca(btnRem));
+                input.dataset.filled = parseFloat(input.value) > 0 ? 'true' : 'false';
+                input.addEventListener('input', () => {
+                    input.dataset.filled = parseFloat(input.value) > 0 ? 'true' : 'false';
+                    clearTimeout(this.debounceTimer);
+                    this.debounceTimer = setTimeout(() => {
+                        this.salvarDadosFormulario();
+                        if (this.resultados) this.calcular();
+                    }, 500);
+                });
+                return row;
+            },
+
+            removerPeca(button) {
+                button.closest('tr').remove();
+                this.salvarDadosFormulario();
+            },
+
+            salvarDadosFormulario() {
+                const formMalha = document.getElementById('formMalha');
+                const largura = formMalha.querySelector('#largura').value;
+                const tipo = formMalha.querySelector('input[name="tipo"]:checked')?.value;
+                const rendimento = formMalha.querySelector('#rendimento').value;
+                const preco = formMalha.querySelector('#precoKg').value;
+
+                this.dadosEntrada.inputs = {
+                    largura: largura ? Calculos.normalizarNumero(largura) : null,
+                    tipo: tipo || null,
+                    rendimento_m_por_kg: rendimento ? Calculos.normalizarNumero(rendimento) : null,
+                    preco_por_kg: preco ? Calculos.normalizarNumero(preco) : null
+                };
+
+                this.dadosEntrada.pecas = [];
+                document.querySelectorAll('#tbodyPecas tr').forEach(row => {
+                    const tamanho = normalizarChaveTamanho(row.querySelector('td:first-child').textContent);
+                    const quantidade = parseFloat(row.querySelector('.input-quantidade').value) || 0;
+                    if (quantidade > 0) {
+                        this.dadosEntrada.pecas.push({ tamanho, quantidade });
+                    }
+                });
+            },
+
+            validarDados() {
+                const erros = [];
+                if (!this.dadosEntrada.inputs.largura) erros.push('Largura é obrigatória');
+                if (!this.dadosEntrada.inputs.tipo) erros.push('Tipo é obrigatório');
+                if (!this.dadosEntrada.inputs.rendimento_m_por_kg || this.dadosEntrada.inputs.rendimento_m_por_kg <= 0) {
+                    erros.push('Rendimento por kg deve ser maior que zero');
+                }
+                if (this.dadosEntrada.inputs.preco_por_kg === null || this.dadosEntrada.inputs.preco_por_kg < 0) {
+                    erros.push('Preço por kg deve ser maior ou igual a zero');
+                }
+                if (this.dadosEntrada.pecas.length === 0) {
+                    erros.push('Adicione pelo menos uma peça com quantidade maior que zero');
+                }
+                return erros;
+            },
+
+            calcular() {
+                this.salvarDadosFormulario();
+                const erros = this.validarDados();
+                if (erros.length > 0) {
+                    this.mostrarMensagem(erros.join('<br>'), 'error');
+                    return;
+                }
+                try {
+                    this.resultados = Calculos.calcularOrcamento(
+                        this.dadosEntrada.inputs,
+                        this.dadosEntrada.pecas,
+                        TabelaRendimento.dados,
+                        { usarCeilPorLote: true }
+                    );
+                    this.exibirResultados();
+                    this.mostrarMensagem('Cálculo realizado com sucesso!', 'success');
+                } catch (error) {
+                    console.error('Erro ao calcular:', error);
+                    this.mostrarMensagem('Erro ao calcular: ' + error.message, 'error');
+                }
+            },
+
+            exibirResultados() {
+                const tbody = document.getElementById('tbodyResultados');
+                const tfoot = document.getElementById('tfootTotais');
+                if (!this.resultados || !this.resultados.resultados) {
+                    document.getElementById('emptyState').style.display = 'flex';
+                    document.getElementById('kpiCards').style.display = 'none';
+                    document.getElementById('wrapTabelaResultados').style.display = 'none';
+                    tbody.innerHTML = '';
+                    tfoot.style.display = 'none';
+                    return;
+                }
+                document.getElementById('emptyState').style.display = 'none';
+                document.getElementById('wrapTabelaResultados').style.display = 'block';
+                document.getElementById('kpiCards').style.display = 'grid';
+                tbody.innerHTML = '';
+                this.resultados.resultados.forEach(r => {
+                    const row = document.createElement('tr');
+                    if (r.erro) {
+                        row.innerHTML = `
+                            <td>${r.tamanho}</td>
+                            <td>${r.quantidade}</td>
+                            <td colspan="5" style="color: var(--error);">${r.erro}</td>
+                        `;
+                    } else {
+                        row.innerHTML = `
+                            <td>${r.tamanho}</td>
+                            <td>${r.quantidade}</td>
+                            <td>${Calculos.formatarDecimal(r.pecas_por_metro, 4)}</td>
+                            <td>${Calculos.formatarMetros(r.metros_necessarios)}</td>
+                            <td>${Calculos.formatarKG(r.kg_necessarios)}</td>
+                            <td>${Calculos.formatarMoeda(r.custo_malha)}</td>
+                            <td>${Calculos.formatarMoeda(r.custo_por_peca)}</td>
+                        `;
+                    }
+                    tbody.appendChild(row);
+                });
+                const totais = this.resultados.totais;
+                document.getElementById('kpiPecas').textContent = String(totais.total_pecas);
+                document.getElementById('kpiMetros').textContent = Calculos.formatarMetros(totais.metros_total);
+                document.getElementById('kpiKg').textContent = Calculos.formatarKG(totais.kg_total);
+                document.getElementById('kpiCusto').textContent = Calculos.formatarMoeda(totais.custo_total);
+                tfoot.innerHTML = `
+                    <tr class="tfoot-totais-row">
+                        <td><strong>TOTAIS</strong></td>
+                        <td><strong>${totais.total_pecas}</strong></td>
+                        <td></td>
+                        <td><strong>${Calculos.formatarMetros(totais.metros_total)}</strong></td>
+                        <td><strong>${Calculos.formatarKG(totais.kg_total)}</strong></td>
+                        <td class="tf-destaque"><strong>${Calculos.formatarMoeda(totais.custo_total)}</strong></td>
+                        <td class="tf-destaque"><strong>${Calculos.formatarMoeda(totais.custo_medio_por_peca)}</strong></td>
+                    </tr>
+                `;
+                tfoot.style.display = 'table-footer-group';
+            },
+
+            novoCalculo() {
+                this.abrirModalConfirmarNovo();
+            },
+
+            abrirModalTabela() {
+                TabelaRendimento.renderizarTabela();
+                document.getElementById('modalTabelaRendimento').classList.add('show');
+            },
+
+            fecharModalTabela() {
+                document.getElementById('modalTabelaRendimento').classList.remove('show');
+            },
+
+            salvarTabelaReferencia() {
+                try {
+                    TabelaRendimento.salvar();
+                    this.mostrarMensagem('Tabela salva com sucesso!', 'success');
+                    this.fecharModalTabela();
+                } catch (error) {
+                    this.mostrarMensagem('Erro ao salvar: ' + error.message, 'error');
+                }
+            },
+
+            mostrarMensagem(texto, tipo = 'success') {
+                const mensagem = document.getElementById('mensagemResultado');
+                mensagem.className = `mensagem ${tipo}`;
+                mensagem.innerHTML = texto;
+                mensagem.style.display = 'block';
+                setTimeout(() => { mensagem.style.display = 'none'; }, 5000);
+            }
+        };
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            App.init();
+        });
+    </script>
+</body>
+</html>
+
