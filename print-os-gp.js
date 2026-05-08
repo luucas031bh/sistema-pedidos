@@ -36,6 +36,17 @@
         document.getElementById('printLoadingOverlay')?.classList.add('hidden');
     }
 
+    /** Alinha URLs do Drive ao preview (thumbnail); blob/data inalterados. */
+    function resolverSrcImpressao(url) {
+        if (!url) return '';
+        const s = String(url);
+        if (/^blob:/i.test(s) || /^data:/i.test(s)) return s;
+        if (typeof normalizarUrlDriveParaImg === 'function') {
+            return normalizarUrlDriveParaImg(s) || s;
+        }
+        return s;
+    }
+
     function preloadImageWithTimeout(src, timeoutMs = PRINT_IMAGE_TIMEOUT_MS) {
         return new Promise((resolve) => {
             if (!src) {
@@ -61,9 +72,6 @@
             img.onerror = () => finish(false, 'error');
             img.decoding = 'async';
             img.src = src;
-            if (img.decode) {
-                img.decode().then(() => finish(true, 'decoded')).catch(() => {});
-            }
         });
     }
 
@@ -183,7 +191,7 @@
         if (!lista.length) return '';
         const thumbs = lista.map((src, idx) => `
             <div class="gp-arte-item">
-                <img src="${src}" alt="Arte ${idx + 1}" class="gp-arte-img" loading="lazy" decoding="async">
+                <img src="${src}" alt="Arte ${idx + 1}" class="gp-arte-img" loading="eager" decoding="async">
             </div>
         `).join('');
         return `<section class="gp-artes"><h2 class="gp-sec-titulo gp-sec-titulo--sub">Artes / Estampas</h2><div class="gp-artes-grid">${thumbs}</div></section>`;
@@ -228,7 +236,7 @@
             .join('');
 
         const imgBloco = imgSrc
-            ? `<div class="gp-mockup"><img src="${imgSrc}" alt="Mockup" class="gp-mockup-img" loading="lazy" decoding="async" fetchpriority="high"></div>`
+            ? `<div class="gp-mockup"><img src="${imgSrc}" alt="Mockup" class="gp-mockup-img" loading="eager" decoding="async" fetchpriority="high"></div>`
             : '<div class="gp-mockup gp-mockup--vazio">(Sem imagem de mockup)</div>';
 
         return `
@@ -325,7 +333,7 @@
             })
             .join('');
         const imgBloco = imgSrc
-            ? `<div class="os-mockup"><img src="${imgSrc}" alt="Mockup" class="os-mockup-img" loading="lazy" decoding="async" fetchpriority="high"></div>`
+            ? `<div class="os-mockup"><img src="${imgSrc}" alt="Mockup" class="os-mockup-img" loading="eager" decoding="async" fetchpriority="high"></div>`
             : '';
 
         return `
@@ -363,13 +371,23 @@
             }
         }
 
-        // 2) Usa URL salva no Drive (mockup persistido)
+        // 2) Usa URL salva no Drive (mockup persistido) — mesma regra do preview (thumbnail)
         const urlDrive = typeof estadoApp !== 'undefined' && estadoApp.imagens && estadoApp.imagens.mockupUrlDrive
             ? estadoApp.imagens.mockupUrlDrive
             : '';
-        if (urlDrive) return { src: urlDrive, revoke: null };
+        if (urlDrive) {
+            const src = resolverSrcImpressao(urlDrive);
+            if (src) return { src, revoke: null };
+        }
 
-        // 3) Sem imagem disponível
+        // 3) Fallback: preview visível no formulário (já com URL exibível)
+        const wrap = document.getElementById('previewMockup');
+        const img = document.getElementById('imgPreviewMockup');
+        if (wrap && !wrap.classList.contains('hidden') && img) {
+            const u = img.currentSrc || img.src;
+            if (u) return { src: u, revoke: null };
+        }
+
         return { src: null, revoke: null };
     }
 
@@ -389,14 +407,22 @@
                 }
             }
             const urlExistente = item.dataset?.urlDrive || '';
-            if (urlExistente) src.push(urlExistente);
+            if (urlExistente) {
+                src.push(resolverSrcImpressao(urlExistente));
+                return;
+            }
+            const thumb = item.querySelector('.arte-thumb');
+            const uThumb = thumb && (thumb.currentSrc || thumb.src);
+            if (uThumb) src.push(resolverSrcImpressao(uThumb));
         });
 
         if (!src.length) {
             const driveList = (typeof estadoApp !== 'undefined' && estadoApp.imagens && Array.isArray(estadoApp.imagens.artesUrlDrive))
                 ? estadoApp.imagens.artesUrlDrive
                 : [];
-            driveList.forEach((u) => { if (u) src.push(u); });
+            driveList.forEach((u) => {
+                if (u) src.push(resolverSrcImpressao(u));
+            });
         }
         return { src, revokes };
     }
