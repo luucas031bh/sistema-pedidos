@@ -1039,6 +1039,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
+        /** Chave canónica para tamanhos: aceita p/P, gg/GG, g1/G1; números (4, 10…) mantêm-se iguais. */
+        function normalizarChaveTamanho(t) {
+            return String(t == null ? '' : t).trim().toUpperCase();
+        }
+
         // Tabela de Rendimento
         const TabelaRendimento = {
             dados: null,
@@ -1081,6 +1086,7 @@
                     const dadosLocal = localStorage.getItem(this.STORAGE_KEY);
                     if (dadosLocal) {
                         this.dados = JSON.parse(dadosLocal);
+                        this.migrarChavesTamanhosMaiusculas();
                         this.aplicarPadraoNovosTamanhos();
                         this.salvar();
                         return this.dados;
@@ -1150,13 +1156,26 @@
                 localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.dados));
             },
 
+            migrarChavesTamanhosMaiusculas() {
+                if (!this.dados || !Array.isArray(this.dados.dados)) return;
+                this.dados.dados.forEach(grupo => {
+                    if (!grupo.tamanhos || typeof grupo.tamanhos !== 'object') return;
+                    const novo = {};
+                    Object.entries(grupo.tamanhos).forEach(([k, v]) => {
+                        novo[normalizarChaveTamanho(k)] = v;
+                    });
+                    grupo.tamanhos = novo;
+                });
+            },
+
             buscarReferencia(largura, tipo, tamanho) {
                 if (!this.dados || !this.dados.dados) return null;
+                const chave = normalizarChaveTamanho(tamanho);
                 const ref = this.dados.dados.find(
                     r => r.largura === largura && r.tipo.toLowerCase() === tipo.toLowerCase()
                 );
-                if (!ref || !ref.tamanhos || !ref.tamanhos[tamanho]) return null;
-                return ref.tamanhos[tamanho];
+                if (!ref || !ref.tamanhos || !ref.tamanhos[chave]) return null;
+                return ref.tamanhos[chave];
             },
 
             adicionarReferencia(largura, tipo, tamanho, metrosPorLote, pecasPorLote) {
@@ -1170,7 +1189,8 @@
                     grupo = { largura: parseFloat(largura), tipo: tipo.toLowerCase(), tamanhos: {} };
                     this.dados.dados.push(grupo);
                 }
-                grupo.tamanhos[tamanho] = {
+                const chave = normalizarChaveTamanho(tamanho);
+                grupo.tamanhos[chave] = {
                     metros_por_lote: parseFloat(metrosPorLote),
                     pecas_por_lote: parseInt(pecasPorLote)
                 };
@@ -1182,8 +1202,9 @@
                 const grupo = this.dados.dados.find(
                     r => r.largura === largura && r.tipo.toLowerCase() === tipo.toLowerCase()
                 );
-                if (grupo && grupo.tamanhos[tamanho]) {
-                    delete grupo.tamanhos[tamanho];
+                const chave = normalizarChaveTamanho(tamanho);
+                if (grupo && grupo.tamanhos[chave]) {
+                    delete grupo.tamanhos[chave];
                     if (Object.keys(grupo.tamanhos).length === 0) {
                         const index = this.dados.dados.indexOf(grupo);
                         this.dados.dados.splice(index, 1);
@@ -1233,7 +1254,7 @@
                 const row = button.closest('tr');
                 const largura = row.querySelector('[data-field="largura"]').getAttribute('data-largura');
                 const tipo = row.querySelector('[data-field="tipo"]').getAttribute('data-tipo');
-                const tamanho = row.querySelector('[data-field="tamanho"]').getAttribute('data-tamanho');
+                const tamanho = normalizarChaveTamanho(row.querySelector('[data-field="tamanho"]').getAttribute('data-tamanho'));
                 this.removerReferencia(parseFloat(largura), tipo, tamanho);
                 this.renderizarTabela();
             },
@@ -1254,10 +1275,12 @@
                 else if (field === 'tipo') tipo = input.value || tipoAntigo;
                 else if (field === 'tamanho') tamanho = input.value || tamanhoAntigo;
 
+                tamanho = normalizarChaveTamanho(tamanho);
+
                 const metrosPorLote = parseFloat(row.querySelector('[data-field="metros"]').value);
                 const pecasPorLote = parseInt(row.querySelector('[data-field="pecas"]').value);
 
-                this.removerReferencia(larguraAntiga, tipoAntigo, tamanhoAntigo);
+                this.removerReferencia(larguraAntiga, tipoAntigo, normalizarChaveTamanho(tamanhoAntigo));
                 this.adicionarReferencia(largura, tipo, tamanho, metrosPorLote, pecasPorLote);
 
                 row.querySelectorAll('[data-largura]').forEach(el => {
@@ -1284,7 +1307,8 @@
                 let metrosTotal = 0, kgTotal = 0, custoTotal = 0, totalPecas = 0;
 
                 pecas.forEach(peca => {
-                    const { tamanho, quantidade } = peca;
+                    const { tamanho: tamanhoBruto, quantidade } = peca;
+                    const tamanho = normalizarChaveTamanho(tamanhoBruto);
                     const qtd = this.normalizarNumero(quantidade);
                     if (qtd <= 0) return;
 
@@ -1335,11 +1359,12 @@
 
             buscarReferencia(tabelaRendimento, largura, tipo, tamanho) {
                 if (!tabelaRendimento || !tabelaRendimento.dados) return null;
+                const chave = normalizarChaveTamanho(tamanho);
                 const ref = tabelaRendimento.dados.find(
                     r => r.largura === largura && r.tipo.toLowerCase() === tipo.toLowerCase()
                 );
-                if (!ref || !ref.tamanhos || !ref.tamanhos[tamanho]) return null;
-                return ref.tamanhos[tamanho];
+                if (!ref || !ref.tamanhos || !ref.tamanhos[chave]) return null;
+                return ref.tamanhos[chave];
             },
 
             formatarMoeda(valor) {
@@ -1637,7 +1662,7 @@
                     return;
                 }
                 if (this._modalModo === 'addPeca') {
-                    const raw = document.getElementById('addPecaTamanho').value.trim();
+                    const raw = normalizarChaveTamanho(document.getElementById('addPecaTamanho').value);
                     if (!raw) {
                         alert('Informe o tamanho.');
                         return;
@@ -1650,7 +1675,7 @@
                 if (this._modalModo === 'addRef') {
                     const largura = document.getElementById('refModalLargura').value;
                     const tipo = document.querySelector('input[name="refModalTipo"]:checked')?.value;
-                    const tamanho = document.getElementById('refModalTamanho').value.trim();
+                    const tamanho = normalizarChaveTamanho(document.getElementById('refModalTamanho').value);
                     const metros = document.getElementById('refModalMetros').value;
                     const pecas = document.getElementById('refModalPecas').value;
                     if (!largura || !tipo || !tamanho || metros === '' || pecas === '') {
@@ -1678,7 +1703,7 @@
             },
 
             inicializarGradePecas() {
-                const tamanhos = ['4', '6', '8', '10', '12', '14', 'PP', 'P', 'M', 'G', 'GG', 'G1', 'G2', 'G3', 'G4', 'G5'];
+                const tamanhos = ['M'];
                 const tbody = document.getElementById('tbodyPecas');
                 tbody.innerHTML = '';
                 tamanhos.forEach(tamanho => {
@@ -1691,11 +1716,12 @@
             },
 
             criarLinhaPeca(tamanho, quantidade) {
+                const chave = normalizarChaveTamanho(tamanho);
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${tamanho}</td>
+                    <td>${chave}</td>
                     <td><input type="number" min="0" step="1" value="${quantidade}" 
-                        data-tamanho="${tamanho}" class="input-quantidade"></td>
+                        data-tamanho="${chave}" class="input-quantidade"></td>
                     <td class="td-action">
                         <button type="button" class="btn-icon btn-danger" title="Remover" aria-label="Remover linha">
                             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
@@ -1740,7 +1766,7 @@
 
                 this.dadosEntrada.pecas = [];
                 document.querySelectorAll('#tbodyPecas tr').forEach(row => {
-                    const tamanho = row.querySelector('td:first-child').textContent;
+                    const tamanho = normalizarChaveTamanho(row.querySelector('td:first-child').textContent);
                     const quantidade = parseFloat(row.querySelector('.input-quantidade').value) || 0;
                     if (quantidade > 0) {
                         this.dadosEntrada.pecas.push({ tamanho, quantidade });
