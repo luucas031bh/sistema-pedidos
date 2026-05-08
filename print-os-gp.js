@@ -1,6 +1,6 @@
 /**
  * Impressão OS (Ordem de serviço) e GP (Guia de pedido).
- * Imagens opcionais apenas em memória — não persistem.
+ * Usa mockup e artes do formulário (arquivo local ou URL salva no Drive).
  */
 (function () {
     function escapeHtml(s) {
@@ -94,6 +94,32 @@
             .join('');
     }
 
+    function normalizarUrlDriveParaImg(url) {
+        if (!url) return '';
+        const s = String(url);
+        if (/^blob:/i.test(s) || /^data:/i.test(s)) return s;
+        if (!s.includes('drive.google.com')) return s;
+        const m = s.match(/[?&]id=([a-zA-Z0-9_-]+)/) || s.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (!m) return s;
+        return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w1600`;
+    }
+
+    function montarBlocoImagens(imgs, prefixo) {
+        if (!imgs || !imgs.length) {
+            return `<div class="${prefixo}-mockup ${prefixo}-mockup--vazio">(Sem imagens)</div>`;
+        }
+        const itens = imgs
+            .map(
+                (im) => `
+        <figure class="${prefixo}-galeria-item">
+            <img src="${im.src}" alt="${escapeHtml(im.label)}" class="${prefixo}-mockup-img">
+            <figcaption class="${prefixo}-galeria-leg">${escapeHtml(im.label)}</figcaption>
+        </figure>`
+            )
+            .join('');
+        return `<div class="${prefixo}-galeria">${itens}</div>`;
+    }
+
     function listaEstampasProduto(prod) {
         const arr = Array.isArray(prod.estampas) ? prod.estampas : [];
         return arr
@@ -102,7 +128,7 @@
             .join('; ') || '—';
     }
 
-    function montarHtmlGp(dados, imgSrc) {
+    function montarHtmlGp(dados, imgs) {
         const emp = (typeof CONFIG !== 'undefined' && CONFIG.EMPRESA) ? CONFIG.EMPRESA : {};
         const nomeEmp = emp.nome || 'ADONAY CONFECÇÃO';
         const tel = emp.telefone1 || '';
@@ -140,9 +166,7 @@
             })
             .join('');
 
-        const imgBloco = imgSrc
-            ? `<div class="gp-mockup"><img src="${imgSrc}" alt="Mockup" class="gp-mockup-img"></div>`
-            : '<div class="gp-mockup gp-mockup--vazio">(Sem imagem de mockup)</div>';
+        const imgBloco = montarBlocoImagens(imgs, 'gp');
 
         return `
 <div class="gp-doc">
@@ -201,7 +225,7 @@
 </div>`;
     }
 
-    function montarHtmlOs(dados, imgSrc) {
+    function montarHtmlOs(dados, imgs) {
         const emp = (typeof CONFIG !== 'undefined' && CONFIG.EMPRESA) ? CONFIG.EMPRESA : {};
         const nomeEmp = emp.nome || 'ADONAY CONFECÇÃO';
         const idC = idCurtoPedido(dados);
@@ -236,9 +260,7 @@
             </div>`;
             })
             .join('');
-        const imgBloco = imgSrc
-            ? `<div class="os-mockup"><img src="${imgSrc}" alt="Mockup" class="os-mockup-img"></div>`
-            : '';
+        const imgBloco = montarBlocoImagens(imgs, 'os');
 
         return `
 <div class="os-doc">
@@ -263,41 +285,53 @@
         return coletarDadosFormulario();
     }
 
-    function prepararImagemParaImpressao(notificarErro) {
-        // 1) Verifica campo de substituição local (secaoImpressaoPedido)
-        const inputSubst = document.getElementById('inputMockupImpressao');
-        if (inputSubst && inputSubst.files && inputSubst.files[0]) {
-            const file = inputSubst.files[0];
-            const ok = file.type === 'image/png' || file.type === 'image/jpeg';
-            if (!ok) {
-                if (notificarErro && typeof Utils !== 'undefined' && Utils.mostrarNotificacao) {
-                    Utils.mostrarNotificacao('Use apenas imagem PNG ou JPG.', 'error');
-                }
-                inputSubst.value = '';
-            } else {
-                const url = URL.createObjectURL(file);
-                return { src: url, revoke: url };
-            }
-        }
+    function prepararImagensParaImpressao() {
+        const revokes = [];
+        const imgs = [];
 
-        // 2) Verifica campo de upload principal do formulário (nova arte selecionada localmente)
-        const inputPrincipal = document.getElementById('inputMockupPedido');
-        if (inputPrincipal && inputPrincipal.files && inputPrincipal.files[0]) {
-            const file = inputPrincipal.files[0];
+        const inputMock = document.getElementById('inputMockupPedido');
+        if (inputMock && inputMock.files && inputMock.files[0]) {
+            const file = inputMock.files[0];
             if (file.type === 'image/png' || file.type === 'image/jpeg') {
                 const url = URL.createObjectURL(file);
-                return { src: url, revoke: url };
+                revokes.push(url);
+                imgs.push({ src: url, label: 'Mockup' });
             }
+        } else {
+            const raw =
+                typeof estadoApp !== 'undefined' && estadoApp.imagens
+                    ? estadoApp.imagens.mockupUrlDrive
+                    : '';
+            if (raw) imgs.push({ src: normalizarUrlDriveParaImg(raw), label: 'Mockup' });
         }
 
-        // 3) Usa URL salva no Drive (mockup persistido)
-        const urlDrive = typeof estadoApp !== 'undefined' && estadoApp.imagens && estadoApp.imagens.mockupUrlDrive
-            ? estadoApp.imagens.mockupUrlDrive
-            : '';
-        if (urlDrive) return { src: urlDrive, revoke: null };
+        const container = document.getElementById('containerArtes');
+        if (
+            container &&
+            typeof obterInputArteDoItem === 'function' &&
+            typeof obterArquivoLocalArteItem === 'function'
+        ) {
+            const itens = container.querySelectorAll('.arte-upload-item');
+            let arteNum = 0;
+            itens.forEach((item) => {
+                const inputArte = obterInputArteDoItem(item);
+                const local = obterArquivoLocalArteItem(item, inputArte);
+                if (local && (local.type === 'image/png' || local.type === 'image/jpeg')) {
+                    const url = URL.createObjectURL(local);
+                    revokes.push(url);
+                    arteNum += 1;
+                    imgs.push({ src: url, label: `Arte ${arteNum}` });
+                    return;
+                }
+                const dsUrl = item.dataset && item.dataset.urlDrive ? item.dataset.urlDrive : '';
+                if (dsUrl) {
+                    arteNum += 1;
+                    imgs.push({ src: normalizarUrlDriveParaImg(dsUrl), label: `Arte ${arteNum}` });
+                }
+            });
+        }
 
-        // 4) Sem imagem disponível
-        return { src: null, revoke: null };
+        return { imgs, revokes };
     }
 
     function executarImpressao(tipo) {
@@ -312,9 +346,9 @@
         const mount = document.getElementById(tipo === 'os' ? 'printOsMount' : 'printGpMount');
         if (!mount) return;
 
-        const { src: imgSrc, revoke } = prepararImagemParaImpressao(true);
+        const { imgs, revokes } = prepararImagensParaImpressao();
 
-        mount.innerHTML = tipo === 'os' ? montarHtmlOs(dados, imgSrc) : montarHtmlGp(dados, imgSrc);
+        mount.innerHTML = tipo === 'os' ? montarHtmlOs(dados, imgs) : montarHtmlGp(dados, imgs);
 
         const cls = tipo === 'os' ? 'imprimindo-doc-os' : 'imprimindo-doc-gp';
         document.body.classList.add(cls);
@@ -322,7 +356,7 @@
         const cleanup = () => {
             document.body.classList.remove(cls);
             mount.innerHTML = '';
-            if (revoke) URL.revokeObjectURL(revoke);
+            revokes.forEach((u) => URL.revokeObjectURL(u));
             window.removeEventListener('afterprint', cleanup);
         };
         window.addEventListener('afterprint', cleanup);
@@ -342,15 +376,5 @@
     document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('btnImprimirOs')?.addEventListener('click', () => executarImpressao('os'));
         document.getElementById('btnImprimirGp')?.addEventListener('click', () => executarImpressao('gp'));
-        document.getElementById('inputMockupImpressao')?.addEventListener('change', function () {
-            if (!this.files || !this.files[0]) return;
-            const file = this.files[0];
-            if (file.type !== 'image/png' && file.type !== 'image/jpeg') {
-                if (typeof Utils !== 'undefined' && Utils.mostrarNotificacao) {
-                    Utils.mostrarNotificacao('Use apenas PNG ou JPG.', 'error');
-                }
-                this.value = '';
-            }
-        });
     });
 })();

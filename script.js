@@ -146,7 +146,7 @@ async function inicializarApp() {
         carregarPedidoViaURL()
     ]);
 
-    atualizarSecaoImpressaoPedido();
+    atualizarBotoesImpressaoTopo();
     const container = document.getElementById('produtosContainer');
     if (container && !container.children.length) adicionarProduto();
     if (!estadoApp.somenteLeitura) garantirSlotArteMinimo();
@@ -189,6 +189,17 @@ function configurarEventListeners() {
 const MAX_ARTES = 10;
 const MAX_TAMANHO_IMAGEM_MB = 4;
 
+/** URLs `uc?id=...&export=view` do Drive não carregam mais em <img>; thumbnail funciona para preview e impressão. */
+function normalizarUrlDriveParaImg(url) {
+    if (!url) return '';
+    const s = String(url);
+    if (/^blob:/i.test(s) || /^data:/i.test(s)) return s;
+    if (!s.includes('drive.google.com')) return s;
+    const m = s.match(/[?&]id=([a-zA-Z0-9_-]+)/) || s.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if (!m) return s;
+    return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w1600`;
+}
+
 function inicializarSecaoImagens() {
     const inputMockup = document.getElementById('inputMockupPedido');
     if (inputMockup) {
@@ -219,8 +230,8 @@ function mostrarPreviewMockup(src, nomeArquivo, urlDrive) {
     const img = document.getElementById('imgPreviewMockup');
     const link = document.getElementById('linkMockupDrive');
     if (!wrap || !img) return;
-    img.src = src;
-    img.onclick = () => window.open(src, '_blank');
+    img.src = normalizarUrlDriveParaImg(src) || src;
+    img.onclick = () => window.open(urlDrive || src, '_blank');
     if (link) {
         if (urlDrive) {
             link.href = urlDrive;
@@ -289,7 +300,7 @@ function adicionarArteUpload(urlDrive, nomeArquivo) {
         const previewWrap = item.querySelector('.arte-preview');
         const thumb = item.querySelector('.arte-thumb');
         if (previewWrap && thumb) {
-            thumb.src = urlDrive;
+            thumb.src = normalizarUrlDriveParaImg(urlDrive) || urlDrive;
             thumb.onclick = () => window.open(urlDrive, '_blank');
             previewWrap.classList.remove('hidden');
         }
@@ -916,12 +927,12 @@ function desativarUIModoEdicaoIndex() {
     configurarBotaoVoltarPrincipal();
 }
 
-function atualizarSecaoImpressaoPedido() {
-    const sec = document.getElementById('secaoImpressaoPedido');
-    if (!sec) return;
+function atualizarBotoesImpressaoTopo() {
+    const wrap = document.getElementById('botoesImpressaoTopo');
+    if (!wrap) return;
     const id = (document.getElementById('idPedido')?.value || '').trim();
     const pedidoPersistidoOuCarregado = Boolean(estadoApp.modoEdicao && estadoApp.idEdicao);
-    sec.classList.toggle('hidden', !id || !pedidoPersistidoOuCarregado);
+    wrap.classList.toggle('hidden', !id || !pedidoPersistidoOuCarregado);
 }
 
 function sincronizarBotoesRemocaoProdutosIndex() {
@@ -1147,7 +1158,7 @@ async function salvarPedido() {
             }
             if (resultado.aviso) Utils.mostrarNotificacao(resultado.aviso, 'info');
             Utils.mostrarNotificacao('Alterações salvas com sucesso!', 'success');
-            atualizarSecaoImpressaoPedido();
+            atualizarBotoesImpressaoTopo();
             await recarregarPedidoAposSalvar();
             return;
         }
@@ -1184,7 +1195,7 @@ async function salvarPedido() {
             estadoApp.pedidoEmEdicao = resultado.id || dados.id;
         }
         Utils.mostrarNotificacao('Pedido salvo com sucesso!', 'success');
-        atualizarSecaoImpressaoPedido();
+        atualizarBotoesImpressaoTopo();
     } catch (erro) {
         console.error(erro);
         const msg = erro && erro.message ? erro.message : (estadoApp.modoEdicao ? 'Erro ao salvar alterações.' : 'Erro ao salvar pedido.');
@@ -1344,7 +1355,7 @@ function limparFormulario() {
     desativarUIModoEdicaoIndex();
     configurarValoresPadraoFormulario();
     adicionarProduto();
-    atualizarSecaoImpressaoPedido();
+    atualizarBotoesImpressaoTopo();
 }
 
 async function carregarPedidoViaURL() {

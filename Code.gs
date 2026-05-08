@@ -66,7 +66,7 @@ function urlPublicaDrive(arquivo) {
   } catch (e) {
     // ignora erro de permissão — arquivo ainda acessível internamente
   }
-  return 'https://drive.google.com/uc?id=' + arquivo.getId() + '&export=view';
+  return 'https://drive.google.com/thumbnail?id=' + arquivo.getId() + '&sz=w1600';
 }
 
 function salvarImagemNoDrive(pasta, base64, tipo, nomeArquivo) {

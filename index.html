@@ -18,16 +18,16 @@
     <!-- Stylesheets -->
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="print.css?v=5">
+    <link rel="stylesheet" href="print.css?v=6">
     
     <!-- Preload Scripts -->
     <link rel="preload" href="config.js?v=5" as="script">
     <link rel="preload" href="utils.js?v=2" as="script">
-    <link rel="preload" href="script.js?v=2" as="script">
+    <link rel="preload" href="script.js?v=3" as="script">
 </head>
 <body>
     <div id="faixaSomenteLeitura" class="faixa-somente-leitura hidden" role="status">
-        Pedido encerrado (entregue ou cancelado) — apenas visualização. Impressão disponível abaixo.
+        Pedido encerrado (entregue ou cancelado) — apenas visualização. Impressão disponível nos botões no topo.
     </div>
     <a href="home.html" id="btnVoltarPrincipal" class="btn-voltar-principal hidden" title="Voltar à fila (HOME)">Voltar à HOME</a>
     <!-- ========== CABEÇALHO ========== -->
@@ -59,26 +59,15 @@
                 <h2 class="card-title" id="tituloPrincipalIndex">🏠 Cadastro de Pedidos</h2>
                 <div class="flex flex-wrap gap-1 nav-desktop-only">
                     <a class="btn btn-info" href="home.html">Fila visual (HOME)</a>
+                    <span id="botoesImpressaoTopo" class="hidden flex flex-wrap gap-1">
+                        <button type="button" id="btnImprimirOs" class="btn btn-secondary">🖨️ Imprimir OS</button>
+                        <button type="button" id="btnImprimirGp" class="btn btn-secondary">🖨️ Imprimir GP</button>
+                    </span>
                     <a class="btn btn-secondary" href="config-calculos.html">Custos / cálculo</a>
                 </div>
             </div>
         </section>
 
-        <section class="card hidden" id="secaoImpressaoPedido">
-            <h2 class="card-title">Impressão</h2>
-            <p class="impressao-ajuda">O mockup salvo será usado automaticamente na impressão. Caso queira substituir só para esta impressão, selecione uma imagem abaixo.</p>
-            <div class="form-row impressao-mockup-linha">
-                <div class="form-group">
-                    <label class="form-label" for="inputMockupImpressao">Substituir mockup só para impressão (PNG ou JPG)</label>
-                    <input type="file" id="inputMockupImpressao" class="form-input" accept=".png,.jpg,.jpeg,image/png,image/jpeg">
-                </div>
-            </div>
-            <div class="btn-group flex-wrap">
-                <button type="button" id="btnImprimirOs" class="btn btn-secondary">Imprimir ordem de serviço (OS)</button>
-                <button type="button" id="btnImprimirGp" class="btn btn-secondary">Imprimir guia de pedido (GP)</button>
-            </div>
-        </section>
-        
         <!-- ========== FORMULÁRIO DE PEDIDO ========== -->
         <form id="formPedido" onsubmit="event.preventDefault();">
             
@@ -373,8 +362,8 @@
 
     <script src="config.js?v=5"></script>
     <script src="utils.js?v=2"></script>
-    <script src="script.js?v=2"></script>
-    <script src="print-os-gp.js?v=6"></script>
+    <script src="script.js?v=3"></script>
+    <script src="print-os-gp.js?v=7"></script>
     <script>
         (function () {
             var flutuante = document.getElementById('btnSalvarFlutuante');
