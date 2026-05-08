@@ -601,11 +601,23 @@
     }
     .gp-mockup--vazio {
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
         min-height: 80px;
         font-size: 9pt;
         color: #666;
+    }
+    .gp-mockup--prod {
+        margin-top: 10px;
+    }
+    .gp-mockup-leg {
+        font-size: 9pt;
+        font-weight: 700;
+        margin-bottom: 6px;
+        color: #111;
+        width: 100%;
+        text-align: left;
     }
 
     .gp-rodape-valores {
@@ -744,6 +756,16 @@
         text-align: center;
         border: 1px dashed #666;
         padding: 8px;
+    }
+    .os-mockup--prod {
+        margin-top: 10px;
+        page-break-inside: avoid;
+    }
+    .os-mockup-leg {
+        font-size: 9pt;
+        font-weight: 700;
+        margin-bottom: 6px;
+        text-align: left;
     }
     .os-mockup-img {
         max-width: 100%;

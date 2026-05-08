@@ -349,7 +349,7 @@ function doPost(e) {
     }
 
     if (acao === 'salvarPedido') {
-      Logger.log('[doPost] imagens recebido: ' + (imagensPayload ? 'SIM (mockup=' + !!(imagensPayload.mockup) + ', artes=' + (Array.isArray(imagensPayload.artes) ? imagensPayload.artes.length : 0) + ')' : 'NÃO'));
+      Logger.log('[doPost] imagens recebido: ' + (imagensPayload ? 'SIM (mockups=' + (Array.isArray(imagensPayload.mockups) ? imagensPayload.mockups.length : 0) + ', artes=' + (Array.isArray(imagensPayload.artes) ? imagensPayload.artes.length : 0) + ')' : 'NÃO'));
       return resposta(salvarPedido(dados, imagensPayload));
     }
     if (acao === 'buscarPedido') return resposta(buscarPedido(dados.termo || dados.id || ''));
@@ -425,38 +425,53 @@ function garantirEstruturaPayloadSalvar(dados) {
 }
 
 // ================= SALVAR =================
-function resolverUrlsImagens(imagens, nomeCliente, idBuscaVal, dataPedido, linhaExistente, temCostura) {
-  var urlMockup = '';
+function resolverUrlsImagens(imagens, nomeCliente, idBuscaVal, dataPedido, linhaExistente, temCostura, produtosArr) {
+  var listaProd = Array.isArray(produtosArr) ? produtosArr : [];
+  var urlMockupColuna = '';
   var urlArtes = ['','','','','','','','','',''];
 
-  // Lê URLs já salvas na linha (preservação)
   if (linhaExistente) {
     var idxMockup = temCostura ? 29 : 28;
     var idxArte1 = temCostura ? 30 : 29;
-    urlMockup = linhaExistente.length > idxMockup ? String(linhaExistente[idxMockup] || '') : '';
+    urlMockupColuna = linhaExistente.length > idxMockup ? String(linhaExistente[idxMockup] || '') : '';
     for (var k = 0; k < 10; k++) {
       var idx = idxArte1 + k;
       urlArtes[k] = linhaExistente.length > idx ? String(linhaExistente[idx] || '') : '';
     }
   }
 
-  if (!imagens) return { urlMockup: urlMockup, urlArtes: urlArtes };
-
-  var novasImagens = { mockup: null, artes: [] };
-  var precisaUpload = false;
-
-  // Mockup: novo arquivo ou URL existente enviada do front
-  if (imagens.mockup && imagens.mockup.base64) {
-    novasImagens.mockup = imagens.mockup;
-    precisaUpload = true;
-  } else if (imagens.mockupUrlExistente) {
-    urlMockup = imagens.mockupUrlExistente;
+  function primeiraUrlMockupColuna() {
+    var pi;
+    for (pi = 0; pi < listaProd.length; pi++) {
+      var um = listaProd[pi] && listaProd[pi].urlMockup ? String(listaProd[pi].urlMockup).trim() : '';
+      if (um) return um;
+    }
+    return '';
   }
 
-  // Artes: resolve cada posição
+  if (!imagens) {
+    return { urlMockup: primeiraUrlMockupColuna(), urlArtes: urlArtes };
+  }
+
+  var mockupsPayload = Array.isArray(imagens.mockups) ? imagens.mockups : [];
+  if (imagens.mockup && imagens.mockup.base64 && mockupsPayload.length === 0 && listaProd.length > 0) {
+    mockupsPayload = [imagens.mockup];
+  }
+
+  var mi;
+  for (mi = 0; mi < mockupsPayload.length && mi < listaProd.length; mi++) {
+    var mk0 = mockupsPayload[mi];
+    var pr0 = listaProd[mi];
+    if (mk0 && mk0.urlExistente) {
+      pr0.urlMockup = mk0.urlExistente;
+    }
+  }
+
+  var precisaUpload = false;
+
   var artesPayload = Array.isArray(imagens.artes) ? imagens.artes : [];
   var novasArtesUpload = [];
-  var novasArtesMap = {}; // posição → índice em novasArtesUpload
+  var novasArtesMap = {};
 
   for (var i = 0; i < artesPayload.length && i < 10; i++) {
     var arte = artesPayload[i];
@@ -468,19 +483,30 @@ function resolverUrlsImagens(imagens, nomeCliente, idBuscaVal, dataPedido, linha
       urlArtes[i] = arte.urlExistente;
     }
   }
-  novasImagens.artes = novasArtesUpload;
+
+  var mq;
+  for (mq = 0; mq < mockupsPayload.length && mq < listaProd.length; mq++) {
+    if (mockupsPayload[mq] && mockupsPayload[mq].base64) {
+      precisaUpload = true;
+      break;
+    }
+  }
 
   if (precisaUpload) {
     var pasta = obterPastaDestino(dataPedido);
     var prefixo = sanitizarNomeArquivoDrive(nomeCliente) + '_' + String(idBuscaVal || '0000');
 
-    if (novasImagens.mockup) {
-      try {
-        var nomeM = prefixo + '_MOCKUP.' + (novasImagens.mockup.extensao || 'jpg');
-        Logger.log('[Drive] Salvando mockup: ' + nomeM + ' base64 len=' + String(novasImagens.mockup.base64 || '').length);
-        urlMockup = salvarImagemNoDrive(pasta, novasImagens.mockup.base64, novasImagens.mockup.tipo, nomeM);
-        Logger.log('[Drive] Mockup salvo: ' + urlMockup);
-      } catch (errM) { Logger.log('Erro mockup: ' + errM.toString()); }
+    for (var im = 0; im < mockupsPayload.length && im < listaProd.length; im++) {
+      var mk = mockupsPayload[im];
+      var prodRef = listaProd[im];
+      if (mk && mk.base64) {
+        try {
+          var numP = prodRef && prodRef.numero != null ? Number(prodRef.numero) : (im + 1);
+          var nomeMP = prefixo + '_PROD' + numP + '_MOCKUP.' + (mk.extensao || 'jpg');
+          Logger.log('[Drive] Salvando mockup prod ' + numP + ': ' + nomeMP);
+          prodRef.urlMockup = salvarImagemNoDrive(pasta, mk.base64, mk.tipo, nomeMP);
+        } catch (errMP) { Logger.log('Erro mockup prod: ' + errMP.toString()); }
+      }
     }
 
     var posicoes = Object.keys(novasArtesMap);
@@ -494,7 +520,7 @@ function resolverUrlsImagens(imagens, nomeCliente, idBuscaVal, dataPedido, linha
     }
   }
 
-  return { urlMockup: urlMockup, urlArtes: urlArtes };
+  return { urlMockup: primeiraUrlMockupColuna(), urlArtes: urlArtes };
 }
 
 function salvarPedido(dados, imagens) {
@@ -570,7 +596,7 @@ function salvarPedido(dados, imagens) {
         var idGravar = linhaAtual[0] !== undefined && linhaAtual[0] !== null && String(linhaAtual[0]).trim() !== ''
           ? linhaAtual[0]
           : idPedido;
-        var urlsImagens = resolverUrlsImagens(imagens, nomeCliente, idBuscaVal, dataPedido, linhaAtual, temCostura);
+        var urlsImagens = resolverUrlsImagens(imagens, nomeCliente, idBuscaVal, dataPedido, linhaAtual, temCostura, dados.produtos || []);
         var linhaVals = montarLinhaValoresPedido(
           idGravar, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
           dados.produtos || [], observacoes, valorTotal, valorEntrada, restante, status,
@@ -600,7 +626,7 @@ function salvarPedido(dados, imagens) {
       var idGravar0 = linhaAtual0[0] !== undefined && linhaAtual0[0] !== null && String(linhaAtual0[0]).trim() !== ''
         ? linhaAtual0[0]
         : idPedido;
-      var urlsImagens0 = resolverUrlsImagens(imagens, nomeCliente, idBuscaVal, dataPedido, linhaAtual0, temCostura);
+      var urlsImagens0 = resolverUrlsImagens(imagens, nomeCliente, idBuscaVal, dataPedido, linhaAtual0, temCostura, dados.produtos || []);
       var linhaVals0 = montarLinhaValoresPedido(
         idGravar0, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
         dados.produtos || [], observacoes, valorTotal, valorEntrada, restante, status,
@@ -617,7 +643,7 @@ function salvarPedido(dados, imagens) {
       };
     }
 
-    var urlsImagensNovas = resolverUrlsImagens(imagens, nomeCliente, idBuscaVal, dataPedido, null, temCostura);
+    var urlsImagensNovas = resolverUrlsImagens(imagens, nomeCliente, idBuscaVal, dataPedido, null, temCostura, dados.produtos || []);
     var linhaNova = montarLinhaValoresPedido(
       idPedido, nomeCliente, telefone, dataPedido, dataEntrega, totalPecas,
       dados.produtos || [], observacoes, valorTotal, valorEntrada, restante, status,

@@ -7,7 +7,6 @@ const estadoApp = {
     idEdicao: null,
     somenteLeitura: false,
     imagens: {
-        mockupUrlDrive: '',
         artesUrlDrive: []
     }
 };
@@ -185,7 +184,7 @@ function configurarEventListeners() {
 }
 
 /* ================================================================
-   SEÇÃO DE IMAGENS DO PEDIDO (Mockup + Artes)
+   SEÇÃO DE IMAGENS DO PEDIDO (Artes globais; mockup fica em cada produto)
    ================================================================ */
 
 const MAX_ARTES = 10;
@@ -203,15 +202,6 @@ function normalizarUrlDriveParaImg(url) {
 }
 
 function inicializarSecaoImagens() {
-    const inputMockup = document.getElementById('inputMockupPedido');
-    if (inputMockup) {
-        inputMockup.addEventListener('change', function () {
-            if (!this.files || !this.files[0]) return;
-            const file = this.files[0];
-            if (!validarArquivoImagem(file)) { this.value = ''; return; }
-            mostrarPreviewMockup(URL.createObjectURL(file), file.name, '');
-        });
-    }
     document.getElementById('btnAdicionarArte')?.addEventListener('click', () => adicionarArteUpload());
 }
 
@@ -227,13 +217,17 @@ function validarArquivoImagem(file) {
     return true;
 }
 
-function mostrarPreviewMockup(src, nomeArquivo, urlDrive) {
-    const wrap = document.getElementById('previewMockup');
-    const img = document.getElementById('imgPreviewMockup');
-    const link = document.getElementById('linkMockupDrive');
-    if (!wrap || !img) return;
+function mostrarPreviewMockupProduto(produtoId, src, nomeArquivo, urlDrive) {
+    const wrap = document.getElementById(`previewMockup-${produtoId}`);
+    const img = document.getElementById(`imgPreviewMockup-${produtoId}`);
+    const link = document.getElementById(`linkMockupDrive-${produtoId}`);
+    const bloco = document.getElementById(`blocoMockup-${produtoId}`);
+    if (!wrap || !img || !bloco) return;
     img.src = normalizarUrlDriveParaImg(src) || src;
     img.onclick = () => window.open(urlDrive || src, '_blank');
+    if (urlDrive) {
+        bloco.dataset.mockupUrlDrive = urlDrive;
+    }
     if (link) {
         if (urlDrive) {
             link.href = urlDrive;
@@ -247,14 +241,45 @@ function mostrarPreviewMockup(src, nomeArquivo, urlDrive) {
     wrap.classList.remove('hidden');
 }
 
-function limparMockup() {
-    const input = document.getElementById('inputMockupPedido');
-    const wrap = document.getElementById('previewMockup');
-    const img = document.getElementById('imgPreviewMockup');
+function configurarMockupProdutoListeners(produtoId) {
+    const input = document.getElementById(`inputMockup-${produtoId}`);
+    const bloco = document.getElementById(`blocoMockup-${produtoId}`);
+    if (!input || !bloco) return;
+    input.addEventListener('change', function () {
+        if (!this.files || !this.files[0]) return;
+        const file = this.files[0];
+        if (!validarArquivoImagem(file)) { this.value = ''; return; }
+        const entry = estadoApp.produtos.find((p) => p.id === produtoId);
+        if (entry && entry.mockupRevokeUrl) {
+            URL.revokeObjectURL(entry.mockupRevokeUrl);
+            entry.mockupRevokeUrl = null;
+        }
+        const url = URL.createObjectURL(file);
+        if (entry) entry.mockupRevokeUrl = url;
+        bloco.dataset.mockupUrlDrive = '';
+        mostrarPreviewMockupProduto(produtoId, url, file.name, '');
+    });
+}
+
+function limparMockupProduto(produtoId) {
+    const input = document.getElementById(`inputMockup-${produtoId}`);
+    const wrap = document.getElementById(`previewMockup-${produtoId}`);
+    const img = document.getElementById(`imgPreviewMockup-${produtoId}`);
+    const bloco = document.getElementById(`blocoMockup-${produtoId}`);
+    const link = document.getElementById(`linkMockupDrive-${produtoId}`);
     if (input) input.value = '';
     if (img) img.src = '';
     if (wrap) wrap.classList.add('hidden');
-    estadoApp.imagens.mockupUrlDrive = '';
+    if (bloco) bloco.dataset.mockupUrlDrive = '';
+    if (link) {
+        link.href = '#';
+        link.classList.add('hidden');
+    }
+    const entry = estadoApp.produtos.find((p) => p.id === produtoId);
+    if (entry && entry.mockupRevokeUrl) {
+        URL.revokeObjectURL(entry.mockupRevokeUrl);
+        entry.mockupRevokeUrl = null;
+    }
 }
 
 function adicionarArteUpload(urlDrive, nomeArquivo) {
@@ -406,19 +431,26 @@ function lerArquivoBase64(file) {
 
 async function coletarImagens() {
     const resultado = {
-        mockup: null,
-        mockupUrlExistente: estadoApp.imagens.mockupUrlDrive || '',
+        mockups: [],
         artes: []
     };
 
-    const inputMockup = document.getElementById('inputMockupPedido');
-    if (inputMockup && inputMockup.files && inputMockup.files[0]) {
-        try {
-            resultado.mockup = await lerArquivoBase64(inputMockup.files[0]);
-            resultado.mockupUrlExistente = '';
-        } catch (e) {
-            console.warn('Erro ao ler mockup:', e);
+    for (const p of estadoApp.produtos) {
+        const pid = p.id;
+        const input = document.getElementById(`inputMockup-${pid}`);
+        const bloco = document.getElementById(`blocoMockup-${pid}`);
+        const urlExistente = (bloco && bloco.dataset && bloco.dataset.mockupUrlDrive) ? String(bloco.dataset.mockupUrlDrive).trim() : '';
+        let slot = {};
+        if (input && input.files && input.files[0]) {
+            try {
+                slot = await lerArquivoBase64(input.files[0]);
+            } catch (e) {
+                console.warn('Erro ao ler mockup produto', pid, e);
+            }
+        } else if (urlExistente) {
+            slot = { urlExistente };
         }
+        resultado.mockups.push(slot);
     }
 
     const container = document.getElementById('containerArtes');
@@ -442,25 +474,16 @@ async function coletarImagens() {
         }
     }
 
-    const temAlgo = resultado.mockup !== null || resultado.mockupUrlExistente || resultado.artes.length > 0;
+    const temMockupNovo = resultado.mockups.some((m) => m && m.base64);
+    const temAlgo = temMockupNovo || resultado.artes.length > 0;
     return temAlgo ? resultado : null;
 }
 
 function carregarImagensSalvas(pedido) {
-    estadoApp.imagens.mockupUrlDrive = pedido.urlMockup || '';
     estadoApp.imagens.artesUrlDrive = pedido.urlArtes || [];
 
     const container = document.getElementById('containerArtes');
     if (container) container.innerHTML = '';
-
-    if (pedido.urlMockup) {
-        const input = document.getElementById('inputMockupPedido');
-        if (input) input.value = '';
-        mostrarPreviewMockup(pedido.urlMockup, 'Mockup salvo no Drive', pedido.urlMockup);
-    } else {
-        const wrap = document.getElementById('previewMockup');
-        if (wrap) wrap.classList.add('hidden');
-    }
 
     const artes = pedido.urlArtes || [];
     artes.forEach((url) => {
@@ -473,9 +496,10 @@ function carregarImagensSalvas(pedido) {
 
 function precarregarImagensPedidoBackground() {
     const urls = [];
-    if (estadoApp.imagens.mockupUrlDrive) {
-        urls.push(normalizarUrlDriveParaImg(estadoApp.imagens.mockupUrlDrive));
-    }
+    document.querySelectorAll('.produto-mockup-bloco').forEach((bloco) => {
+        const u = bloco.dataset && bloco.dataset.mockupUrlDrive ? String(bloco.dataset.mockupUrlDrive).trim() : '';
+        if (u) urls.push(normalizarUrlDriveParaImg(u));
+    });
     if (Array.isArray(estadoApp.imagens.artesUrlDrive)) {
         estadoApp.imagens.artesUrlDrive.forEach((u) => {
             if (u) urls.push(normalizarUrlDriveParaImg(u));
@@ -588,6 +612,19 @@ function adicionarProduto() {
         </tbody></table></div>
         <button type="button" class="btn btn-small btn-secondary mt-1" onclick="adicionarLinhaEstampa(${produtoId})">➕ Adicionar Estampa</button>
 
+        <div class="card-subtitle">🖼️ Mockup deste produto</div>
+        <div class="imagem-upload-bloco produto-mockup-bloco" id="blocoMockup-${produtoId}" data-mockup-url-drive="">
+          <div class="form-group">
+            <label class="form-label" for="inputMockup-${produtoId}">Imagem do Mockup (PNG ou JPG)</label>
+            <input type="file" id="inputMockup-${produtoId}" class="form-input" accept=".png,.jpg,.jpeg,image/png,image/jpeg">
+          </div>
+          <div id="previewMockup-${produtoId}" class="imagem-preview-wrap hidden">
+            <img id="imgPreviewMockup-${produtoId}" class="imagem-thumb" alt="Preview mockup">
+            <button type="button" class="btn-remover-imagem" onclick="limparMockupProduto(${produtoId})" title="Remover mockup">✕</button>
+            <a id="linkMockupDrive-${produtoId}" href="#" target="_blank" class="imagem-link-drive hidden">Ver no Drive</a>
+          </div>
+        </div>
+
         <div class="card-subtitle">💰 Cálculo de Custos</div>
         <div class="custos-container">
           <div class="custo-item"><span class="custo-label">Malha:</span><span class="custo-valor" id="custoMalha-${produtoId}">R$ 0,00</span></div>
@@ -604,11 +641,16 @@ function adicionarProduto() {
       </div>
     `);
 
-    estadoApp.produtos.push({ id: produtoId, valorTotal: 0, custoTotal: 0 });
+    estadoApp.produtos.push({ id: produtoId, valorTotal: 0, custoTotal: 0, mockupRevokeUrl: null });
+    configurarMockupProdutoListeners(produtoId);
 }
 
 function removerProduto(produtoId) {
     if (!confirm('Deseja realmente remover este produto?')) return;
+    const entry = estadoApp.produtos.find((p) => p.id === produtoId);
+    if (entry && entry.mockupRevokeUrl) {
+        URL.revokeObjectURL(entry.mockupRevokeUrl);
+    }
     document.getElementById(`produto-${produtoId}`)?.remove();
     estadoApp.produtos = estadoApp.produtos.filter((p) => p.id !== produtoId);
     calcularTotalPecas();
@@ -1094,6 +1136,8 @@ function preencherFormularioCompleto(pedido) {
     atualizarBadgesStatusEdicao();
 
     const listaProdutos = Array.isArray(pedido.produtos) && pedido.produtos.length ? pedido.produtos : [{}];
+    const legacyMockupGlobal = String(pedido.urlMockup || '').trim();
+    let legacyMockupUsado = false;
     listaProdutos.forEach((p) => {
         adicionarProduto();
         const pid = estadoApp.produtos[estadoApp.produtos.length - 1].id;
@@ -1117,6 +1161,17 @@ function preencherFormularioCompleto(pedido) {
             margem.value = m != null && m !== '' ? String(m) : String(obterMargemPadraoCalc());
         }
         calcularCustosProduto(pid);
+
+        let mockUrl = String(p.urlMockup || '').trim();
+        if (!mockUrl && legacyMockupGlobal && !legacyMockupUsado) {
+            mockUrl = legacyMockupGlobal;
+            legacyMockupUsado = true;
+        }
+        if (mockUrl) {
+            const inputM = document.getElementById(`inputMockup-${pid}`);
+            if (inputM) inputM.value = '';
+            mostrarPreviewMockupProduto(pid, mockUrl, 'Mockup salvo no Drive', mockUrl);
+        }
     });
 
     sincronizarBotoesRemocaoProdutosIndex();
@@ -1174,7 +1229,10 @@ async function salvarPedido() {
     try {
         const dados = coletarDadosFormulario();
         const imagens = await coletarImagens();
-        const temImagensNovas = imagens !== null && (imagens.mockup !== null || imagens.artes.length > 0);
+        const temImagensNovas = imagens !== null && (
+            (Array.isArray(imagens.mockups) && imagens.mockups.some((m) => m && m.base64))
+            || (Array.isArray(imagens.artes) && imagens.artes.length > 0)
+        );
 
         if (temImagensNovas) {
             mostrarLoading('Enviando imagens... (pode demorar)');
@@ -1318,9 +1376,14 @@ function coletarProduto(produtoId) {
     const precoUnitarioNumero = obterValorNumericoInput(precoUnitarioInput);
     const nomeEl = document.getElementById(`nomeProduto-${produtoId}`);
     const nomeProduto = nomeEl ? (nomeEl.textContent.trim() || nomeEl.dataset.default) : `📦 PRODUTO #${produtoId}`;
+    const blocoMock = document.getElementById(`blocoMockup-${produtoId}`);
+    const urlMockup = (blocoMock && blocoMock.dataset && blocoMock.dataset.mockupUrlDrive)
+        ? String(blocoMock.dataset.mockupUrlDrive).trim()
+        : '';
     const produto = {
         numero: produtoId,
         nomeProduto,
+        urlMockup,
         tipoPeca: document.getElementById(`tipoPeca-${produtoId}`)?.value || '',
         detalhesPeca: document.getElementById(`detalhesPeca-${produtoId}`)?.value || '',
         tipoMalha: document.getElementById(`tipoMalha-${produtoId}`)?.value || '',
@@ -1399,13 +1462,11 @@ function limparFormulario() {
     estadoApp.modoEdicao = false;
     estadoApp.idEdicao = null;
     estadoApp.somenteLeitura = false;
-    estadoApp.imagens = { mockupUrlDrive: '', artesUrlDrive: [] };
+    estadoApp.imagens = { artesUrlDrive: [] };
     document.getElementById('resumoTotalPedido').textContent = 'R$ 0,00';
     document.getElementById('resumoRestante').textContent = 'R$ 0,00';
     const containerArtes = document.getElementById('containerArtes');
     if (containerArtes) containerArtes.innerHTML = '';
-    const previewMockup = document.getElementById('previewMockup');
-    if (previewMockup) previewMockup.classList.add('hidden');
     atualizarBotaoAdicionarArte();
     garantirSlotArteMinimo();
     desativarUIModoEdicaoIndex();

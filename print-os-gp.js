@@ -197,7 +197,21 @@
         return `<section class="gp-artes"><h2 class="gp-sec-titulo gp-sec-titulo--sub">Artes / Estampas</h2><div class="gp-artes-grid">${thumbs}</div></section>`;
     }
 
-    function montarHtmlGp(dados, imgSrc, artesSrc) {
+    function montarBlocoMockupGp(mockSrc, nomeProduto, idx) {
+        const titulo = escapeHtml(nomeProduto || `Produto ${idx + 1}`);
+        if (!mockSrc) {
+            return `<div class="gp-mockup gp-mockup--prod gp-mockup--vazio"><div class="gp-mockup-leg">${titulo}</div><p>(Sem mockup)</p></div>`;
+        }
+        return `<div class="gp-mockup gp-mockup--prod"><div class="gp-mockup-leg">${titulo}</div><img src="${mockSrc}" alt="Mockup" class="gp-mockup-img" loading="eager" decoding="async"></div>`;
+    }
+
+    function montarBlocoMockupOs(mockSrc, nomeProduto, idx) {
+        const titulo = escapeHtml(nomeProduto || `Modelo ${idx + 1}`);
+        if (!mockSrc) return '';
+        return `<div class="os-mockup os-mockup--prod"><div class="os-mockup-leg">${titulo}</div><img src="${mockSrc}" alt="Mockup" class="os-mockup-img" loading="eager" decoding="async"></div>`;
+    }
+
+    function montarHtmlGp(dados, mockupSrcsPorProduto, artesSrc) {
         const emp = (typeof CONFIG !== 'undefined' && CONFIG.EMPRESA) ? CONFIG.EMPRESA : {};
         const nomeEmp = emp.nome || 'ADONAY CONFECÇÃO';
         const tel = emp.telefone1 || '';
@@ -214,15 +228,19 @@
         const cli = dados.cliente || {};
         const obs = dados.observacoes || '';
         const obsHtml = obs.trim() ? escapeHtml(obs) : '—';
+        const mockupsArr = Array.isArray(mockupSrcsPorProduto) ? mockupSrcsPorProduto : [];
 
         const blocosProduto = produtos
             .map((prod, idx) => {
                 const linhas = montarLinhasGpUmProduto(prod);
                 const corpo = linhasGpParaHtmlTabela(linhas);
                 const n = idx + 1;
+                const tituloProd = prod.nomeProduto || `Produto ${n}`;
+                const mockSrc = mockupsArr[idx] || '';
+                const mockHtml = montarBlocoMockupGp(mockSrc, tituloProd, idx);
                 return `
     <section class="gp-produto">
-        <h3 class="gp-produto-tit">Produto ${n}</h3>
+        <h3 class="gp-produto-tit">${escapeHtml(tituloProd)}</h3>
         <table class="gp-tabela">
             <thead>
                 <tr>
@@ -231,13 +249,10 @@
             </thead>
             <tbody>${corpo}</tbody>
         </table>
+        ${mockHtml}
     </section>`;
             })
             .join('');
-
-        const imgBloco = imgSrc
-            ? `<div class="gp-mockup"><img src="${imgSrc}" alt="Mockup" class="gp-mockup-img" loading="eager" decoding="async" fetchpriority="high"></div>`
-            : '<div class="gp-mockup gp-mockup--vazio">(Sem imagem de mockup)</div>';
 
         return `
 <div class="gp-doc">
@@ -275,7 +290,6 @@
         <p class="gp-desc-texto">${obsHtml}</p>
     </section>
     ${blocosProduto}
-    ${imgBloco}
     ${montarGaleriaArtesHtml(artesSrc)}
     <div class="gp-rodape-valores">
         <div class="gp-resumo-financeiro">
@@ -297,17 +311,19 @@
 </div>`;
     }
 
-    function montarHtmlOs(dados, imgSrc, artesSrc) {
+    function montarHtmlOs(dados, mockupSrcsPorProduto, artesSrc) {
         const emp = (typeof CONFIG !== 'undefined' && CONFIG.EMPRESA) ? CONFIG.EMPRESA : {};
         const nomeEmp = emp.nome || 'ADONAY CONFECÇÃO';
         const idC = idCurtoPedido(dados);
         const cli = dados.cliente || {};
         const obs = dados.observacoes || '';
         const produtos = Array.isArray(dados.produtos) ? dados.produtos : [];
+        const mockupsArr = Array.isArray(mockupSrcsPorProduto) ? mockupSrcsPorProduto : [];
         let totalPecas = 0;
         const blocosProd = produtos
             .map((prod, idx) => {
                 const n = idx + 1;
+                const tituloProd = prod.nomeProduto || `Modelo ${n}`;
                 const tams = Array.isArray(prod.tamanhos) ? prod.tamanhos : [];
                 let sub = 0;
                 const linhasTam = tams
@@ -319,9 +335,11 @@
                     .join('');
                 totalPecas += sub;
                 const est = listaEstampasProduto(prod);
+                const mockSrc = mockupsArr[idx] || '';
+                const mockHtml = montarBlocoMockupOs(mockSrc, tituloProd, idx);
                 return `
             <div class="os-modelo">
-                <h3 class="os-modelo-tit">Modelo ${n}</h3>
+                <h3 class="os-modelo-tit">${escapeHtml(tituloProd)}</h3>
                 <table class="os-tab-tam"><thead><tr><th>Tamanho</th><th>Qtd</th></tr></thead><tbody>${linhasTam}</tbody></table>
                 <div class="os-info">
                     <div><strong>Malha</strong> ${escapeHtml(prod.tipoMalha || '—')}</div>
@@ -329,12 +347,10 @@
                     <div><strong>Peça / detalhe</strong> ${escapeHtml(prod.tipoPeca || '')} ${escapeHtml(prod.detalhesPeca || '')}</div>
                     <div><strong>Estampas</strong> ${escapeHtml(est)}</div>
                 </div>
+                ${mockHtml}
             </div>`;
             })
             .join('');
-        const imgBloco = imgSrc
-            ? `<div class="os-mockup"><img src="${imgSrc}" alt="Mockup" class="os-mockup-img" loading="eager" decoding="async" fetchpriority="high"></div>`
-            : '';
 
         return `
 <div class="os-doc">
@@ -350,7 +366,6 @@
     </div>
     ${blocosProd}
     <div class="os-total-pecas"><strong>Total de peças</strong> ${totalPecas}</div>
-    ${imgBloco}
     ${montarGaleriaArtesHtml(artesSrc)}
 </div>`;
     }
@@ -360,35 +375,41 @@
         return coletarDadosFormulario();
     }
 
-    function prepararImagemParaImpressao(notificarErro) {
-        // 1) Verifica campo de upload principal do formulário
-        const inputPrincipal = document.getElementById('inputMockupPedido');
-        if (inputPrincipal && inputPrincipal.files && inputPrincipal.files[0]) {
-            const file = inputPrincipal.files[0];
-            if (file.type === 'image/png' || file.type === 'image/jpeg') {
-                const url = URL.createObjectURL(file);
-                return { src: url, revoke: url };
+    function prepararMockupsProdutosParaImpressao(dados) {
+        const srcs = [];
+        const revokes = [];
+        const prods = Array.isArray(dados.produtos) ? dados.produtos : [];
+        prods.forEach((prod) => {
+            const pid = prod.numero;
+            const inp = pid != null ? document.getElementById(`inputMockup-${pid}`) : null;
+            if (inp && inp.files && inp.files[0]) {
+                const file = inp.files[0];
+                if (file.type === 'image/png' || file.type === 'image/jpeg') {
+                    const url = URL.createObjectURL(file);
+                    srcs.push(url);
+                    revokes.push(url);
+                    return;
+                }
             }
-        }
-
-        // 2) Usa URL salva no Drive (mockup persistido) — mesma regra do preview (thumbnail)
-        const urlDrive = typeof estadoApp !== 'undefined' && estadoApp.imagens && estadoApp.imagens.mockupUrlDrive
-            ? estadoApp.imagens.mockupUrlDrive
-            : '';
-        if (urlDrive) {
-            const src = resolverSrcImpressao(urlDrive);
-            if (src) return { src, revoke: null };
-        }
-
-        // 3) Fallback: preview visível no formulário (já com URL exibível)
-        const wrap = document.getElementById('previewMockup');
-        const img = document.getElementById('imgPreviewMockup');
-        if (wrap && !wrap.classList.contains('hidden') && img) {
-            const u = img.currentSrc || img.src;
-            if (u) return { src: u, revoke: null };
-        }
-
-        return { src: null, revoke: null };
+            const uDrive = prod.urlMockup ? String(prod.urlMockup).trim() : '';
+            if (uDrive) {
+                srcs.push(resolverSrcImpressao(uDrive));
+                return;
+            }
+            if (pid != null) {
+                const wrap = document.getElementById(`previewMockup-${pid}`);
+                const img = document.getElementById(`imgPreviewMockup-${pid}`);
+                if (wrap && !wrap.classList.contains('hidden') && img) {
+                    const u = img.currentSrc || img.src;
+                    if (u) {
+                        srcs.push(u);
+                        return;
+                    }
+                }
+            }
+            srcs.push('');
+        });
+        return { srcs, revokes };
     }
 
     function prepararArtesParaImpressao() {
@@ -440,21 +461,21 @@
         if (!mount) return;
 
         mostrarOverlayImpressao('Preparando documento para impressão...');
-        const { src: imgSrc, revoke } = prepararImagemParaImpressao(true);
+        const mockData = prepararMockupsProdutosParaImpressao(dados);
         const artes = prepararArtesParaImpressao();
         const cls = tipo === 'os' ? 'imprimindo-doc-os' : 'imprimindo-doc-gp';
 
         try {
             mount.innerHTML = tipo === 'os'
-                ? montarHtmlOs(dados, imgSrc, artes.src)
-                : montarHtmlGp(dados, imgSrc, artes.src);
+                ? montarHtmlOs(dados, mockData.srcs, artes.src)
+                : montarHtmlGp(dados, mockData.srcs, artes.src);
             document.body.classList.add(cls);
             await prepararImagensParaImpressao(mount);
 
             const cleanup = () => {
                 document.body.classList.remove(cls);
                 mount.innerHTML = '';
-                if (revoke) URL.revokeObjectURL(revoke);
+                mockData.revokes.forEach((url) => URL.revokeObjectURL(url));
                 artes.revokes.forEach((url) => URL.revokeObjectURL(url));
                 esconderOverlayImpressao();
                 window.removeEventListener('afterprint', cleanup);

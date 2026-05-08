@@ -26,7 +26,7 @@
     <!-- Preload Scripts -->
     <link rel="preload" href="config.js?v=5" as="script">
     <link rel="preload" href="utils.js?v=2" as="script">
-    <link rel="preload" href="script.js?v=2" as="script">
+    <link rel="preload" href="script.js?v=3" as="script">
 </head>
 <body>
     <div id="faixaSomenteLeitura" class="faixa-somente-leitura hidden" role="status">
@@ -177,21 +177,7 @@
             <!-- IMAGENS DO PEDIDO -->
             <section class="card" id="secaoImagens">
                 <h2 class="card-title">🖼️ Imagens do Pedido</h2>
-                <p class="impressao-ajuda">Imagens salvas no Google Drive organizadas por Ano/Mês. Nenhuma obrigatória.</p>
-
-                <!-- Mockup -->
-                <div class="card-subtitle">Mockup</div>
-                <div class="imagem-upload-bloco" id="blocoMockup">
-                    <div class="form-group">
-                        <label class="form-label" for="inputMockupPedido">Imagem do Mockup (PNG ou JPG)</label>
-                        <input type="file" id="inputMockupPedido" class="form-input" accept=".png,.jpg,.jpeg,image/png,image/jpeg">
-                    </div>
-                    <div id="previewMockup" class="imagem-preview-wrap hidden">
-                        <img id="imgPreviewMockup" class="imagem-thumb" alt="Preview mockup">
-                        <button type="button" class="btn-remover-imagem" onclick="limparMockup()" title="Remover mockup">✕</button>
-                        <a id="linkMockupDrive" href="#" target="_blank" class="imagem-link-drive hidden">Ver no Drive</a>
-                    </div>
-                </div>
+                <p class="impressao-ajuda">Mockup de cada produto fica na seção do produto. Artes/estampas aqui são do pedido inteiro. Imagens no Google Drive (Ano/Mês). Nenhuma obrigatória.</p>
 
                 <!-- Artes -->
                 <div class="card-subtitle mt-2">Artes / Estampas <span class="lista-badge-opcional">(Opcional — até 10)</span></div>
@@ -367,8 +353,8 @@
 
     <script src="config.js?v=5"></script>
     <script src="utils.js?v=2"></script>
-    <script src="script.js?v=2"></script>
-    <script src="print-os-gp.js?v=7"></script>
+    <script src="script.js?v=3"></script>
+    <script src="print-os-gp.js?v=8"></script>
     <script>
         (function () {
             var flutuante = document.getElementById('btnSalvarFlutuante');
