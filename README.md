@@ -1,4 +1,4 @@
-# Sistema de pedidos — Adonay Confecção
+# Sistema de pedidos — Adonay Confecção.
 
 Front-end estático em HTML/CSS/JS que persiste dados numa planilha Google via Web App (Google Apps Script). Não há backend próprio nem etapa de build; o deploy típico é hospedar os arquivos estáticos e manter o Apps Script implantado.
 
