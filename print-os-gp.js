@@ -3,6 +3,82 @@
  * Imagens opcionais apenas em memória — não persistem.
  */
 (function () {
+    const PRINT_IMAGE_TIMEOUT_MS = 4000;
+
+    function getPlaceholderImagem() {
+        return `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700"><rect width="100%" height="100%" fill="#d1d5db"/><text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" fill="#374151" font-size="42" font-family="Arial">Imagem indisponivel</text></svg>')}`;
+    }
+
+    function garantirOverlayImpressao() {
+        let overlay = document.getElementById('printLoadingOverlay');
+        if (overlay) return overlay;
+        overlay = document.createElement('div');
+        overlay.id = 'printLoadingOverlay';
+        overlay.className = 'print-loading-overlay hidden';
+        overlay.innerHTML = `
+            <div class="print-loading-card">
+                <div class="print-loading-spinner"></div>
+                <p id="printLoadingMensagem">Preparando documento para impressão...</p>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        return overlay;
+    }
+
+    function mostrarOverlayImpressao(msg) {
+        const overlay = garantirOverlayImpressao();
+        const texto = overlay.querySelector('#printLoadingMensagem');
+        if (texto) texto.textContent = msg || 'Preparando documento para impressão...';
+        overlay.classList.remove('hidden');
+    }
+
+    function esconderOverlayImpressao() {
+        document.getElementById('printLoadingOverlay')?.classList.add('hidden');
+    }
+
+    function preloadImageWithTimeout(src, timeoutMs = PRINT_IMAGE_TIMEOUT_MS) {
+        return new Promise((resolve) => {
+            if (!src) {
+                resolve({ ok: false, reason: 'empty' });
+                return;
+            }
+            const img = new Image();
+            let done = false;
+            const timer = setTimeout(() => {
+                if (done) return;
+                done = true;
+                resolve({ ok: false, reason: 'timeout' });
+            }, timeoutMs);
+
+            const finish = (ok, reason) => {
+                if (done) return;
+                done = true;
+                clearTimeout(timer);
+                resolve({ ok, reason });
+            };
+
+            img.onload = () => finish(true, 'loaded');
+            img.onerror = () => finish(false, 'error');
+            img.decoding = 'async';
+            img.src = src;
+            if (img.decode) {
+                img.decode().then(() => finish(true, 'decoded')).catch(() => {});
+            }
+        });
+    }
+
+    async function prepararImagensParaImpressao(mountEl) {
+        const imgs = Array.from(mountEl.querySelectorAll('img'));
+        if (!imgs.length) return;
+        const resultados = await Promise.allSettled(
+            imgs.map((img) => preloadImageWithTimeout(img.src, PRINT_IMAGE_TIMEOUT_MS))
+        );
+        resultados.forEach((resultado, idx) => {
+            const ok = resultado.status === 'fulfilled' && resultado.value && resultado.value.ok;
+            if (!ok) imgs[idx].src = getPlaceholderImagem();
+        });
+    }
+
     function escapeHtml(s) {
         return String(s || '')
             .replace(/&/g, '&amp;')
@@ -152,7 +228,7 @@
             .join('');
 
         const imgBloco = imgSrc
-            ? `<div class="gp-mockup"><img src="${imgSrc}" alt="Mockup" class="gp-mockup-img"></div>`
+            ? `<div class="gp-mockup"><img src="${imgSrc}" alt="Mockup" class="gp-mockup-img" loading="lazy" decoding="async" fetchpriority="high"></div>`
             : '<div class="gp-mockup gp-mockup--vazio">(Sem imagem de mockup)</div>';
 
         return `
@@ -249,7 +325,7 @@
             })
             .join('');
         const imgBloco = imgSrc
-            ? `<div class="os-mockup"><img src="${imgSrc}" alt="Mockup" class="os-mockup-img"></div>`
+            ? `<div class="os-mockup"><img src="${imgSrc}" alt="Mockup" class="os-mockup-img" loading="lazy" decoding="async" fetchpriority="high"></div>`
             : '';
 
         return `
@@ -325,7 +401,7 @@
         return { src, revokes };
     }
 
-    function executarImpressao(tipo) {
+    async function executarImpressao(tipo) {
         const dados = obterDadosImpressao();
         if (!dados || !dados.cliente) {
             if (typeof Utils !== 'undefined' && Utils.mostrarNotificacao) {
@@ -337,28 +413,35 @@
         const mount = document.getElementById(tipo === 'os' ? 'printOsMount' : 'printGpMount');
         if (!mount) return;
 
+        mostrarOverlayImpressao('Preparando documento para impressão...');
         const { src: imgSrc, revoke } = prepararImagemParaImpressao(true);
         const artes = prepararArtesParaImpressao();
-
-        mount.innerHTML = tipo === 'os'
-            ? montarHtmlOs(dados, imgSrc, artes.src)
-            : montarHtmlGp(dados, imgSrc, artes.src);
-
         const cls = tipo === 'os' ? 'imprimindo-doc-os' : 'imprimindo-doc-gp';
-        document.body.classList.add(cls);
 
-        const cleanup = () => {
-            document.body.classList.remove(cls);
-            mount.innerHTML = '';
-            if (revoke) URL.revokeObjectURL(revoke);
-            artes.revokes.forEach((url) => URL.revokeObjectURL(url));
-            window.removeEventListener('afterprint', cleanup);
-        };
-        window.addEventListener('afterprint', cleanup);
+        try {
+            mount.innerHTML = tipo === 'os'
+                ? montarHtmlOs(dados, imgSrc, artes.src)
+                : montarHtmlGp(dados, imgSrc, artes.src);
+            document.body.classList.add(cls);
+            await prepararImagensParaImpressao(mount);
 
-        setTimeout(() => {
+            const cleanup = () => {
+                document.body.classList.remove(cls);
+                mount.innerHTML = '';
+                if (revoke) URL.revokeObjectURL(revoke);
+                artes.revokes.forEach((url) => URL.revokeObjectURL(url));
+                esconderOverlayImpressao();
+                window.removeEventListener('afterprint', cleanup);
+            };
+            window.addEventListener('afterprint', cleanup);
             window.print();
-        }, 100);
+        } catch (err) {
+            console.error('Erro ao preparar impressão', err);
+            esconderOverlayImpressao();
+            if (typeof Utils !== 'undefined' && Utils.mostrarNotificacao) {
+                Utils.mostrarNotificacao('Não foi possível preparar a impressão.', 'error');
+            }
+        }
     }
 
     window.imprimirOrdemServico = function () {

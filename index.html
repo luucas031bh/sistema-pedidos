@@ -9,6 +9,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Pedidos">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <title>Adonay Confecção - Sistema de Pedidos</title>
     
@@ -57,7 +60,7 @@
         <section class="card">
             <div class="flex-between flex-wrap gap-1">
                 <h2 class="card-title" id="tituloPrincipalIndex">🏠 Cadastro de Pedidos</h2>
-                <div class="flex flex-wrap gap-1 nav-desktop-only">
+                <div class="flex flex-wrap gap-1 top-actions-index">
                     <a class="btn btn-info" href="home.html">Fila visual (HOME)</a>
                     <a class="btn btn-secondary" href="config-calculos.html">Custos / cálculo</a>
                 </div>
@@ -272,11 +275,13 @@
                     <div class="form-group">
                         <label class="form-label" for="statusOperacionalIndex">Status operacional</label>
                         <select class="form-select" id="statusOperacionalIndex"></select>
+                        <span id="badgeStatusOperacionalIndex" class="status-badge status-badge--novo">Novo pedido</span>
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="etapaProducaoAtual">Status de PROD.</label>
                     <select class="form-select" id="etapaProducaoAtual" name="etapaProducaoAtual"></select>
+                    <span id="badgeStatusProducaoIndex" class="status-badge status-badge--producao">Pedido em Aberto</span>
                 </div>
             </section>
             

@@ -449,10 +449,23 @@ function renderizarFilaMobile(abertos) {
         const resumo = obterResumoProdutoPedidoHome(pedido);
         const tipoRes = resumirTipoPeca(resumo.tipoPeca, resumo.detalhePeca);
         const nome = escapeHtmlHome(pedido.cliente?.nome || '—');
-        const diasTexto = escapeHtmlHome(textoDiasParaEntrega(pedido.datas?.entrega));
+        const diasTextoRaw = textoDiasParaEntrega(pedido.datas?.entrega);
+        const diasTexto = escapeHtmlHome(diasTextoRaw);
         const etapaTexto = escapeHtmlHome(String(pedido.etapaProducaoAtual || '—'));
         const badgeClass = classeBadgeStatusProd(pedido);
         const statusOp = escapeHtmlHome(String(pedido.statusOperacional || '—'));
+        const idBusca = escapeHtmlHome(obterIdBuscaExibicaoPedido(pedido));
+        const entregaData = parseDataEntregaLocal(pedido.datas?.entrega);
+        let diasNumero = null;
+        if (entregaData) {
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            entregaData.setHours(0, 0, 0, 0);
+            diasNumero = Math.round((entregaData.getTime() - hoje.getTime()) / 86400000);
+        }
+        let diasClasse = 'pedido-card-dias--ok';
+        if (diasNumero !== null && diasNumero <= 3) diasClasse = 'pedido-card-dias--critico';
+        else if (diasNumero !== null && diasNumero <= 7) diasClasse = 'pedido-card-dias--alerta';
 
         let cardMod = '';
         if (badgeClass === 'vermelho') cardMod = 'pedido-card-mobile--atrasado';
@@ -462,8 +475,9 @@ function renderizarFilaMobile(abertos) {
         return `<div class="pedido-card-mobile ${cardMod}">
             <div class="pedido-card-header">
                 <div class="pedido-card-nome">${nome}</div>
-                <div class="pedido-card-dias">${diasTexto}</div>
+                <div class="pedido-card-dias ${diasClasse}">${diasTexto}</div>
             </div>
+            <div class="pedido-card-id-badge">ID Busca ${idBusca}</div>
             <div class="pedido-card-info">
                 <div class="pedido-card-info-item">
                     <span class="pedido-card-info-label">Tipo</span>
@@ -484,10 +498,43 @@ function renderizarFilaMobile(abertos) {
             </div>
             <div class="pedido-card-footer">
                 <span class="home-etapa-badge home-etapa-badge--${badgeClass}">${etapaTexto}</span>
-                <a class="btn btn-small btn-primary" href="${link}">Abrir →</a>
+                <a class="btn btn-small btn-primary" href="${link}">Editar</a>
             </div>
         </div>`;
     }).join('');
+}
+
+function mostrarSkeletonHome() {
+    const kpiIds = ['kpiPedidosAbertos', 'kpiPecasTotal', 'kpiValorRecebido', 'kpiValorReceber', 'kpiValorTotalPedidos'];
+    kpiIds.forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = '';
+        el.classList.add('skeleton', 'skeleton-kpi');
+    });
+
+    const tbody = document.getElementById('homeFilaBody');
+    if (tbody) {
+        tbody.innerHTML = Array.from({ length: 5 }).map(() => `
+            <tr>
+                <td colspan="10"><div class="skeleton skeleton-row"></div></td>
+            </tr>
+        `).join('');
+    }
+
+    const mobileCards = document.getElementById('homeFilaCards');
+    if (mobileCards) {
+        mobileCards.innerHTML = Array.from({ length: 3 }).map(() => '<div class="skeleton skeleton-card"></div>').join('');
+    }
+}
+
+function esconderSkeletonHome() {
+    const kpiIds = ['kpiPedidosAbertos', 'kpiPecasTotal', 'kpiValorRecebido', 'kpiValorReceber', 'kpiValorTotalPedidos'];
+    kpiIds.forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.remove('skeleton', 'skeleton-kpi');
+    });
 }
 
 function renderizarGraficoEtapas(abertos) {
@@ -532,11 +579,11 @@ async function carregarHome() {
         return;
     }
 
-    tbody.innerHTML = '<tr><td colspan="10">Atualizando...</td></tr>';
-    if (mobileCardsEl) mobileCardsEl.innerHTML = '<p style="text-align:center;color:var(--texto-secundario);padding:24px 0;">Atualizando...</p>';
+    mostrarSkeletonHome();
     try {
         const res = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=listarPedidos&acao=listarPedidos&_ts=${Date.now()}`);
         const data = await res.json();
+        esconderSkeletonHome();
         if (!res.ok || data.sucesso === false) {
             const msg = data.erro || `Erro HTTP ${res.status}`;
             tbody.innerHTML = `<tr><td colspan="10">${escapeHtmlHome(msg)}</td></tr>`;
@@ -561,6 +608,7 @@ async function carregarHome() {
         renderizarGraficoEtapas(abertos);
     } catch (err) {
         console.error(err);
+        esconderSkeletonHome();
         tbody.innerHTML = '<tr><td colspan="10">Falha ao carregar dados (rede ou resposta inválida).</td></tr>';
         renderizarKpisHome([]);
         renderizarFilaMobile([]);

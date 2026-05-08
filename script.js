@@ -179,6 +179,8 @@ function configurarEventListeners() {
     document.getElementById('valorEntrada')?.addEventListener('input', calcularResumoFinanceiro);
     document.getElementById('btnAdicionarProduto')?.addEventListener('click', adicionarProduto);
     document.getElementById('btnSalvar')?.addEventListener('click', salvarPedido);
+    document.getElementById('statusOperacionalIndex')?.addEventListener('change', atualizarBadgesStatusEdicao);
+    document.getElementById('etapaProducaoAtual')?.addEventListener('change', atualizarBadgesStatusEdicao);
     inicializarSecaoImagens();
 }
 
@@ -466,6 +468,24 @@ function carregarImagensSalvas(pedido) {
     });
 
     atualizarBotaoAdicionarArte();
+    precarregarImagensPedidoBackground();
+}
+
+function precarregarImagensPedidoBackground() {
+    const urls = [];
+    if (estadoApp.imagens.mockupUrlDrive) {
+        urls.push(normalizarUrlDriveParaImg(estadoApp.imagens.mockupUrlDrive));
+    }
+    if (Array.isArray(estadoApp.imagens.artesUrlDrive)) {
+        estadoApp.imagens.artesUrlDrive.forEach((u) => {
+            if (u) urls.push(normalizarUrlDriveParaImg(u));
+        });
+    }
+    urls.filter(Boolean).forEach((src) => {
+        const img = new Image();
+        img.decoding = 'async';
+        img.src = src;
+    });
 }
 
 function configurarBotaoVoltarPrincipal() {
@@ -834,6 +854,40 @@ function popularOpcoesStatusOperacionalIndex() {
     select.innerHTML = CONFIG.STATUS_PEDIDO.map((status) => `<option value="${escapeAttrIndex(status)}">${escapeHtmlIndex(status)}</option>`).join('');
 }
 
+function classeBadgeStatusOperacional(valor) {
+    const v = String(valor || '').toLowerCase();
+    if (v.includes('novo')) return 'status-badge--novo';
+    if (v.includes('produção') || v.includes('producao') || v.includes('pendente') || v.includes('orçamento') || v.includes('orcamento')) return 'status-badge--producao';
+    if (v.includes('atrasado') || v.includes('travado') || v.includes('cancelado')) return 'status-badge--pendente';
+    if (v.includes('finalizado') || v.includes('entregue')) return 'status-badge--pronto';
+    return 'status-badge--producao';
+}
+
+function classeBadgeStatusProducao(valor) {
+    const v = String(valor || '').toLowerCase();
+    if (v.includes('aguardando retirada') || v.includes('embalo')) return 'status-badge--pronto';
+    if (v.includes('pedido em aberto') || v.includes('arte') || v.includes('insumos') || v.includes('corte') || v.includes('estampa') || v.includes('costura')) return 'status-badge--producao';
+    return 'status-badge--producao';
+}
+
+function atualizarBadgesStatusEdicao() {
+    const selOp = document.getElementById('statusOperacionalIndex');
+    const badgeOp = document.getElementById('badgeStatusOperacionalIndex');
+    if (selOp && badgeOp) {
+        const texto = selOp.value || 'Novo pedido';
+        badgeOp.textContent = texto;
+        badgeOp.className = `status-badge ${classeBadgeStatusOperacional(texto)}`;
+    }
+
+    const selProd = document.getElementById('etapaProducaoAtual');
+    const badgeProd = document.getElementById('badgeStatusProducaoIndex');
+    if (selProd && badgeProd) {
+        const texto = selProd.value || 'Pedido em Aberto';
+        badgeProd.textContent = texto;
+        badgeProd.className = `status-badge ${classeBadgeStatusProducao(texto)}`;
+    }
+}
+
 function garantirOpcaoStatusIndex(valorPlanilha) {
     const select = document.getElementById('statusOperacionalIndex');
     if (!select || !valorPlanilha) return;
@@ -1037,6 +1091,7 @@ function preencherFormularioCompleto(pedido) {
     garantirOpcaoStatusProducaoIndex(statusProd);
     const selProd = document.getElementById('etapaProducaoAtual');
     if (selProd) selProd.value = statusProd;
+    atualizarBadgesStatusEdicao();
 
     const listaProdutos = Array.isArray(pedido.produtos) && pedido.produtos.length ? pedido.produtos : [{}];
     listaProdutos.forEach((p) => {
@@ -1400,6 +1455,12 @@ function enviarWhatsApp() {
 }
 
 function mostrarLoading(mensagem = 'Carregando...') {
+    const existente = document.getElementById('loadingOverlay');
+    if (existente) {
+        const txt = existente.querySelector('p');
+        if (txt) txt.textContent = mensagem;
+        return;
+    }
     document.body.insertAdjacentHTML('beforeend', `<div class="loading-overlay" id="loadingOverlay"><div class="loading-content"><div class="loading loading-big"></div><p>${mensagem}</p></div></div>`);
 }
 

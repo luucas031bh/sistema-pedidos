@@ -8,6 +8,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Pedidos">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <title>HOME - Fila visual | Adonay Confecção</title>
     <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👕</text></svg>">
     <link rel="manifest" href="manifest.json">
@@ -38,8 +41,8 @@
                     <button type="button" id="btnAtualizarHome" class="btn btn-info">Atualizar</button>
                     <a href="CalculadoraMalha/" class="btn btn-secondary">✂ Calculadora Malha</a>
                     <a href="ROANTONE/" class="btn btn-secondary">🎨 ROANTONE</a>
-                    <a href="index.html" class="btn btn-primary nav-desktop-only">Novo pedido</a>
-                    <a href="config-calculos.html" class="btn btn-secondary nav-desktop-only">Custos / cálculo</a>
+                    <a href="index.html" class="btn btn-primary">Novo pedido</a>
+                    <a href="config-calculos.html" class="btn btn-secondary">Custos / cálculo</a>
                 </div>
             </div>
         </section>
@@ -63,26 +66,31 @@
 
         <section class="card">
             <h2 class="card-title">Indicadores (pedidos em aberto)</h2>
-            <div class="form-row home-kpi-grid">
-                <div class="form-group">
-                    <label class="form-label">Pedidos em aberto</label>
-                    <div class="form-input" id="kpiPedidosAbertos">0</div>
+            <div class="home-kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-icon">📦</div>
+                    <div class="kpi-value" id="kpiPedidosAbertos">0</div>
+                    <div class="kpi-label">Pedidos em aberto</div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Quantidade de peças (total)</label>
-                    <div class="form-input" id="kpiPecasTotal">0</div>
+                <div class="kpi-card">
+                    <div class="kpi-icon">👕</div>
+                    <div class="kpi-value" id="kpiPecasTotal">0</div>
+                    <div class="kpi-label">Quantidade de peças</div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Valor recebido (entradas)</label>
-                    <div class="form-input" id="kpiValorRecebido">R$ 0,00</div>
+                <div class="kpi-card">
+                    <div class="kpi-icon">💰</div>
+                    <div class="kpi-value" id="kpiValorRecebido">R$ 0,00</div>
+                    <div class="kpi-label">Valor recebido</div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Valor a receber</label>
-                    <div class="form-input" id="kpiValorReceber">R$ 0,00</div>
+                <div class="kpi-card">
+                    <div class="kpi-icon">📋</div>
+                    <div class="kpi-value" id="kpiValorReceber">R$ 0,00</div>
+                    <div class="kpi-label">Valor a receber</div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Valor total dos pedidos</label>
-                    <div class="form-input" id="kpiValorTotalPedidos">R$ 0,00</div>
+                <div class="kpi-card">
+                    <div class="kpi-icon">🧾</div>
+                    <div class="kpi-value" id="kpiValorTotalPedidos">R$ 0,00</div>
+                    <div class="kpi-label">Valor total</div>
                 </div>
             </div>
             <div class="home-chart-container" id="homeGraficoEtapas"></div>
