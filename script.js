@@ -932,15 +932,8 @@ function atualizarBotoesImpressaoTopo() {
     const pedidoEmContexto = Boolean(estadoApp.modoEdicao || estadoApp.idEdicao);
     const mostrarImpressao = Boolean(id && pedidoEmContexto);
 
-    const wrapTopo = document.getElementById('botoesImpressaoTopo');
-    if (wrapTopo) {
-        wrapTopo.classList.toggle('hidden', !mostrarImpressao);
-    }
-
-    const secaoImpressao = document.getElementById('secaoImpressaoPedido');
-    if (secaoImpressao) {
-        secaoImpressao.classList.toggle('hidden', !mostrarImpressao);
-    }
+    const wrapRodape = document.getElementById('botoesImpressaoRodape');
+    if (wrapRodape) wrapRodape.classList.toggle('hidden', !mostrarImpressao);
 }
 
 function sincronizarBotoesRemocaoProdutosIndex() {

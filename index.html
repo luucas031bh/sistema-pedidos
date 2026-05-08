@@ -64,21 +64,6 @@
             </div>
         </section>
 
-        <section class="card hidden" id="secaoImpressaoPedido">
-            <h2 class="card-title">Impressão</h2>
-            <p class="impressao-ajuda">O mockup salvo será usado automaticamente na impressão. Caso queira substituir só para esta impressão, selecione uma imagem abaixo.</p>
-            <div class="form-row impressao-mockup-linha">
-                <div class="form-group">
-                    <label class="form-label" for="inputMockupImpressao">Substituir mockup só para impressão (PNG ou JPG)</label>
-                    <input type="file" id="inputMockupImpressao" class="form-input" accept=".png,.jpg,.jpeg,image/png,image/jpeg">
-                </div>
-            </div>
-            <div class="btn-group flex-wrap">
-                <button type="button" id="btnImprimirOs" class="btn btn-secondary">Imprimir ordem de serviço (OS)</button>
-                <button type="button" id="btnImprimirGp" class="btn btn-secondary">Imprimir guia de pedido (GP)</button>
-            </div>
-        </section>
-        
         <!-- ========== FORMULÁRIO DE PEDIDO ========== -->
         <form id="formPedido" onsubmit="event.preventDefault();">
             
@@ -330,6 +315,10 @@
             <!-- BOTÕES DE AÇÃO -->
             <section class="card">
                 <div class="btn-group">
+                    <div id="botoesImpressaoRodape" class="btn-group hidden" style="margin-top:0;">
+                        <button type="button" id="btnImprimirOs" class="btn btn-secondary">🖨️ IMPRIMIR OS</button>
+                        <button type="button" id="btnImprimirGp" class="btn btn-secondary">🖨️ IMPRIMIR GP</button>
+                    </div>
                     <button type="button" id="btnSalvar" class="btn btn-success" data-label-novo="💾 Salvar Pedido" data-label-edicao="💾 Salvar alterações">
                         💾 Salvar Pedido
                     </button>
