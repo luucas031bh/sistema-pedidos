@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     carregarHome();
 });
 
-let kpisVisiveis = true;
+let kpisVisiveis = false;
 const estadoKpisValores = {
     pedidosAbertos: '0',
     pecasTotal: '0',
