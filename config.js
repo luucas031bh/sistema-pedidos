@@ -10,7 +10,8 @@ const CONFIG = {
     // [ ] Colar o Code.gs atualizado no projeto Google Apps Script
     // [ ] Implantação > Gerenciar implantações > Editar > Versão: Nova versão > Implantar
     // [ ] Copiar a URL /exec desta implantação e colar em APPS_SCRIPT_URL abaixo
-    // [ ] Publicar no host do site: script.js, home.js, config.js, utils.js, index.html, editar-pedido.html (o que mudou)
+    // [ ] Publicar no host do site: script.js, home.js, config.js, utils.js, index.html, relatorio.html, relatorio.js, editar-pedido.html (o que mudou)
+    // [ ] Novas ações no Code.gs (ex.: relatorioPedidos) exigem nova implantação da Web App para funcionarem no relatório
     // [ ] Hard refresh no navegador; na planilha, remover linhas duplicadas com o mesmo ID se existirem
     //
     // INSTRUÇÕES:

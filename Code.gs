@@ -242,6 +242,7 @@ function doGet(e) {
     if (acao === 'obterConfigCalculo') return resposta(obterConfigCalculo());
     if (acao === 'listarPedidos' || acao === 'obterFila') return resposta(listarPedidos((e.parameter && e.parameter.filtro) || ''));
     if (acao === 'getStats') return resposta({ sucesso: true, stats: getStats() });
+    if (acao === 'relatorioPedidos') return resposta(relatorioPedidosFromParams(e.parameter || {}));
 
     return resposta({ sucesso: false, erro: 'Ação inválida: ' + acao });
   } catch (erro) {
@@ -366,6 +367,17 @@ function doPost(e) {
     if (acao === 'obterConfigCalculo') return resposta(obterConfigCalculo());
     if (acao === 'salvarConfigCalculo') return resposta(salvarConfigCalculo(dados));
     if (acao === 'listarPedidos' || acao === 'obterFila') return resposta(listarPedidos(dados.filtro || ''));
+    if (acao === 'relatorioPedidos') {
+      var rp = {
+        dataInicio: dados.dataInicio || (e.parameter && e.parameter.dataInicio) || '',
+        dataFim: dados.dataFim || (e.parameter && e.parameter.dataFim) || '',
+        dimensao: dados.dimensao || (e.parameter && e.parameter.dimensao) || '',
+        nivel: dados.nivel || (e.parameter && e.parameter.nivel) || '',
+        filtroStatus: dados.filtroStatus || (e.parameter && e.parameter.filtroStatus) || '',
+        excluirCancelados: dados.excluirCancelados !== undefined ? dados.excluirCancelados : (e.parameter && e.parameter.excluirCancelados)
+      };
+      return resposta(relatorioPedidos(rp));
+    }
 
     return resposta({ sucesso: false, erro: 'Ação inválida: ' + acao });
   } catch (erro) {
@@ -911,35 +923,265 @@ function linhaParaPedido(row, temCostura) {
 }
 
 // ================= LISTAR =================
+/** Lista pedidos únicos por ID (mesma deduplicação que listarPedidos). */
+function listarPedidosBase() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.ABAS.PEDIDOS);
+  const data = sheet.getDataRange().getValues();
+  data.shift();
+  var temCosturaLista = planilhaPedidosTemColunaCostura(sheet);
+
+  const pedidosPorId = {};
+  data.forEach(function(row) {
+    const pedido = linhaParaPedido(row, temCosturaLista);
+    const chaveIdNormalizada = normalizarId(pedido.id);
+    const chaveId = chaveIdNormalizada ? chaveIdNormalizada : ('ROW_' + row[0] + '_' + row[12] + '_' + row[13]);
+    const existente = pedidosPorId[chaveId];
+    if (!existente) {
+      pedidosPorId[chaveId] = pedido;
+      return;
+    }
+    const dataAtual = obterTimestampSeguro(pedido.dataModificacao || pedido.dataCriacao);
+    const dataExistente = obterTimestampSeguro(existente.dataModificacao || existente.dataCriacao);
+    if (dataAtual >= dataExistente) pedidosPorId[chaveId] = pedido;
+  });
+
+  return Object.keys(pedidosPorId).map(function(chave) {
+    return pedidosPorId[chave];
+  });
+}
+
 function listarPedidos(filtro) {
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.ABAS.PEDIDOS);
-    const data = sheet.getDataRange().getValues();
-    data.shift();
-    var temCosturaLista = planilhaPedidosTemColunaCostura(sheet);
-
-    const pedidosPorId = {};
-    data.forEach(function(row) {
-      const pedido = linhaParaPedido(row, temCosturaLista);
-      const chaveIdNormalizada = normalizarId(pedido.id);
-      const chaveId = chaveIdNormalizada ? chaveIdNormalizada : ('ROW_' + row[0] + '_' + row[12] + '_' + row[13]);
-      const existente = pedidosPorId[chaveId];
-      if (!existente) {
-        pedidosPorId[chaveId] = pedido;
-        return;
-      }
-      const dataAtual = obterTimestampSeguro(pedido.dataModificacao || pedido.dataCriacao);
-      const dataExistente = obterTimestampSeguro(existente.dataModificacao || existente.dataCriacao);
-      if (dataAtual >= dataExistente) pedidosPorId[chaveId] = pedido;
-    });
-
-    const pedidos = Object.keys(pedidosPorId).map(function(chave) {
-      return pedidosPorId[chave];
-    }).filter(function(pedido) {
+    const lista = listarPedidosBase();
+    const pedidos = lista.filter(function(pedido) {
       return !filtro || pedido.statusOperacional === filtro;
     });
 
     return { sucesso: true, pedidos: pedidos, fila: pedidos };
+  } catch (erro) {
+    return { sucesso: false, erro: erro.toString() };
+  }
+}
+
+/** Parâmetros GET/query ou objeto POST para relatorioPedidos. */
+function relatorioPedidosFromParams(p) {
+  p = p || {};
+  return relatorioPedidos({
+    dataInicio: String(p.dataInicio || '').trim(),
+    dataFim: String(p.dataFim || '').trim(),
+    dimensao: String(p.dimensao || '').trim(),
+    nivel: String(p.nivel || '').trim(),
+    filtroStatus: String(p.filtroStatus || '').trim(),
+    excluirCancelados: p.excluirCancelados
+  });
+}
+
+function relatorioParseDataLimite(iso, fimDoDia) {
+  if (!iso || typeof iso !== 'string') return null;
+  var parts = iso.split('-');
+  if (parts.length !== 3) return null;
+  var y = parseInt(parts[0], 10);
+  var m = parseInt(parts[1], 10) - 1;
+  var d = parseInt(parts[2], 10);
+  if (Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d)) return null;
+  var dt = new Date(y, m, d);
+  if (fimDoDia) dt.setHours(23, 59, 59, 999);
+  else dt.setHours(0, 0, 0, 0);
+  return dt;
+}
+
+function relatorioDataPedido(pedido) {
+  if (!pedido || !pedido.datas) return null;
+  var raw = pedido.datas.pedido;
+  if (!raw && raw !== 0) return null;
+  if (raw instanceof Date) return raw;
+  var dt = new Date(raw);
+  return Number.isNaN(dt.getTime()) ? null : dt;
+}
+
+function relatorioTotalPecasProduto(produto) {
+  var tam = produto && Array.isArray(produto.tamanhos) ? produto.tamanhos : [];
+  var s = 0;
+  var i;
+  for (i = 0; i < tam.length; i++) {
+    s += Number(tam[i].quantidade) || 0;
+  }
+  return s;
+}
+
+function relatorioDimensaoChave(resumo, pedido, dimensao) {
+  var d = String(dimensao || 'tipoMalha').toLowerCase();
+  switch (d) {
+    case 'tipopeca':
+    case 'tipo_peca':
+      return relatorioNormChave(resumo.tipoPeca);
+    case 'tipomalha':
+    case 'tipo_malha':
+      return relatorioNormChave(resumo.tipoMalha);
+    case 'cormalha':
+    case 'cor_malha':
+      return relatorioNormChave(resumo.corMalha);
+    case 'estampa':
+    case 'estamparesumo':
+    case 'tipo_estampa':
+      return relatorioNormChave(resumo.estampaResumo);
+    case 'detalhepeca':
+    case 'detalhe_peca':
+      return relatorioNormChave(resumo.detalhePeca);
+    case 'status':
+    case 'statusoperacional':
+      return relatorioNormChave(pedido.statusOperacional);
+    default:
+      return relatorioNormChave(resumo.tipoMalha);
+  }
+}
+
+function relatorioNormChave(v) {
+  var s = String(v === null || v === undefined ? '' : v).trim();
+  return s || '(sem informação)';
+}
+
+function relatorioAgregar(grupoMap, chave, pedidoId, valorFrac, pecas) {
+  if (!grupoMap[chave]) {
+    grupoMap[chave] = { valor: 0, pecas: 0, _ids: {} };
+  }
+  grupoMap[chave].valor += valorFrac;
+  grupoMap[chave].pecas += pecas;
+  if (pedidoId !== null && pedidoId !== undefined && String(pedidoId) !== '') {
+    grupoMap[chave]._ids[String(pedidoId)] = true;
+  }
+}
+
+/**
+ * Agrega pedidos por período (data do pedido) e dimensão.
+ * nivel=item: divide valor do pedido proporcionalmente às peças de cada produto (extrai cor/malha por item).
+ * nivel=pedido: usa resumoProduto da linha (um grupo por pedido).
+ */
+function relatorioPedidos(opts) {
+  try {
+    opts = opts || {};
+    var dataInicio = opts.dataInicio || '';
+    var dataFim = opts.dataFim || '';
+    var di = relatorioParseDataLimite(dataInicio, false);
+    var df = relatorioParseDataLimite(dataFim, true);
+    if (!di || !df || df < di) {
+      return { sucesso: false, erro: 'Informe dataInicio e dataFim válidas (YYYY-MM-DD). O período deve ser coerente.' };
+    }
+
+    var excluirCancelados = opts.excluirCancelados !== false && opts.excluirCancelados !== 'false';
+    var filtroStatus = opts.filtroStatus ? String(opts.filtroStatus).trim() : '';
+    var dimensao = opts.dimensao ? String(opts.dimensao).trim() : 'tipoMalha';
+    var nivel = String(opts.nivel || 'item').toLowerCase() === 'pedido' ? 'pedido' : 'item';
+
+    var lista = listarPedidosBase();
+    var grupoMap = {};
+
+    lista.forEach(function(pedido) {
+      var dp = relatorioDataPedido(pedido);
+      if (!dp || dp < di || dp > df) return;
+
+      var st = normalizarStatusOperacional(pedido.statusOperacional);
+      var stLower = String(st || '').trim().toLowerCase();
+      if (excluirCancelados && stLower === 'cancelado') return;
+
+      if (filtroStatus) {
+        var fo = filtroStatus.trim().toLowerCase();
+        var po = String(pedido.statusOperacional || '').trim().toLowerCase();
+        if (po !== fo && String(st || '').trim().toLowerCase() !== fo) return;
+      }
+
+      var valorPedido = Number(pedido.financeiro && pedido.financeiro.totalPedido) || 0;
+      var totalPecasPedido = Number(pedido.totalPecas) || 0;
+
+      if (nivel === 'pedido') {
+        var rp = pedido.resumoProduto || {};
+        var chaveP = relatorioDimensaoChave(rp, pedido, dimensao);
+        relatorioAgregar(grupoMap, chaveP, pedido.id, valorPedido, totalPecasPedido || 0);
+        return;
+      }
+
+      var prods = Array.isArray(pedido.produtos) ? pedido.produtos : [];
+      if (prods.length === 0) {
+        var rp2 = pedido.resumoProduto || {};
+        var chaveEmpty = relatorioDimensaoChave(rp2, pedido, dimensao);
+        relatorioAgregar(grupoMap, chaveEmpty, pedido.id, valorPedido, totalPecasPedido || 0);
+        return;
+      }
+
+      var pecasPorProd = prods.map(relatorioTotalPecasProduto);
+      var sumPecas = pecasPorProd.reduce(function(a, b) {
+        return a + b;
+      }, 0);
+
+      var idx;
+      for (idx = 0; idx < prods.length; idx++) {
+        var prod = prods[idx];
+        var res = extrairResumoProduto(prod);
+        var chaveI = relatorioDimensaoChave(res, pedido, dimensao);
+        var pecasI = pecasPorProd[idx];
+        var share = sumPecas > 0 ? pecasI / sumPecas : 1 / prods.length;
+        relatorioAgregar(grupoMap, chaveI, pedido.id, valorPedido * share, pecasI);
+      }
+    });
+
+    var chaves = Object.keys(grupoMap).sort(function(a, b) {
+      return grupoMap[b].valor - grupoMap[a].valor;
+    });
+
+    var grupos = chaves.map(function(chave) {
+      var g = grupoMap[chave];
+      var pedidosN = Object.keys(g._ids).length;
+      var valor = Math.round(g.valor * 100) / 100;
+      var ticket = pedidosN > 0 ? Math.round((g.valor / pedidosN) * 100) / 100 : 0;
+      return {
+        chave: chave,
+        valor: valor,
+        pecas: Math.round(g.pecas * 100) / 100,
+        pedidos: pedidosN,
+        ticketMedio: ticket
+      };
+    });
+
+    var totValor = 0;
+    var totPecas = 0;
+    var todosIds = {};
+    lista.forEach(function(pedido) {
+      var dp = relatorioDataPedido(pedido);
+      if (!dp || dp < di || dp > df) return;
+      var st = normalizarStatusOperacional(pedido.statusOperacional);
+      var stLower = String(st || '').trim().toLowerCase();
+      if (excluirCancelados && stLower === 'cancelado') return;
+      if (filtroStatus) {
+        var fo = filtroStatus.trim().toLowerCase();
+        var po = String(pedido.statusOperacional || '').trim().toLowerCase();
+        if (po !== fo && String(st || '').trim().toLowerCase() !== fo) return;
+      }
+      totValor += Number(pedido.financeiro && pedido.financeiro.totalPedido) || 0;
+      totPecas += Number(pedido.totalPecas) || 0;
+      if (pedido.id !== null && pedido.id !== undefined && String(pedido.id) !== '') {
+        todosIds[String(pedido.id)] = true;
+      }
+    });
+    var totPedidos = Object.keys(todosIds).length;
+
+    return {
+      sucesso: true,
+      periodo: { inicio: dataInicio, fim: dataFim },
+      dimensao: dimensao,
+      nivel: nivel,
+      excluirCancelados: excluirCancelados,
+      filtroStatus: filtroStatus || null,
+      grupos: grupos,
+      totais: {
+        valor: Math.round(totValor * 100) / 100,
+        pecas: Math.round(totPecas * 100) / 100,
+        pedidos: totPedidos
+      },
+      documentacao: {
+        nivelItem: 'Valor do pedido é distribuído entre produtos na proporção das quantidades por tamanho; métricas por cor/malha/tipo usam cada produto.',
+        nivelPedido: 'Uma linha por pedido usando o resumo consolidado da planilha (primeiro produto / colunas de resumo).'
+      }
+    };
   } catch (erro) {
     return { sucesso: false, erro: erro.toString() };
   }

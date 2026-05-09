@@ -914,6 +914,7 @@ body {
 }
 
 .pedido-somente-leitura #btnSalvar,
+.pedido-somente-leitura #btnSalvarFlutuante,
 .pedido-somente-leitura #btnAdicionarProduto {
     display: none !important;
 }
@@ -940,13 +941,14 @@ body {
 }
 
 /* ============================================================
-   MOBILE / PWA — iPhone 17 · Safe Areas · Bottom Nav
+   MOBILE / PWA — Safe areas (sem barra inferior fixa)
    ============================================================ */
 
 :root {
-    /* Área tocável da barra + faixa salva para FAB/toasts acima da nav */
-    --bottom-nav-height: 68px;
-    --mobile-nav-clearance: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 12px);
+    --mobile-safe-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+    /* Espaço ao rolar até o fim sem ficar atrás do FAB Salvar */
+    --mobile-scroll-end-pad: calc(env(safe-area-inset-bottom, 0px) + 88px);
+    --mobile-toast-above-fab: calc(env(safe-area-inset-bottom, 0px) + 72px);
 }
 
 /* ---- Prevent iOS input zoom (font-size < 16px triggers zoom) ---- */
@@ -958,10 +960,12 @@ body {
     }
 }
 
-/* Clearance da nav: apenas em main — evita somar com padding no body */
-
-/* ---- Header compact on mobile ---- */
+/* ---- Header compact + margens safe area (mobile) ---- */
 @media (max-width: 767px) {
+    main.container {
+        padding-bottom: var(--mobile-scroll-end-pad);
+    }
+
     .header {
         padding: max(env(safe-area-inset-top, 0px), 8px) var(--espacamento-md) var(--espacamento-sm);
     }
@@ -983,89 +987,15 @@ body {
         padding-top: 4px;
     }
 
-    /* Ocultar botão "Voltar à HOME" fixo — bottom nav já cumpre essa função */
-    .btn-voltar-principal {
-        display: none !important;
-    }
-}
-
-/* ---- Bottom Navigation Bar ---- */
-.bottom-nav {
-    display: none;
-}
-
-@media (max-width: 767px) {
-    main.container {
-        padding-bottom: var(--mobile-nav-clearance);
-    }
-
-    .bottom-nav {
-        display: flex;
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
-        background: rgba(26, 26, 26, 0.96);
-        border-top: 1px solid rgba(212, 175, 55, 0.22);
-        z-index: 1100;
-        padding-bottom: env(safe-area-inset-bottom, 0px);
-        box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.55);
-        -webkit-backdrop-filter: blur(20px);
-        backdrop-filter: blur(20px);
-    }
-
-    .bottom-nav-item {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
+    .btn-voltar-principal:not(.hidden) {
+        top: max(env(safe-area-inset-top, 0px), 10px);
+        right: max(env(safe-area-inset-right, 0px), 12px);
+        padding: 10px 14px;
+        min-height: 44px;
+        display: inline-flex;
         align-items: center;
-        justify-content: center;
-        gap: 4px;
-        text-decoration: none;
-        color: rgba(255, 255, 255, 0.48);
-        transition: color 0.2s ease, opacity var(--transicao-rapida);
-        padding: 10px 6px;
-        min-height: 48px;
+        font-size: 0.85rem;
         -webkit-tap-highlight-color: transparent;
-        user-select: none;
-        position: relative;
-    }
-
-    .bottom-nav-item.active {
-        color: var(--dourado-primario);
-    }
-
-    .bottom-nav-item.active .bottom-nav-icon {
-        transform: scale(1.12);
-    }
-
-    .bottom-nav-item.active::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 25%;
-        right: 25%;
-        height: 2px;
-        background: var(--dourado-primario);
-        border-radius: 0 0 3px 3px;
-    }
-
-    .bottom-nav-item:active {
-        opacity: 0.72;
-    }
-
-    .bottom-nav-icon {
-        font-size: 1.55rem;
-        line-height: 1;
-        transition: transform 0.2s ease;
-    }
-
-    .bottom-nav-label {
-        font-size: 0.7rem;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
     }
 }
 
@@ -1392,8 +1322,8 @@ a.pedido-card-mobile {
     .btn-salvar-flutuante {
         display: inline-flex;
         position: fixed;
-        bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 14px);
-        right: 16px;
+        bottom: var(--mobile-safe-bottom);
+        right: max(env(safe-area-inset-right, 0px), 16px);
         z-index: 1050;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.55);
         border-radius: 999px;
@@ -1428,7 +1358,7 @@ a.pedido-card-mobile {
 @media (max-width: 767px) {
     .notificacao {
         top: auto;
-        bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 14px);
+        bottom: var(--mobile-toast-above-fab);
         right: -110vw;
         left: var(--espacamento-sm);
         min-width: 0;

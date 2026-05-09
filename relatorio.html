@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Relatórios e comparativos — Adonay Confecção">
+    <meta name="theme-color" content="#d4af37">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Relatórios | Adonay Confecção</title>
+    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .relatorio-grid-filtros {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+            align-items: end;
+        }
+        .relatorio-periodo-bloco {
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: var(--radius-md, 10px);
+            padding: 14px;
+            background: rgba(0, 0, 0, 0.15);
+        }
+        .relatorio-periodo-bloco h3 {
+            font-size: 0.85rem;
+            color: var(--dourado-secundario, #f0d98d);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .relatorio-chart-wrap {
+            position: relative;
+            min-height: 280px;
+            max-height: 520px;
+            margin-top: var(--espacamento-md);
+        }
+        .relatorio-tabela-scroll {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            max-height: 420px;
+            margin-top: var(--espacamento-md);
+        }
+        .relatorio-doc-caixa {
+            font-size: 0.88rem;
+            color: rgba(255, 255, 255, 0.72);
+            line-height: 1.55;
+            border-left: 3px solid rgba(212, 175, 55, 0.45);
+            padding-left: 14px;
+            margin-top: var(--espacamento-md);
+        }
+        .relatorio-doc-caixa strong {
+            color: var(--dourado-primario, #d4af37);
+        }
+        .relatorio-msg-erro {
+            color: #f87171;
+            margin-top: 12px;
+            font-size: 0.95rem;
+        }
+        .relatorio-presets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .relatorio-presets button {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body class="page-home">
+    <header class="header header--home">
+        <div class="header-content">
+            <h1 class="empresa-nome">ADONAY CONFECÇÃO</h1>
+            <div class="relogio" id="relogioRelatorio">—</div>
+        </div>
+    </header>
+
+    <main class="container container--home">
+        <section class="card">
+            <div class="flex-between flex-wrap gap-1">
+                <h2 class="card-title">Relatórios</h2>
+                <div class="flex flex-wrap gap-1">
+                    <a href="home.html" class="btn btn-secondary">Fila (HOME)</a>
+                    <a href="index.html" class="btn btn-primary">Novo pedido</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2 class="card-title">Filtros</h2>
+            <div class="relatorio-grid-filtros">
+                <div class="form-group">
+                    <label class="form-label" for="relDimensao">Agrupar por</label>
+                    <select id="relDimensao" class="form-select">
+                        <option value="tipoMalha">Tipo de malha</option>
+                        <option value="corMalha">Cor da malha</option>
+                        <option value="tipoPeca">Tipo de camisa / peça</option>
+                        <option value="estampa">Tipo de estampa (resumo)</option>
+                        <option value="detalhePeca">Detalhe da peça</option>
+                        <option value="statusOperacional">Status operacional</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="relNivel">Nível do dado</label>
+                    <select id="relNivel" class="form-select">
+                        <option value="item">Por produto (recomendado)</option>
+                        <option value="pedido">Por pedido (resumo da planilha)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="relMetrica">Métrica no gráfico</label>
+                    <select id="relMetrica" class="form-select">
+                        <option value="valor">Valor de vendas (R$)</option>
+                        <option value="pecas">Quantidade de peças</option>
+                        <option value="pedidos">Quantidade de pedidos</option>
+                        <option value="ticketMedio">Ticket médio (R$ / pedido)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="relStatus">Status (opcional)</label>
+                    <select id="relStatus" class="form-select">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+                <div class="form-group flex flex-center gap-1" style="min-height: 52px;">
+                    <label class="flex gap-1" style="align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="relExcluirCancelados" checked>
+                        <span>Excluir cancelados</span>
+                    </label>
+                </div>
+                <div class="form-group flex flex-center gap-1" style="min-height: 52px;">
+                    <label class="flex gap-1" style="align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="relComparar">
+                        <span>Comparar com 2º período</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="relatorio-periodo-bloco mt-2">
+                <h3>Período principal</h3>
+                <div class="relatorio-grid-filtros">
+                    <div class="form-group">
+                        <label class="form-label" for="relIniA">Data início</label>
+                        <input type="date" id="relIniA" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="relFimA">Data final</label>
+                        <input type="date" id="relFimA" class="form-input">
+                    </div>
+                </div>
+                <div class="relatorio-presets">
+                    <button type="button" class="btn btn-secondary btn-small" data-preset="7d">Últimos 7 dias</button>
+                    <button type="button" class="btn btn-secondary btn-small" data-preset="mes">Este mês</button>
+                    <button type="button" class="btn btn-secondary btn-small" data-preset="mesAnt">Mês passado</button>
+                </div>
+            </div>
+
+            <div class="relatorio-periodo-bloco mt-2 hidden" id="relBlocoPeriodoB">
+                <h3>Período comparativo</h3>
+                <div class="relatorio-grid-filtros">
+                    <div class="form-group">
+                        <label class="form-label" for="relIniB">Data início</label>
+                        <input type="date" id="relIniB" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="relFimB">Data final</label>
+                        <input type="date" id="relFimB" class="form-input">
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-group" style="margin-top: 16px;">
+                <button type="button" id="relBtnGerar" class="btn btn-success">Gerar relatório</button>
+            </div>
+            <p id="relErro" class="relatorio-msg-erro hidden" role="alert"></p>
+        </section>
+
+        <section class="card hidden" id="relCardResultado">
+            <h2 class="card-title">Resultado</h2>
+            <div id="relResumoTotais" class="home-busca-msg mb-2"></div>
+            <div class="relatorio-chart-wrap">
+                <canvas id="relChart" aria-label="Gráfico do relatório"></canvas>
+            </div>
+            <div id="relTabelas"></div>
+        </section>
+
+        <section class="card">
+            <h2 class="card-title">Como interpretamos os dados</h2>
+            <div class="relatorio-doc-caixa">
+                <p><strong>Por produto:</strong> cada item do pedido entra separado na quebra (cor, malha, tipo de camisa, etc.).
+                O <strong>valor em R$</strong> do pedido é dividido entre os produtos na proporção das <strong>quantidades por tamanho</strong>
+                de cada produto (para não duplicar o total do pedido).</p>
+                <p class="mt-1"><strong>Por pedido:</strong> usa apenas o <strong>resumo</strong> gravado na planilha (equivalente ao primeiro produto / colunas de resumo).
+                É mais rápido de entender, mas menos preciso se um pedido tiver vários produtos com características diferentes.</p>
+                <p class="mt-1"><strong>Período:</strong> consideramos a <strong>data do pedido</strong>. Cancelados podem ser excluídos pelo checkbox acima.</p>
+                <p class="mt-1"><strong>Backend:</strong> após alterar <code>Code.gs</code>, publique uma <strong>nova versão</strong> da Web App para a ação <code>relatorioPedidos</code> responder.</p>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="config.js?v=5"></script>
+    <script src="utils.js?v=2"></script>
+    <script src="relatorio.js?v=1"></script>
+</body>
+</html>
