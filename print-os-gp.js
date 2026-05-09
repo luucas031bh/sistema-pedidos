@@ -75,12 +75,18 @@
         });
     }
 
-    async function prepararImagensParaImpressao(mountEl) {
+    async function prepararImagensParaImpressao(mountEl, onProgress) {
         const imgs = Array.from(mountEl.querySelectorAll('img'));
         if (!imgs.length) return;
-        const resultados = await Promise.allSettled(
-            imgs.map((img) => preloadImageWithTimeout(img.src, PRINT_IMAGE_TIMEOUT_MS))
-        );
+        let concluidas = 0;
+        const total = imgs.length;
+        if (typeof onProgress === 'function') onProgress(concluidas, total);
+        const resultados = await Promise.allSettled(imgs.map(async (img) => {
+            const resultado = await preloadImageWithTimeout(img.src, PRINT_IMAGE_TIMEOUT_MS);
+            concluidas += 1;
+            if (typeof onProgress === 'function') onProgress(concluidas, total);
+            return resultado;
+        }));
         resultados.forEach((resultado, idx) => {
             const ok = resultado.status === 'fulfilled' && resultado.value && resultado.value.ok;
             if (!ok) imgs[idx].src = getPlaceholderImagem();
@@ -191,7 +197,7 @@
         if (!lista.length) return '';
         const thumbs = lista.map((src, idx) => `
             <div class="gp-arte-item">
-                <img src="${src}" alt="Arte ${idx + 1}" class="gp-arte-img" loading="eager" decoding="async">
+                <img src="${src}" alt="Arte ${idx + 1}" class="gp-arte-img" loading="lazy" decoding="async">
             </div>
         `).join('');
         return `<section class="gp-artes"><h2 class="gp-sec-titulo gp-sec-titulo--sub">Artes / Estampas</h2><div class="gp-artes-grid">${thumbs}</div></section>`;
@@ -202,13 +208,13 @@
         if (!mockSrc) {
             return `<div class="gp-mockup gp-mockup--prod gp-mockup--vazio"><div class="gp-mockup-leg">${titulo}</div><p>(Sem mockup)</p></div>`;
         }
-        return `<div class="gp-mockup gp-mockup--prod"><div class="gp-mockup-leg">${titulo}</div><img src="${mockSrc}" alt="Mockup" class="gp-mockup-img" loading="eager" decoding="async"></div>`;
+        return `<div class="gp-mockup gp-mockup--prod"><div class="gp-mockup-leg">${titulo}</div><img src="${mockSrc}" alt="Mockup" class="gp-mockup-img" loading="lazy" decoding="async" fetchpriority="high"></div>`;
     }
 
     function montarBlocoMockupOs(mockSrc, nomeProduto, idx) {
         const titulo = escapeHtml(nomeProduto || `Modelo ${idx + 1}`);
         if (!mockSrc) return '';
-        return `<div class="os-mockup os-mockup--prod"><div class="os-mockup-leg">${titulo}</div><img src="${mockSrc}" alt="Mockup" class="os-mockup-img" loading="eager" decoding="async"></div>`;
+        return `<div class="os-mockup os-mockup--prod"><div class="os-mockup-leg">${titulo}</div><img src="${mockSrc}" alt="Mockup" class="os-mockup-img" loading="lazy" decoding="async" fetchpriority="high"></div>`;
     }
 
     function montarHtmlGp(dados, mockupSrcsPorProduto, artesSrc) {
@@ -470,7 +476,12 @@
                 ? montarHtmlOs(dados, mockData.srcs, artes.src)
                 : montarHtmlGp(dados, mockData.srcs, artes.src);
             document.body.classList.add(cls);
-            await prepararImagensParaImpressao(mount);
+            await prepararImagensParaImpressao(mount, (concluidas, total) => {
+                const msg = total > 0
+                    ? `Preparando documento para impressão... (${concluidas}/${total})`
+                    : 'Preparando documento para impressão...';
+                mostrarOverlayImpressao(msg);
+            });
 
             const cleanup = () => {
                 document.body.classList.remove(cls);

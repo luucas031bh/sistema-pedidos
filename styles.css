@@ -978,11 +978,6 @@ body {
         padding-top: 4px;
     }
 
-    /* Ocultar links de navegação de desktop (substituídos pelo bottom nav) */
-    .nav-desktop-only {
-        display: none !important;
-    }
-
     /* Ocultar botão "Voltar à HOME" fixo — bottom nav já cumpre essa função */
     .btn-voltar-principal {
         display: none !important;
@@ -1690,10 +1685,6 @@ body {
     font-family: var(--font-sans);
 }
 
-.nav-desktop-only {
-    display: initial !important;
-}
-
 .container {
     padding: 12px;
 }
@@ -2203,10 +2194,15 @@ body {
     #botoesImpressaoRodape {
         display: flex;
         width: 100%;
+        flex-direction: row;
+        gap: 8px;
     }
 
     #botoesImpressaoRodape .btn {
         width: 100%;
+        min-height: 48px;
+        padding: 14px 12px;
+        font-weight: 700;
     }
 
     .btn-salvar-flutuante {

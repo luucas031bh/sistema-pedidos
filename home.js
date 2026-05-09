@@ -422,7 +422,7 @@ function renderizarFilaHome(abertos) {
         const statusProd = `<span class="home-etapa-badge home-etapa-badge--${badgeClass}">${escapeHtmlHome(textoSt)}</span>`;
         return `
             <tr>
-                <td><a class="cliente-link" href="${link}" target="_blank" rel="noopener noreferrer">${nome}</a></td>
+                <td><a class="cliente-link" href="${link}">${nome}</a></td>
                 <td>${escapeHtmlHome(textoDiasParaEntrega(pedido.datas?.entrega))}</td>
                 <td>${idBusca}</td>
                 <td>${escapeHtmlHome(String(pedido.statusOperacional || '—'))}</td>
