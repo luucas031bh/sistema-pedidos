@@ -14,8 +14,51 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.location.protocol !== 'file:' && typeof CONFIG !== 'undefined' && CONFIG.APPS_SCRIPT_URL) {
         fetch(`${CONFIG.APPS_SCRIPT_URL}?action=online`).catch(() => {});
     }
+    document.getElementById('btnToggleKpis')?.addEventListener('click', alternarVisibilidadeKpis);
+    atualizarBotaoVisibilidadeKpis();
     carregarHome();
 });
+
+let kpisVisiveis = true;
+const estadoKpisValores = {
+    pedidosAbertos: '0',
+    pecasTotal: '0',
+    valorRecebido: 'R$ 0,00',
+    valorReceber: 'R$ 0,00',
+    valorTotal: 'R$ 0,00'
+};
+
+function atualizarBotaoVisibilidadeKpis() {
+    const btn = document.getElementById('btnToggleKpis');
+    const icone = document.getElementById('iconeToggleKpis');
+    const texto = document.getElementById('textoToggleKpis');
+    if (!btn || !icone || !texto) return;
+    btn.setAttribute('aria-pressed', kpisVisiveis ? 'true' : 'false');
+    btn.title = kpisVisiveis ? 'Ocultar valores dos indicadores' : 'Mostrar valores dos indicadores';
+    icone.textContent = kpisVisiveis ? '👁️' : '🙈';
+    texto.textContent = kpisVisiveis ? 'Ocultar valores' : 'Mostrar valores';
+}
+
+function aplicarVisibilidadeKpis() {
+    const mapa = [
+        ['kpiPedidosAbertos', estadoKpisValores.pedidosAbertos],
+        ['kpiPecasTotal', estadoKpisValores.pecasTotal],
+        ['kpiValorRecebido', estadoKpisValores.valorRecebido],
+        ['kpiValorReceber', estadoKpisValores.valorReceber],
+        ['kpiValorTotalPedidos', estadoKpisValores.valorTotal]
+    ];
+    mapa.forEach(([id, valorReal]) => {
+        const el = document.getElementById(id);
+        if (!el || el.classList.contains('skeleton')) return;
+        el.textContent = kpisVisiveis ? valorReal : '••••••';
+    });
+    atualizarBotaoVisibilidadeKpis();
+}
+
+function alternarVisibilidadeKpis() {
+    kpisVisiveis = !kpisVisiveis;
+    aplicarVisibilidadeKpis();
+}
 
 
 function atualizarRelogioHome() {
@@ -397,11 +440,12 @@ function renderizarKpisHome(abertos) {
         receber += Number(fin.restante || 0);
         total += Number(fin.totalPedido || 0);
     });
-    document.getElementById('kpiPedidosAbertos').textContent = String(n);
-    document.getElementById('kpiPecasTotal').textContent = String(pecas);
-    document.getElementById('kpiValorRecebido').textContent = Utils.formatarMoeda(recebido);
-    document.getElementById('kpiValorReceber').textContent = Utils.formatarMoeda(receber);
-    document.getElementById('kpiValorTotalPedidos').textContent = Utils.formatarMoeda(total);
+    estadoKpisValores.pedidosAbertos = String(n);
+    estadoKpisValores.pecasTotal = String(pecas);
+    estadoKpisValores.valorRecebido = Utils.formatarMoeda(recebido);
+    estadoKpisValores.valorReceber = Utils.formatarMoeda(receber);
+    estadoKpisValores.valorTotal = Utils.formatarMoeda(total);
+    aplicarVisibilidadeKpis();
 }
 
 function renderizarFilaHome(abertos) {

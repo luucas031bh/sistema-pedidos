@@ -65,7 +65,13 @@
         </section>
 
         <section class="card">
-            <h2 class="card-title">Indicadores (pedidos em aberto)</h2>
+            <div class="flex-between flex-wrap gap-1">
+                <h2 class="card-title">Indicadores (pedidos em aberto)</h2>
+                <button type="button" id="btnToggleKpis" class="btn btn-secondary btn-kpi-olho" aria-pressed="true" title="Ocultar valores dos indicadores">
+                    <span id="iconeToggleKpis" aria-hidden="true">👁️</span>
+                    <span id="textoToggleKpis">Ocultar valores</span>
+                </button>
+            </div>
             <div class="home-kpi-grid">
                 <div class="kpi-card">
                     <div class="kpi-icon">📦</div>

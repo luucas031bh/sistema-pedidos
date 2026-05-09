@@ -1856,6 +1856,16 @@ body {
     letter-spacing: 0.05em;
 }
 
+.btn-kpi-olho {
+    min-height: 44px;
+    padding: 10px 14px;
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
 @media (min-width: 1024px) {
     .home-kpi-grid {
         grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -2156,6 +2166,11 @@ body {
     .top-actions-index .btn {
         width: 100%;
         padding: 12px;
+    }
+
+    .btn-kpi-olho {
+        width: 100%;
+        justify-content: center;
     }
 
     .form-row {
