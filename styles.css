@@ -69,9 +69,7 @@ body {
     background-color: #000000;
     color: var(--texto-primario);
     padding: var(--espacamento-lg) var(--espacamento-md);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+    position: static;
     box-shadow: var(--sombra-lg);
 }
 
@@ -828,7 +826,7 @@ body {
 .gap-2 { gap: var(--espacamento-md); }
 .flex-wrap { flex-wrap: wrap; }
 
-/* HOME — fila visual: cabeçalho fixo reforçado (sticky já em .header) */
+/* HOME — fila visual */
 .header--home {
     background-color: #000000;
 }
@@ -1381,7 +1379,7 @@ body {
     }
 }
 
-/* ---- config-calculos: scroll hint e inputs touch-friendly ---- */
+/* ---- formulários longos: scroll hint e inputs touch-friendly ---- */
 @media (max-width: 767px) {
     .config-calc-scroll {
         position: relative;
