@@ -551,7 +551,7 @@ function renderizarFilaMobile(abertos) {
         else if (badgeClass === 'amarelo') cardMod = 'pedido-card-mobile--alerta';
         else if (badgeClass === 'verde') cardMod = 'pedido-card-mobile--ok';
 
-        return `<div class="pedido-card-mobile ${cardMod}">
+        return `<a class="pedido-card-mobile ${cardMod}" href="${link}" aria-label="Abrir pedido: ${nome}">
             <div class="pedido-card-header">
                 <div class="pedido-card-nome">${nome}</div>
                 <div class="pedido-card-dias ${diasClasse}">${diasTexto}</div>
@@ -577,9 +577,9 @@ function renderizarFilaMobile(abertos) {
             </div>
             <div class="pedido-card-footer">
                 <span class="home-etapa-badge home-etapa-badge--${badgeClass}">${etapaTexto}</span>
-                <a class="btn btn-small btn-primary" href="${link}">Editar</a>
+                <span class="pedido-card-cta">Editar pedido</span>
             </div>
-        </div>`;
+        </a>`;
     }).join('');
 }
 
