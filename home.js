@@ -40,14 +40,22 @@ function atualizarBotaoVisibilidadeKpis() {
 }
 
 function aplicarVisibilidadeKpis() {
-    const mapa = [
+    const sempreVisiveis = [
         ['kpiPedidosAbertos', estadoKpisValores.pedidosAbertos],
-        ['kpiPecasTotal', estadoKpisValores.pecasTotal],
+        ['kpiPecasTotal', estadoKpisValores.pecasTotal]
+    ];
+    sempreVisiveis.forEach(([id, valorReal]) => {
+        const el = document.getElementById(id);
+        if (!el || el.classList.contains('skeleton')) return;
+        el.textContent = valorReal;
+    });
+
+    const monetarios = [
         ['kpiValorRecebido', estadoKpisValores.valorRecebido],
         ['kpiValorReceber', estadoKpisValores.valorReceber],
         ['kpiValorTotalPedidos', estadoKpisValores.valorTotal]
     ];
-    mapa.forEach(([id, valorReal]) => {
+    monetarios.forEach(([id, valorReal]) => {
         const el = document.getElementById(id);
         if (!el || el.classList.contains('skeleton')) return;
         el.textContent = kpisVisiveis ? valorReal : '••••••';
