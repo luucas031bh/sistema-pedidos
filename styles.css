@@ -1272,6 +1272,63 @@ body {
     flex-shrink: 0;
 }
 
+.chart-bar-details {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--cor-terciaria);
+    background: rgba(0, 0, 0, 0.12);
+}
+
+.chart-bar-details[open] {
+    border-color: rgba(212, 175, 55, 0.35);
+}
+
+.chart-bar-summary {
+    list-style: none;
+    cursor: pointer;
+    outline: none;
+}
+
+.chart-bar-summary::-webkit-details-marker {
+    display: none;
+}
+
+.chart-bar-summary::marker {
+    content: '';
+}
+
+.chart-bar-row--interactive {
+    padding: 4px 6px;
+    transition: background 0.15s ease;
+}
+
+.chart-bar-row--interactive:hover {
+    background: rgba(212, 175, 55, 0.06);
+}
+
+.chart-bar-client-list {
+    margin: 0;
+    padding: 8px 10px 10px;
+    list-style: none;
+    border-top: 1px solid var(--cor-terciaria);
+    font-size: 0.78rem;
+}
+
+.chart-bar-client-list li {
+    padding: 3px 0;
+}
+
+.chart-bar-client-link {
+    color: var(--dourado-primario);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.chart-bar-client-link:hover {
+    text-decoration: underline;
+    color: var(--dourado-claro, #e8d589);
+}
+
 /* ---- Botão salvar flutuante (mobile only) ---- */
 .btn-salvar-flutuante {
     display: none;

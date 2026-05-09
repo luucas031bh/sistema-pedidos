@@ -153,6 +153,33 @@ function textoDiasParaEntrega(dataEntrega) {
     return `Atrasado (${atraso} ${atraso === 1 ? 'dia' : 'dias'})`;
 }
 
+/** Data BR + dias entre parênteses (fila HOME). */
+function textoEntregaDataEDias(dataEntrega) {
+    const entrega = parseDataEntregaLocal(dataEntrega);
+    if (!entrega) return '—';
+    const dataBr = formatarDataEntregaBR(dataEntrega);
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    entrega.setHours(0, 0, 0, 0);
+    const diffDias = Math.round((entrega.getTime() - hoje.getTime()) / 86400000);
+    if (diffDias > 0) {
+        const sufixo = diffDias === 1 ? '1 dia' : `${diffDias} dias`;
+        return `${dataBr} (${sufixo})`;
+    }
+    if (diffDias === 0) return `${dataBr} (hoje)`;
+    const atraso = Math.abs(diffDias);
+    const sufixoA = atraso === 1 ? 'atrasado 1 dia' : `atrasado ${atraso} dias`;
+    return `${dataBr} (${sufixoA})`;
+}
+
+/** Chave da barra em «Pedidos por etapa»: orçamentos na faixa própria. */
+function chaveEtapaPedidosPorEtapaHome(pedido) {
+    const s = String(pedido?.statusOperacional || '').normalize('NFC').trim().toLowerCase();
+    if (s === 'orçamento' || s === 'orcamento') return 'Orçamento';
+    const etapa = String(pedido?.etapaProducaoAtual || 'Pedido em Aberto').trim() || 'Pedido em Aberto';
+    return etapa;
+}
+
 /** Dias corridos desde a data do pedido (0 = mesmo dia); null se data inválida. */
 function diasCorridosDesdeDataPedido(dataPedido) {
     const d = parseDataEntregaLocal(dataPedido);
@@ -475,7 +502,7 @@ function renderizarFilaHome(abertos) {
         return `
             <tr>
                 <td><a class="cliente-link" href="${link}">${nome}</a></td>
-                <td>${escapeHtmlHome(textoDiasParaEntrega(pedido.datas?.entrega))}</td>
+                <td>${escapeHtmlHome(textoEntregaDataEDias(pedido.datas?.entrega))}</td>
                 <td>${idBusca}</td>
                 <td>${escapeHtmlHome(String(pedido.statusOperacional || '—'))}</td>
                 <td>${pedido.totalPecas ?? 0}</td>
@@ -501,7 +528,7 @@ function renderizarFilaMobile(abertos) {
         const resumo = obterResumoProdutoPedidoHome(pedido);
         const tipoRes = resumirTipoPeca(resumo.tipoPeca, resumo.detalhePeca);
         const nome = escapeHtmlHome(pedido.cliente?.nome || '—');
-        const diasTextoRaw = textoDiasParaEntrega(pedido.datas?.entrega);
+        const diasTextoRaw = textoEntregaDataEDias(pedido.datas?.entrega);
         const diasTexto = escapeHtmlHome(diasTextoRaw);
         const etapaTexto = escapeHtmlHome(String(pedido.etapaProducaoAtual || '—'));
         const badgeClass = classeBadgeStatusProd(pedido);
@@ -596,26 +623,41 @@ function renderizarGraficoEtapas(abertos) {
         container.innerHTML = '';
         return;
     }
-    const contagem = {};
+    const grupos = {};
     abertos.forEach((p) => {
-        const etapa = String(p.etapaProducaoAtual || 'Pedido em Aberto').trim() || 'Pedido em Aberto';
-        contagem[etapa] = (contagem[etapa] || 0) + 1;
+        const etapa = chaveEtapaPedidosPorEtapaHome(p);
+        if (!grupos[etapa]) grupos[etapa] = [];
+        grupos[etapa].push(p);
     });
-    const itens = Object.entries(contagem).sort((a, b) => b[1] - a[1]);
-    const max = Math.max(1, itens[0][1]);
+    const itens = Object.entries(grupos).sort((a, b) => b[1].length - a[1].length);
+    const max = Math.max(1, itens[0][1].length);
     container.innerHTML = `
         <div class="home-chart-title">Pedidos por etapa</div>
         <div class="home-chart-bars">
-            ${itens.map(([etapa, count]) => {
+            ${itens.map(([etapa, pedidos]) => {
+                const count = pedidos.length;
                 const pct = Math.max(8, Math.round((count / max) * 100));
                 const dentroBarrinha = pct >= 22;
-                return `<div class="chart-bar-row">
-                    <div class="chart-bar-label" title="${escapeHtmlHome(etapa)}">${escapeHtmlHome(etapa)}</div>
-                    <div class="chart-bar-track">
-                        <div class="chart-bar-fill" style="width:${pct}%">${dentroBarrinha ? `<span class="chart-bar-value">${count}</span>` : ''}</div>
-                    </div>
-                    ${!dentroBarrinha ? `<span class="chart-bar-count-outside">${count}</span>` : ''}
-                </div>`;
+                const etapaEsc = escapeHtmlHome(etapa);
+                const listaHtml = pedidos
+                    .map((p) => {
+                        const nome = escapeHtmlHome(p.cliente?.nome || '—');
+                        const href = `index.html?id=${encodeURIComponent(p.id || '')}`;
+                        return `<li><a class="chart-bar-client-link" href="${href}">${nome}</a></li>`;
+                    })
+                    .join('');
+                return `<details class="chart-bar-details">
+                    <summary class="chart-bar-summary">
+                        <div class="chart-bar-row chart-bar-row--interactive">
+                            <div class="chart-bar-label" title="${etapaEsc}">${etapaEsc}</div>
+                            <div class="chart-bar-track">
+                                <div class="chart-bar-fill" style="width:${pct}%">${dentroBarrinha ? `<span class="chart-bar-value">${count}</span>` : ''}</div>
+                            </div>
+                            ${!dentroBarrinha ? `<span class="chart-bar-count-outside">${count}</span>` : ''}
+                        </div>
+                    </summary>
+                    <ul class="chart-bar-client-list">${listaHtml}</ul>
+                </details>`;
             }).join('')}
         </div>`;
 }
@@ -647,8 +689,6 @@ async function carregarHome() {
         const todos = data.pedidos || [];
         const abertos = todos.filter(pedidoEstaAberto);
         const abertosParaKpi = abertos.filter(pedidoContaNosIndicadores);
-        console.log('[DEBUG KPI] status de todos os abertos:', abertos.map(p => p.statusOperacional));
-        console.log('[DEBUG KPI] contados no KPI:', abertosParaKpi.length, 'de', abertos.length);
         abertos.sort((a, b) => {
             const da = parseDataEntregaLocal(a.datas?.entrega)?.getTime() ?? 0;
             const db = parseDataEntregaLocal(b.datas?.entrega)?.getTime() ?? 0;
