@@ -35,6 +35,10 @@ REM Evita PORT errado herdado do Windows; o valor final vem do .env ao iniciar o
 set "PORT=3000"
 
 echo Porta: o servidor usa o que estiver em .env ^(padrao do projeto: 3000^).
+echo Encerrando instancia anterior do bot nesta pasta, se estiver na mesma porta...
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\free-bot-port.ps1"
+echo.
+
 echo Iniciando servidor ^(Ctrl+C para parar^)...
 echo.
 call npm.cmd start

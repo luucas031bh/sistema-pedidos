@@ -1,9 +1,31 @@
 import dotenv from 'dotenv';
 import express from 'express';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 dotenv.config({ override: true });
 import { loadConfig } from './config.js';
 import { verifyWebhookGet, handleWebhookPost } from './webhookMeta.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const PID_FILE = path.join(__dirname, '..', '.bot-adny.pid');
+
+function writePidFile() {
+  try {
+    fs.writeFileSync(PID_FILE, String(process.pid));
+  } catch (e) {
+    console.warn('[BOT-ADNY] nao foi possivel gravar .bot-adny.pid:', e?.message || e);
+  }
+}
+
+function removePidFile() {
+  try {
+    fs.unlinkSync(PID_FILE);
+  } catch {
+    /* ok */
+  }
+}
 
 const config = loadConfig();
 const app = express();
@@ -21,10 +43,25 @@ app.post(
 );
 
 const server = app.listen(config.port, () => {
+  writePidFile();
   console.log(
     `BOT-ADNY http://127.0.0.1:${config.port} — health /health — webhook /webhook/whatsapp`,
   );
 });
+
+function shutdown() {
+  removePidFile();
+  try {
+    server.close();
+  } catch {
+    /* ok */
+  }
+  process.exit(0);
+}
+
+process.once('SIGINT', shutdown);
+process.once('SIGTERM', shutdown);
+process.on('exit', () => removePidFile());
 
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {

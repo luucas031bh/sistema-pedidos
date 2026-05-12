@@ -4,3 +4,4 @@ node_modules/
 .env.*.backup
 *.log
 .DS_Store
+.bot-adny.pid
