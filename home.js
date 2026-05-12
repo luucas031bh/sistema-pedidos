@@ -651,9 +651,11 @@ function renderizarGraficoEtapas(abertos) {
                         <div class="chart-bar-row chart-bar-row--interactive">
                             <div class="chart-bar-label" title="${etapaEsc}">${etapaEsc}</div>
                             <div class="chart-bar-track">
-                                <div class="chart-bar-fill" style="width:${pct}%">${dentroBarrinha ? `<span class="chart-bar-value">${count}</span>` : ''}</div>
+                                <div class="chart-bar-track-inner">
+                                    <div class="chart-bar-fill" style="width:${pct}%">${dentroBarrinha ? `<span class="chart-bar-value">${count}</span>` : ''}</div>
+                                    ${!dentroBarrinha ? `<span class="chart-bar-count-outside">${count}</span>` : ''}
+                                </div>
                             </div>
-                            ${!dentroBarrinha ? `<span class="chart-bar-count-outside">${count}</span>` : ''}
                         </div>
                     </summary>
                     <ul class="chart-bar-client-list">${listaHtml}</ul>
