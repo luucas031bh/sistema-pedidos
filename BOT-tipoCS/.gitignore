@@ -1,0 +1,7 @@
+node_modules/
+.env
+.env.*.local
+auth_info/
+*.log
+.DS_Store
+qrcode.png

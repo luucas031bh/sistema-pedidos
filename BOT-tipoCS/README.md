@@ -1,0 +1,61 @@
+# BOT-tipoCS — consulta WhatsApp (Baileys) ao sistema-pedidos
+
+Bot **somente leitura**: envia apenas requisições **GET** ao Web App do Google Apps Script do projeto (mesmo `Code.gs` do repositório). Não altera pedidos.
+
+## Pré-requisitos
+
+- Node.js **18+**
+- URL do Web App do Apps Script (`APPS_SCRIPT_URL`) já publicada
+- Após alterar `Code.gs`, **implantar nova versão** do Web App no Google Apps Script
+
+## Instalação
+
+```powershell
+cd "C:\Users\PC CASA\Documents\GitHub\sistema-pedidos\BOT-tipoCS"
+npm install
+copy .env.example .env
+```
+
+Edite `.env` e preencha `APPS_SCRIPT_URL` (e `APPS_SCRIPT_TOKEN` se usar).
+
+## Primeiro uso (QR)
+
+```powershell
+npm start
+```
+
+Escaneie o QR no terminal ou abra `qrcode.png` na pasta do projeto. A pasta `auth_info/` guarda a sessão (não envie ao Git).
+
+## Comandos (exemplo com gatilho ADNY)
+
+Mencione **ADNY** (ou o que estiver em `BOT_TRIGGERS`) no texto, ou use prefixo `/adny`:
+
+| Exemplo | Ação |
+|--------|------|
+| `ADNY abertos` | Lista pedidos em aberto |
+| `ADNY busca Maria` | Busca por termo |
+| `ADNY pedido 1234` | Detalhe de um pedido |
+| `ADNY relatorio 2025-01-01 2025-01-31` | Relatório agregado (tipo malha) |
+| `ADNY etapa Arte` | Quantidade de pedidos na etapa de produção **Arte** |
+| `ADNY entregas semana` | Pedidos com data de entrega na **semana atual** (seg–dom, fuso do servidor) |
+| `ADNY tamanhos` | Soma de peças por **tamanho** em pedidos em aberto |
+| `ADNY tamanhos preta` | Idem, só produtos cuja cor da malha contém `preta` |
+| `ADNY ajuda` | Lista de comandos |
+
+## Segurança
+
+- `ALLOWED_GROUP_IDS`: opcional; se preenchido (JIDs de grupo separados por vírgula), o bot **só responde** nesses grupos.
+- Não commite `.env` nem `auth_info/`.
+
+## Ações novas no Apps Script
+
+O `Code.gs` passa a expor (GET):
+
+- `action=contarPorEtapaProducao&etapa=Arte`
+- `action=listarPedidosEntregaPeriodo&dataInicio=YYYY-MM-DD&dataFim=YYYY-MM-DD`
+- `action=agregarPecasAbertos&cor=preta` (parâmetro `cor` opcional)
+
+## Problemas comuns
+
+- **Resposta não é JSON**: URL errada ou Web App não implantado como acesso que retorna JSON.
+- **Ação inválida**: Web App ainda na versão antiga do `Code.gs` — republicar implantação.

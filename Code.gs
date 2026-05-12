@@ -243,6 +243,9 @@ function doGet(e) {
     if (acao === 'listarPedidos' || acao === 'obterFila') return resposta(listarPedidos((e.parameter && e.parameter.filtro) || ''));
     if (acao === 'getStats') return resposta({ sucesso: true, stats: getStats() });
     if (acao === 'relatorioPedidos') return resposta(relatorioPedidosFromParams(e.parameter || {}));
+    if (acao === 'contarPorEtapaProducao') return resposta(contarPorEtapaProducao(e.parameter || {}));
+    if (acao === 'listarPedidosEntregaPeriodo') return resposta(listarPedidosEntregaPeriodo(e.parameter || {}));
+    if (acao === 'agregarPecasAbertos') return resposta(agregarPecasPedidosAbertos(e.parameter || {}));
 
     return resposta({ sucesso: false, erro: 'Ação inválida: ' + acao });
   } catch (erro) {
@@ -958,6 +961,181 @@ function listarPedidos(filtro) {
     });
 
     return { sucesso: true, pedidos: pedidos, fila: pedidos };
+  } catch (erro) {
+    return { sucesso: false, erro: erro.toString() };
+  }
+}
+
+// ================= BOT CONSULTA (somente leitura, GET) =================
+
+/** Alinhado ao Bot-ADNY format.js: pedido em aberto = não cancelado nem entregue. */
+function pedidoEstaAbertoBot(pedido) {
+  var s = String(
+    pedido && pedido.statusOperacional !== undefined && pedido.statusOperacional !== null
+      ? pedido.statusOperacional
+      : ''
+  )
+    .trim()
+    .toLowerCase();
+  if (!s) return true;
+  if (s.indexOf('cancel') !== -1) return false;
+  if (s.indexOf('entregue') !== -1) return false;
+  return true;
+}
+
+function parseDataFlex(valor) {
+  if (valor === null || valor === undefined || valor === '') return null;
+  if (valor instanceof Date) {
+    var x = new Date(valor.getTime());
+    return Number.isNaN(x.getTime()) ? null : x;
+  }
+  var d = new Date(valor);
+  if (!Number.isNaN(d.getTime())) return d;
+  var s = String(valor).trim();
+  var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (m) {
+    var dd = parseInt(m[1], 10);
+    var mm = parseInt(m[2], 10) - 1;
+    var yyyy = parseInt(m[3], 10);
+    var dt = new Date(yyyy, mm, dd);
+    return Number.isNaN(dt.getTime()) ? null : dt;
+  }
+  return null;
+}
+
+function inicioDoDiaTimestamp(d) {
+  var r = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  return r.getTime();
+}
+
+function contarPorEtapaProducao(param) {
+  try {
+    param = param || {};
+    var etapaRaw = String(param.etapa || param.etapaProducao || '').trim();
+    var etapa = normalizarEtapaProducaoId(etapaRaw);
+    if (!etapa) {
+      return { sucesso: false, erro: 'Informe etapa válida (ex.: Arte, Insumos, Corte, Estampa).' };
+    }
+    var apenasAbertosOp = String(param.apenasAbertosOperacional || param.somenteAbertos || 'false').toLowerCase();
+    var filtrarAbertos = apenasAbertosOp === 'true' || apenasAbertosOp === '1';
+    var excluirCancelados = String(param.excluirCancelados || 'true').toLowerCase() !== 'false';
+
+    var lista = listarPedidosBase();
+    var ids = [];
+    var i;
+    for (i = 0; i < lista.length; i++) {
+      var p = lista[i];
+      if (excluirCancelados) {
+        var st = String(normalizarStatusOperacional(p.statusOperacional) || '').toLowerCase();
+        if (st === 'cancelado') continue;
+      }
+      if (filtrarAbertos && !pedidoEstaAbertoBot(p)) continue;
+      var ep = normalizarEtapaProducaoId(p.etapaProducaoAtual || '');
+      if (!ep) ep = etapaDeFlagsProducao(p.statusProducao);
+      if (ep === etapa) ids.push(p.id);
+    }
+    return { sucesso: true, etapa: etapa, total: ids.length, ids: ids.slice(0, 500) };
+  } catch (erro) {
+    return { sucesso: false, erro: erro.toString() };
+  }
+}
+
+function listarPedidosEntregaPeriodo(param) {
+  try {
+    param = param || {};
+    var di = relatorioParseDataLimite(String(param.dataInicio || '').trim(), false);
+    var df = relatorioParseDataLimite(String(param.dataFim || '').trim(), true);
+    if (!di || !df || df < di) {
+      return { sucesso: false, erro: 'Informe dataInicio e dataFim (YYYY-MM-DD) com período válido.' };
+    }
+    var t0 = inicioDoDiaTimestamp(di);
+    var t1 = inicioDoDiaTimestamp(df);
+    var lista = listarPedidosBase();
+    var out = [];
+    var i;
+    for (i = 0; i < lista.length; i++) {
+      var p = lista[i];
+      var st = String(normalizarStatusOperacional(p.statusOperacional) || '').toLowerCase();
+      if (st === 'cancelado') continue;
+      var rawEnt = p.datas && p.datas.entrega !== undefined && p.datas.entrega !== null ? p.datas.entrega : '';
+      var dEnt = parseDataFlex(rawEnt);
+      if (!dEnt) continue;
+      var tEnt = inicioDoDiaTimestamp(dEnt);
+      if (tEnt >= t0 && tEnt <= t1) {
+        out.push({
+          id: p.id,
+          cliente: p.cliente && p.cliente.nome ? p.cliente.nome : '',
+          entrega: rawEnt,
+          statusOperacional: normalizarStatusOperacional(p.statusOperacional),
+          etapaProducaoAtual: p.etapaProducaoAtual || ''
+        });
+      }
+    }
+    return {
+      sucesso: true,
+      periodo: { inicio: String(param.dataInicio || '').trim(), fim: String(param.dataFim || '').trim() },
+      pedidos: out
+    };
+  } catch (erro) {
+    return { sucesso: false, erro: erro.toString() };
+  }
+}
+
+function normalizarChaveTamanhoBot(t) {
+  return String(t === null || t === undefined ? '' : t).trim().toUpperCase();
+}
+
+function agregarPecasPedidosAbertos(param) {
+  try {
+    param = param || {};
+    var corFiltro = String(param.cor || param.corMalha || '').trim().toLowerCase();
+    var lista = listarPedidosBase();
+    var mapa = {};
+    var totalPecas = 0;
+    var pedidoIds = {};
+    var j;
+    for (j = 0; j < lista.length; j++) {
+      var p = lista[j];
+      if (!pedidoEstaAbertoBot(p)) continue;
+      var stn = String(normalizarStatusOperacional(p.statusOperacional) || '').toLowerCase();
+      if (stn === 'cancelado') continue;
+      var produtos = Array.isArray(p.produtos) ? p.produtos : [];
+      var k;
+      for (k = 0; k < produtos.length; k++) {
+        var pr = produtos[k];
+        if (!pr || typeof pr !== 'object') continue;
+        var corMalha = String(pr.corMalha || '').trim().toLowerCase();
+        if (corFiltro && corMalha.indexOf(corFiltro) === -1) continue;
+        var tamanhos = Array.isArray(pr.tamanhos) ? pr.tamanhos : [];
+        var t;
+        for (t = 0; t < tamanhos.length; t++) {
+          var tm = tamanhos[t];
+          if (!tm) continue;
+          var chave = normalizarChaveTamanhoBot(tm.tamanho);
+          if (!chave) continue;
+          var qtd = Number(tm.quantidade) || 0;
+          if (qtd <= 0) continue;
+          if (!mapa[chave]) mapa[chave] = 0;
+          mapa[chave] += qtd;
+          totalPecas += qtd;
+          pedidoIds[String(p.id)] = true;
+        }
+      }
+    }
+    var chaves = Object.keys(mapa).sort();
+    var totaisOrdenados = {};
+    var c;
+    for (c = 0; c < chaves.length; c++) {
+      totaisOrdenados[chaves[c]] = mapa[chaves[c]];
+    }
+    return {
+      sucesso: true,
+      corFiltro: corFiltro,
+      apenasPedidosAbertos: true,
+      totalPecas: totalPecas,
+      pedidosComPeca: Object.keys(pedidoIds).length,
+      totaisPorTamanho: totaisOrdenados
+    };
   } catch (erro) {
     return { sucesso: false, erro: erro.toString() };
   }
