@@ -420,6 +420,30 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: var(--espacamento-md);
+    gap: var(--espacamento-sm);
+}
+
+.produto-header-titulo {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+
+.produto-badge-pecas {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--dourado-secundario, #f0d98d);
+    white-space: nowrap;
+}
+
+.resumo-pecas-pedido-valor {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--texto-secundario, #ccc);
+    margin: 0;
 }
 
 .produto-numero {

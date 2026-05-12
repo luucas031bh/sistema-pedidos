@@ -149,6 +149,7 @@ async function inicializarApp() {
     const container = document.getElementById('produtosContainer');
     if (container && !container.children.length) adicionarProduto();
     if (!estadoApp.somenteLeitura) garantirSlotArteMinimo();
+    calcularTotalPecas();
 }
 
 function atualizarRelogio() {
@@ -554,15 +555,18 @@ function adicionarProduto() {
     container.insertAdjacentHTML('beforeend', `
       <div class="produto-container" id="produto-${produtoId}" data-produto-id="${produtoId}">
         <div class="produto-header">
-          <span
-            class="produto-numero produto-nome-editavel"
-            id="nomeProduto-${produtoId}"
-            contenteditable="true"
-            spellcheck="false"
-            title="Clique para renomear"
-            data-default="📦 PRODUTO #${produtoId}"
-            onblur="if(!this.textContent.trim()){this.textContent=this.dataset.default;}"
-          >📦 PRODUTO #${produtoId}</span>
+          <div class="produto-header-titulo">
+            <span
+              class="produto-numero produto-nome-editavel"
+              id="nomeProduto-${produtoId}"
+              contenteditable="true"
+              spellcheck="false"
+              title="Clique para renomear"
+              data-default="📦 PRODUTO #${produtoId}"
+              onblur="if(!this.textContent.trim()){this.textContent=this.dataset.default;}"
+            >📦 PRODUTO #${produtoId}</span>
+            <span class="produto-badge-pecas" id="badgeTotalPecasProduto-${produtoId}" aria-label="Total de peças deste produto">0-peças</span>
+          </div>
           ${produtoId > 1 ? `<button type="button" class="btn-remover-produto" onclick="removerProduto(${produtoId})">🗑️ Remover</button>` : ''}
         </div>
         <div class="form-row">
@@ -686,6 +690,24 @@ function calcularTotalPecas() {
     document.querySelectorAll('[id^="tamanhosBody-"] input[type="number"]').forEach((input) => { total += parseInt(input.value, 10) || 0; });
     const el = document.getElementById('totalPecas');
     if (el) el.value = total;
+    atualizarBadgesPecasPorProduto();
+}
+
+/** Atualiza "N-peças" em cada produto e o resumo global entre Status e financeiro. */
+function atualizarBadgesPecasPorProduto() {
+    let totalGeral = 0;
+    estadoApp.produtos.forEach((p) => {
+        const n = obterQuantidadeProduto(p.id);
+        totalGeral += n;
+        const badge = document.getElementById(`badgeTotalPecasProduto-${p.id}`);
+        if (badge) badge.textContent = `${n}-peças`;
+    });
+    const resumoEl = document.getElementById('resumoTotalPecasPedido');
+    if (resumoEl) {
+        const np = estadoApp.produtos.length;
+        resumoEl.textContent =
+            `Total no pedido: ${totalGeral} peça${totalGeral === 1 ? '' : 's'} (somando ${np} produto${np === 1 ? '' : 's'})`;
+    }
 }
 
 function adicionarLinhaEstampa(produtoId) {
@@ -1473,6 +1495,7 @@ function limparFormulario() {
     configurarValoresPadraoFormulario();
     adicionarProduto();
     atualizarBotoesImpressaoTopo();
+    calcularTotalPecas();
 }
 
 async function carregarPedidoViaURL() {
