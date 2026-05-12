@@ -30,6 +30,10 @@ function removePidFile() {
 const config = loadConfig();
 const app = express();
 
+app.get('/', (_req, res) => {
+  res.redirect(302, '/health');
+});
+
 app.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'bot-adny' });
 });
@@ -71,7 +75,8 @@ server.on('error', (err) => {
     console.error('Feche a outra janela do CMD ou encerre o processo:');
     console.error(`  netstat -ano | findstr :${config.port}`);
     console.error('  taskkill /PID <numero_ultima_coluna> /F');
-    console.error('Ou altere PORT no arquivo .env para outra porta livre.');
+    console.error('Se usou start.bat, leia as linhas [start.bat] acima: pode ser outro programa ou o Node do Cursor na mesma porta.');
+    console.error('Solucao: feche o outro app, ou defina PORT=3002 (ou outra livre) no .env e ngrok na mesma porta.');
     process.exit(1);
   }
   throw err;
