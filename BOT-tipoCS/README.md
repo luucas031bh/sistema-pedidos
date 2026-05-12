@@ -10,11 +10,29 @@ Bot **somente leitura**: envia apenas requisições **GET** ao Web App do Google
 
 ## Instalação
 
+### PowerShell bloqueou `npm` (`npm.ps1` / ExecutionPolicy)
+
+O Windows às vezes impede scripts `.ps1`. Use **uma** destas opções:
+
+1. **Prompt de Comando (cmd)** — abra `cmd.exe`, vá até esta pasta e rode `npm install` (o cmd usa `npm.cmd`, sem esse bloqueio).
+2. **No PowerShell**, chame o launcher `.cmd`: `npm.cmd install` e depois `npm.cmd start`.
+3. **Duplo clique** em `install.bat` nesta pasta (já usa `npm.cmd`).
+
+Para liberar scripts só para seu usuário (uma vez no PowerShell):
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+### Comandos usuais
+
 ```powershell
 cd "C:\Users\PC CASA\Documents\GitHub\sistema-pedidos\BOT-tipoCS"
-npm install
+npm.cmd install
 copy .env.example .env
 ```
+
+Ou: `install.bat` → editar `.env` → `start.bat`.
 
 Edite `.env` e preencha `APPS_SCRIPT_URL` (e `APPS_SCRIPT_TOKEN` se usar).
 
