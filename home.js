@@ -637,7 +637,6 @@ function renderizarGraficoEtapas(abertos) {
             ${itens.map(([etapa, pedidos]) => {
                 const count = pedidos.length;
                 const pct = Math.max(8, Math.round((count / max) * 100));
-                const dentroBarrinha = pct >= 22;
                 const etapaEsc = escapeHtmlHome(etapa);
                 const listaHtml = pedidos
                     .map((p) => {
@@ -651,10 +650,7 @@ function renderizarGraficoEtapas(abertos) {
                         <div class="chart-bar-row chart-bar-row--interactive">
                             <div class="chart-bar-label" title="${etapaEsc}">${etapaEsc}</div>
                             <div class="chart-bar-track">
-                                <div class="chart-bar-track-inner">
-                                    <div class="chart-bar-fill" style="width:${pct}%">${dentroBarrinha ? `<span class="chart-bar-value">${count}</span>` : ''}</div>
-                                    ${!dentroBarrinha ? `<span class="chart-bar-count-outside">${count}</span>` : ''}
-                                </div>
+                                <div class="chart-bar-fill" style="width:${pct}%"><span class="chart-bar-value">${count}</span></div>
                             </div>
                         </div>
                     </summary>
