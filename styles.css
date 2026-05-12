@@ -56,6 +56,11 @@
     --transicao-lenta: 0.5s ease;
 }
 
+/* Formulários nativos em tema escrito (select, scrollbars) — evita painel branco do sistema */
+html {
+    color-scheme: dark;
+}
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: var(--cor-fundo);
@@ -189,6 +194,22 @@ body {
     font-size: 1rem;
     transition: all var(--transicao-normal);
     width: 100%;
+    color-scheme: dark;
+}
+
+/* Lista suspensa: onde o navegador permite, fundo escuro + texto claro */
+.form-select option,
+.form-input option,
+select.form-select option,
+select option {
+    background-color: #2d2d2d;
+    color: #f5f5f5;
+}
+
+select optgroup {
+    background-color: #252525;
+    color: var(--dourado-secundario, #f0d98d);
+    font-weight: 600;
 }
 
 .form-input:focus,
@@ -1577,6 +1598,7 @@ a.pedido-card-mobile {
     appearance: none;
     -webkit-appearance: none;
     outline: none;
+    color-scheme: dark;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23d4af37' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 8px center;
@@ -1879,6 +1901,7 @@ body {
     padding: 12px 14px;
     font-size: var(--font-size-base);
     transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    color-scheme: dark;
 }
 
 .form-input:focus, .form-select:focus, .form-textarea:focus {
