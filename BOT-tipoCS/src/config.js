@@ -15,6 +15,9 @@ function loadConfig() {
     .filter(Boolean);
   if (triggers.length === 0) triggers.push('ADNY');
 
+  const geminiKey = (process.env.GEMINI_API_KEY || '').trim();
+  const geminiModel = (process.env.GEMINI_MODEL || 'gemini-2.0-flash').trim();
+
   return {
     port: Number(process.env.PORT) || 3010,
     allowedGroupIds: new Set(allowed),
@@ -22,6 +25,9 @@ function loadConfig() {
     botTriggers: triggers.map((t) => t.toLowerCase()),
     appsScriptUrl: (process.env.APPS_SCRIPT_URL || '').trim().replace(/\/$/, ''),
     appsScriptToken: (process.env.APPS_SCRIPT_TOKEN || '').trim(),
+    geminiApiKey: geminiKey,
+    geminiModel,
+    naturalLanguageEnabled: geminiKey.length >= 10,
   };
 }
 

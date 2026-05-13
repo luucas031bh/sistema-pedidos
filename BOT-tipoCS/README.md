@@ -34,7 +34,19 @@ copy .env.example .env
 
 Ou: `install.bat` → editar `.env` → `start.bat`.
 
-Edite `.env` e preencha `APPS_SCRIPT_URL` (e `APPS_SCRIPT_TOKEN` se usar).
+Edite `.env`: `APPS_SCRIPT_URL` (obrigatório), `APPS_SCRIPT_TOKEN` se usar, e opcionalmente **`GEMINI_API_KEY`** para perguntas em linguagem natural (veja seção abaixo).
+
+## Linguagem natural (Gemini)
+
+Com **`GEMINI_API_KEY`** configurada ([Google AI Studio](https://aistudio.google.com/apikey)), depois do gatilho você pode escrever em português, por exemplo:
+
+- *ADNY quantos pedidos estão na etapa Arte?*
+- *ADNY quais entregas essa semana?*
+- *ADNY peças por tamanho em aberto na cor preta*
+
+O modelo **só escolhe** qual consulta GET fazer; **valores e listas** vêm da planilha (não inventamos totais no lugar do servidor).
+
+Opcional: `GEMINI_MODEL` (padrão `gemini-2.0-flash`). Se o JSON falhar, use os comandos fixos ou `ajuda`.
 
 ## Primeiro uso (QR)
 
@@ -46,10 +58,12 @@ Escaneie o QR no terminal ou abra `qrcode.png` na pasta do projeto. A pasta `aut
 
 ## Comandos (exemplo com gatilho ADNY)
 
-Mencione **ADNY** (ou o que estiver em `BOT_TRIGGERS`) no texto, ou use prefixo `/adny`:
+Com **`GEMINI_API_KEY`** no `.env`, pode perguntar em **frase livre** depois do gatilho (a IA só mapeia para consultas já existentes; os dados vêm da planilha).
 
 | Exemplo | Ação |
 |--------|------|
+| `ADNY quantos pedidos na arte?` | Via Gemini → contagem por etapa |
+| `ADNY entregas essa semana?` | Via Gemini → período seg–dom |
 | `ADNY abertos` | Lista pedidos em aberto |
 | `ADNY busca Maria` | Busca por termo |
 | `ADNY pedido 1234` | Detalhe de um pedido |

@@ -1,4 +1,5 @@
 const { gasGet } = require('../services/gasGet');
+const { runNaturalLanguage, segundaDomingoISO } = require('../ai/nlIntent');
 const {
   formatListaAbertos,
   formatBuscaMultipla,
@@ -45,32 +46,11 @@ function stripTrigger(text, triggers) {
   return s.trim();
 }
 
-/** Segunda a domingo da semana calendário que contém `d` (horário local do servidor). */
-function segundaDomingoISO(d = new Date()) {
-  const day = d.getDay();
-  const diffMon = day === 0 ? -6 : 1 - day;
-  const mon = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  mon.setDate(mon.getDate() + diffMon);
-  mon.setHours(0, 0, 0, 0);
-  const sun = new Date(mon);
-  sun.setDate(sun.getDate() + 6);
-  const pad = (n) => String(n).padStart(2, '0');
-  const ymd = (x) => `${x.getFullYear()}-${pad(x.getMonth() + 1)}-${pad(x.getDate())}`;
-  return { dataInicio: ymd(mon), dataFim: ymd(sun) };
-}
-
-function shouldHandle(config, text) {
-  return mentionsTrigger(text, config.botTriggers);
-}
-
-async function runCommand(config, text) {
-  const triggers = config.botTriggers;
-  const rest = stripTrigger(text, triggers);
+/**
+ * Comandos explícitos (sem IA). Retorna null se nada casou — aí pode tentar linguagem natural.
+ */
+async function tryStructuredCommand(config, rest) {
   const lower = rest.toLowerCase();
-
-  if (!rest || lower === 'ajuda' || lower === 'help' || lower === '?') {
-    return helpText();
-  }
 
   if (lower === 'abertos' || lower === 'fila' || lower === 'aberto' || lower === 'em aberto') {
     const data = await gasGet(config, 'listarPedidos', { filtro: '' });
@@ -141,6 +121,37 @@ async function runCommand(config, text) {
     return formatRelatorio(data);
   }
 
+  return null;
+}
+
+function shouldHandle(config, text) {
+  return mentionsTrigger(text, config.botTriggers);
+}
+
+async function runCommand(config, text) {
+  const triggers = config.botTriggers;
+  const rest = stripTrigger(text, triggers);
+  const lower = rest.toLowerCase();
+
+  if (!rest || lower === 'ajuda' || lower === 'help' || lower === '?') {
+    return helpText();
+  }
+
+  const structured = await tryStructuredCommand(config, rest);
+  if (structured !== null) {
+    return structured;
+  }
+
+  if (config.naturalLanguageEnabled) {
+    try {
+      const nl = await runNaturalLanguage(config, rest);
+      if (nl) return nl;
+    } catch (e) {
+      console.error('IA (Gemini):', e);
+      return `Falha na interpretação por IA: ${e.message || e}\n\nTente um comando fixo ou veja *ajuda*.`;
+    }
+  }
+
   const termoDireto = rest.trim();
   if (termoDireto.length >= 2) {
     const dataUm = await gasGet(config, 'buscarPedido', { termo: termoDireto });
@@ -154,7 +165,10 @@ async function runCommand(config, text) {
     }
   }
 
-  return `Não entendi. ${helpText()}`;
+  if (config.naturalLanguageEnabled) {
+    return `Não entendi. ${helpText()}`;
+  }
+  return `Não entendi. Configure *GEMINI_API_KEY* no .env para perguntas em linguagem natural, ou use:\n${helpText()}`;
 }
 
-module.exports = { shouldHandle, runCommand };
+module.exports = { shouldHandle, runCommand, stripTrigger };
