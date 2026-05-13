@@ -1,5 +1,7 @@
 require('dotenv').config();
 
+const { loadProjectContextSnippet } = require('./ai/projectContext');
+
 function parseList(raw) {
   if (!raw || !String(raw).trim()) return [];
   return String(raw)
@@ -20,6 +22,9 @@ function loadConfig() {
   const organicRaw = String(process.env.GEMINI_ORGANIC_RESPONSES ?? 'true').toLowerCase();
   const geminiOrganicResponses = organicRaw !== 'false' && organicRaw !== '0';
 
+  const { snippet: projectContextSnippet, sourceLabel: projectContextSourceLabel } =
+    loadProjectContextSnippet(process.env);
+
   return {
     port: Number(process.env.PORT) || 3010,
     allowedGroupIds: new Set(allowed),
@@ -31,6 +36,8 @@ function loadConfig() {
     geminiModel,
     geminiOrganicResponses,
     naturalLanguageEnabled: geminiKey.length >= 10,
+    projectContextSnippet,
+    projectContextSourceLabel,
   };
 }
 

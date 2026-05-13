@@ -1,5 +1,6 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { generateWithModelFallback } = require('./geminiClient');
+const { buildOrganicContextBlock } = require('./projectContext');
 
 const ORGANIC_SYSTEM = `Voce e a ADNY, assistente da confeccao no WhatsApp. Responda em portugues brasileiro, tom caloroso, direto e profissional.
 
@@ -44,11 +45,13 @@ async function synthesizeOrganicAnswer(config, userQuestion, envelope) {
     truncateJson(payload, 28000),
   ].join('\n');
 
+  const organicSystem = `${ORGANIC_SYSTEM}${buildOrganicContextBlock(config)}`;
+
   const { result, modelUsed } = await generateWithModelFallback(
     genAI,
     config.geminiModel,
     {
-      systemInstruction: ORGANIC_SYSTEM,
+      systemInstruction: organicSystem,
       generationConfig: {
         temperature: 0.55,
         maxOutputTokens: 2048,

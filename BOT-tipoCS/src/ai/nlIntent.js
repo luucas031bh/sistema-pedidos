@@ -3,6 +3,7 @@ const { gasGet } = require('../services/gasGet');
 const { generateWithModelFallback } = require('./geminiClient');
 const { synthesizeOrganicAnswer } = require('./organicReply');
 const { formatIntentFallback } = require('../format/respostas');
+const { buildRouterContextBlock } = require('./projectContext');
 
 const ALLOWED_ACTIONS = new Set([
   'none',
@@ -28,10 +29,11 @@ function segundaDomingoISO(d = new Date()) {
   return { dataInicio: ymd(mon), dataFim: ymd(sun) };
 }
 
-function buildSystemPrompt() {
+function buildSystemPrompt(config) {
   const now = new Date();
   const iso = (d) => d.toISOString().slice(0, 10);
   const { dataInicio: seg, dataFim: dom } = segundaDomingoISO(now);
+  const codeRef = buildRouterContextBlock(config || {});
   return `Voce e um ROTEADOR de intencoes para consultas de PEDIDOS (confeccao). Nao invente numeros: so escolha uma acao e parametros.
 
 Responda APENAS com um objeto JSON valido (sem markdown, sem texto fora do JSON).
@@ -55,7 +57,7 @@ Exemplos:
 - "entregas essa semana" -> listarPedidosEntregaPeriodo com seg e dom acima
 - "pecas por tamanho malha preta em aberto" -> agregarPecasAbertos cor preta
 - "lista aberta" / "fila" -> listarPedidos filtro vazio
-- "relatorio de janeiro" sem datas claras -> none pedindo as duas datas YYYY-MM-DD`;
+- "relatorio de janeiro" sem datas claras -> none pedindo as duas datas YYYY-MM-DD`${codeRef}`;
 }
 
 function safeJsonParse(raw) {
@@ -186,7 +188,7 @@ async function runNaturalLanguage(config, userQuestion) {
     genAI,
     config.geminiModel,
     {
-      systemInstruction: `${buildSystemPrompt()}\n\nResponda APENAS um objeto JSON valido, sem markdown nem texto fora do JSON.`,
+      systemInstruction: `${buildSystemPrompt(config)}\n\nResponda APENAS um objeto JSON valido, sem markdown nem texto fora do JSON.`,
       generationConfig: {
         temperature: 0.12,
         maxOutputTokens: 1024,

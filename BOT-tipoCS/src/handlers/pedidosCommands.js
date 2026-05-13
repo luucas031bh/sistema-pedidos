@@ -43,7 +43,10 @@ function stripTrigger(text, triggers) {
   return s.trim();
 }
 
-/** Frases tipo "lista de pedidos para entregar essa semana" — sem roteador Gemini. */
+const NL_ROUTER_PARSE_FAIL =
+  'Não consegui interpretar a resposta da IA. Tente de novo ou use *ajuda*.';
+
+/** Frases tipo "lista de pedidos para entregar essa semana" — fallback sem roteador Gemini. */
 function matchEntregaEstaSemana(lower) {
   if (/\bentregas?\s+semana\b/i.test(lower) || lower === 'entrega semana') return true;
   const semanaAtual = /\b(es[st]a)\s+semana\b/i.test(lower);
@@ -143,6 +146,13 @@ function shouldHandle(config, text) {
   return mentionsTrigger(text, config.botTriggers);
 }
 
+async function replyFromStructured(config, rest, structured) {
+  if (config.naturalLanguageEnabled && config.geminiOrganicResponses) {
+    return finalizeOrganic(config, rest, structured);
+  }
+  return structuredPlainText(structured);
+}
+
 async function runCommand(config, text) {
   const triggers = config.botTriggers;
   const rest = stripTrigger(text, triggers);
@@ -152,21 +162,17 @@ async function runCommand(config, text) {
     return helpText();
   }
 
-  const structured = await tryStructuredCommand(config, rest);
-  if (structured !== null) {
-    if (config.naturalLanguageEnabled && config.geminiOrganicResponses) {
-      const out = await finalizeOrganic(config, rest, structured);
-      return out;
-    }
-    return structuredPlainText(structured);
-  }
-
+  /** Com chave Gemini: roteador primeiro; comandos fixos só em fallback. */
+  let nlError = null;
   if (config.naturalLanguageEnabled) {
     try {
       const nl = await runNaturalLanguage(config, rest);
-      if (nl) return nl;
+      if (nl && nl !== NL_ROUTER_PARSE_FAIL) {
+        return nl;
+      }
     } catch (e) {
       console.error('IA (Gemini):', e);
+      nlError = e;
       if (matchEntregaEstaSemana(lower)) {
         try {
           const { dataInicio, dataFim } = segundaDomingoISO(new Date());
@@ -191,8 +197,12 @@ async function runCommand(config, text) {
           '*Sem IA:* `ADNY entregas semana` ou pergunte de novo com *lista* + *pedidos* + *entrega* + *essa semana*.',
         ].join('\n');
       }
-      return `Falha na interpretação por IA:\n${msg.slice(0, 500)}\n\nTente *ajuda* ou comandos fixos.`;
     }
+  }
+
+  const structured = await tryStructuredCommand(config, rest);
+  if (structured !== null) {
+    return replyFromStructured(config, rest, structured);
   }
 
   const termoDireto = rest.trim();
@@ -216,6 +226,11 @@ async function runCommand(config, text) {
     if (dataUm.sucesso === false && dataUm.erro) {
       return `Não encontrado: ${dataUm.erro}\n\n${helpText()}`;
     }
+  }
+
+  if (nlError) {
+    const msg = String(nlError && nlError.message ? nlError.message : nlError);
+    return `Falha na interpretação por IA:\n${msg.slice(0, 500)}\n\nTente *ajuda* ou comandos fixos.`;
   }
 
   if (config.naturalLanguageEnabled) {
