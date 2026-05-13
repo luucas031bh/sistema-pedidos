@@ -57,7 +57,7 @@ Exemplos:
 - "entregas essa semana" -> listarPedidosEntregaPeriodo com seg e dom acima
 - "pecas por tamanho malha preta em aberto" -> agregarPecasAbertos cor preta
 - "lista aberta" / "fila" -> listarPedidos filtro vazio
-- "relatorio de janeiro" sem datas claras -> none pedindo as duas datas YYYY-MM-DD`${codeRef}`;
+- "relatorio de janeiro" sem datas claras -> none pedindo as duas datas YYYY-MM-DD${codeRef}`;
 }
 
 function safeJsonParse(raw) {
