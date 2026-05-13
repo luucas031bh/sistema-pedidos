@@ -16,7 +16,9 @@ function loadConfig() {
   if (triggers.length === 0) triggers.push('ADNY');
 
   const geminiKey = (process.env.GEMINI_API_KEY || '').trim();
-  const geminiModel = (process.env.GEMINI_MODEL || 'gemini-2.0-flash').trim();
+  const geminiModel = (process.env.GEMINI_MODEL || 'gemini-2.5-flash').trim();
+  const organicRaw = String(process.env.GEMINI_ORGANIC_RESPONSES ?? 'true').toLowerCase();
+  const geminiOrganicResponses = organicRaw !== 'false' && organicRaw !== '0';
 
   return {
     port: Number(process.env.PORT) || 3010,
@@ -27,6 +29,7 @@ function loadConfig() {
     appsScriptToken: (process.env.APPS_SCRIPT_TOKEN || '').trim(),
     geminiApiKey: geminiKey,
     geminiModel,
+    geminiOrganicResponses,
     naturalLanguageEnabled: geminiKey.length >= 10,
   };
 }

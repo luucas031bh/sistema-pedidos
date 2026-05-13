@@ -1,13 +1,10 @@
 const { gasGet } = require('../services/gasGet');
-const { runNaturalLanguage, segundaDomingoISO } = require('../ai/nlIntent');
+const { runNaturalLanguage, segundaDomingoISO, finalizeOrganic } = require('../ai/nlIntent');
 const {
-  formatListaAbertos,
   formatBuscaMultipla,
   formatBuscaUm,
-  formatRelatorio,
-  formatContagemEtapa,
   formatEntregasPeriodo,
-  formatAgregacaoTamanhos,
+  formatIntentFallback,
   helpText,
 } = require('../format/respostas');
 
@@ -46,31 +43,43 @@ function stripTrigger(text, triggers) {
   return s.trim();
 }
 
+/** Frases tipo "lista de pedidos para entregar essa semana" — sem roteador Gemini. */
+function matchEntregaEstaSemana(lower) {
+  if (/\bentregas?\s+semana\b/i.test(lower) || lower === 'entrega semana') return true;
+  const semanaAtual = /\b(es[st]a)\s+semana\b/i.test(lower);
+  const intencaoEntrega = /(entregas?|entregar|entregue|entregues|entreguem)/i.test(lower);
+  const pedidoOuLista = /\b(pedidos?|lista)\b/i.test(lower);
+  if (semanaAtual && intencaoEntrega) return true;
+  if (/\bsemana\b/i.test(lower) && intencaoEntrega && pedidoOuLista) return true;
+  return false;
+}
+
 /**
- * Comandos explícitos (sem IA). Retorna null se nada casou — aí pode tentar linguagem natural.
+ * Comandos explícitos. Retorna envelope para resposta orgânica ou null.
+ * @returns {Promise<null | { type: 'text', text: string } | { type: 'organic', kind: string, facts: object }>}
  */
 async function tryStructuredCommand(config, rest) {
   const lower = rest.toLowerCase();
 
   if (lower === 'abertos' || lower === 'fila' || lower === 'aberto' || lower === 'em aberto') {
     const data = await gasGet(config, 'listarPedidos', { filtro: '' });
-    if (!data.sucesso) return `Erro: ${data.erro || 'listar pedidos'}`;
-    return formatListaAbertos(data.pedidos || []);
+    if (!data.sucesso) return { type: 'text', text: `Erro: ${data.erro || 'listar pedidos'}` };
+    return { type: 'organic', kind: 'lista_pedidos', facts: data };
   }
 
   const mBusca = lower.match(/^busca(r)?\s+(.+)$/i);
   if (mBusca) {
     const termo = mBusca[2].trim();
-    if (!termo) return 'Informe o termo: *busca (nome, telefone, ID…)*';
+    if (!termo) return { type: 'text', text: 'Informe o termo: *busca (nome, telefone, ID…)*' };
     const data = await gasGet(config, 'buscarPedidos', { termo });
-    return formatBuscaMultipla(data);
+    return { type: 'organic', kind: 'busca_pedidos', facts: data };
   }
 
   const mPedido = lower.match(/^pedido\s+(.+)$/i);
   if (mPedido) {
     const termo = mPedido[1].trim();
     const data = await gasGet(config, 'buscarPedido', { termo });
-    return formatBuscaUm(data);
+    return { type: 'organic', kind: 'detalhe_pedido', facts: data };
   }
 
   const mEtapa = lower.match(/^etapa\s+(.+)$/i);
@@ -80,20 +89,20 @@ async function tryStructuredCommand(config, rest) {
       etapa: etapaNome,
       excluirCancelados: 'true',
     });
-    return formatContagemEtapa(data);
+    return { type: 'organic', kind: 'contagem_etapa_producao', facts: data };
   }
 
-  if (/\bentregas?\s+semana\b/i.test(lower) || lower === 'entrega semana') {
+  if (matchEntregaEstaSemana(lower)) {
     const { dataInicio, dataFim } = segundaDomingoISO(new Date());
     const data = await gasGet(config, 'listarPedidosEntregaPeriodo', { dataInicio, dataFim });
-    return formatEntregasPeriodo(data);
+    return { type: 'organic', kind: 'entregas_no_periodo', facts: data };
   }
 
   const mTam = lower.match(/^tamanhos(?:\s+(.+))?$/i);
   if (mTam) {
     const corExtra = (mTam[1] || '').trim();
     const data = await gasGet(config, 'agregarPecasAbertos', { cor: corExtra });
-    return formatAgregacaoTamanhos(data);
+    return { type: 'organic', kind: 'pecas_por_tamanho_abertos', facts: data };
   }
 
   const mRel = lower.match(
@@ -107,7 +116,7 @@ async function tryStructuredCommand(config, rest) {
       dimensao: dimensao || 'tipoMalha',
       nivel: 'item',
     });
-    return formatRelatorio(data);
+    return { type: 'organic', kind: 'relatorio_periodo', facts: data };
   }
 
   if (/^\d{4}-\d{2}-\d{2}\s+\d{4}-\d{2}-\d{2}$/.test(lower)) {
@@ -118,10 +127,16 @@ async function tryStructuredCommand(config, rest) {
       dimensao: 'tipoMalha',
       nivel: 'item',
     });
-    return formatRelatorio(data);
+    return { type: 'organic', kind: 'relatorio_periodo', facts: data };
   }
 
   return null;
+}
+
+/** Se nao houver Gemini ou respostas organicas desligadas, devolve texto em formato lista. */
+function structuredPlainText(exec) {
+  if (exec.type === 'text') return exec.text;
+  return formatIntentFallback(exec.kind, exec.facts);
 }
 
 function shouldHandle(config, text) {
@@ -139,7 +154,11 @@ async function runCommand(config, text) {
 
   const structured = await tryStructuredCommand(config, rest);
   if (structured !== null) {
-    return structured;
+    if (config.naturalLanguageEnabled && config.geminiOrganicResponses) {
+      const out = await finalizeOrganic(config, rest, structured);
+      return out;
+    }
+    return structuredPlainText(structured);
   }
 
   if (config.naturalLanguageEnabled) {
@@ -148,16 +167,50 @@ async function runCommand(config, text) {
       if (nl) return nl;
     } catch (e) {
       console.error('IA (Gemini):', e);
-      return `Falha na interpretação por IA: ${e.message || e}\n\nTente um comando fixo ou veja *ajuda*.`;
+      if (matchEntregaEstaSemana(lower)) {
+        try {
+          const { dataInicio, dataFim } = segundaDomingoISO(new Date());
+          const data = await gasGet(config, 'listarPedidosEntregaPeriodo', { dataInicio, dataFim });
+          const exec = { type: 'organic', kind: 'entregas_no_periodo', facts: data };
+          const lista = config.geminiOrganicResponses
+            ? await finalizeOrganic(config, rest, exec).catch(() => formatEntregasPeriodo(data))
+            : formatEntregasPeriodo(data);
+          return `${lista}\n\n_(IA indisponível; dados acima vêm da planilha.)_`;
+        } catch (e2) {
+          console.error('Fallback entrega semana:', e2);
+        }
+      }
+      const msg = String(e && e.message ? e.message : e);
+      if (/429|quota|Quota|RESOURCE_EXHAUSTED/i.test(msg)) {
+        return [
+          '*Cota do Gemini esgotada ou modelo sem uso gratuito (429).*',
+          '· No `.env` use `GEMINI_MODEL=gemini-2.5-flash` ou `gemini-2.5-flash-lite` e reinicie;',
+          '· Ou crie outra chave / ative faturamento em Google AI Studio.',
+          '· `GEMINI_ORGANIC_RESPONSES=false` reduz chamadas (só roteador ou listas).',
+          '',
+          '*Sem IA:* `ADNY entregas semana` ou pergunte de novo com *lista* + *pedidos* + *entrega* + *essa semana*.',
+        ].join('\n');
+      }
+      return `Falha na interpretação por IA:\n${msg.slice(0, 500)}\n\nTente *ajuda* ou comandos fixos.`;
     }
   }
 
   const termoDireto = rest.trim();
   if (termoDireto.length >= 2) {
     const dataUm = await gasGet(config, 'buscarPedido', { termo: termoDireto });
-    if (dataUm.sucesso && dataUm.pedido) return formatBuscaUm(dataUm);
+    if (dataUm.sucesso && dataUm.pedido) {
+      const exec = { type: 'organic', kind: 'detalhe_pedido', facts: dataUm };
+      if (config.naturalLanguageEnabled && config.geminiOrganicResponses) {
+        return finalizeOrganic(config, rest, exec);
+      }
+      return formatBuscaUm(dataUm);
+    }
     const dataMulti = await gasGet(config, 'buscarPedidos', { termo: termoDireto });
     if (dataMulti.sucesso && (dataMulti.pedidos || []).length > 0) {
+      const exec = { type: 'organic', kind: 'busca_pedidos', facts: dataMulti };
+      if (config.naturalLanguageEnabled && config.geminiOrganicResponses) {
+        return finalizeOrganic(config, rest, exec);
+      }
       return formatBuscaMultipla(dataMulti);
     }
     if (dataUm.sucesso === false && dataUm.erro) {

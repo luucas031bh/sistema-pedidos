@@ -46,7 +46,7 @@ Com **`GEMINI_API_KEY`** configurada ([Google AI Studio](https://aistudio.google
 
 O modelo **só escolhe** qual consulta GET fazer; **valores e listas** vêm da planilha (não inventamos totais no lugar do servidor).
 
-Opcional: `GEMINI_MODEL` (padrão `gemini-2.0-flash`). Se o JSON falhar, use os comandos fixos ou `ajuda`.
+Opcional: `GEMINI_MODEL` (padrão no código: **`gemini-2.5-flash`**). Alternativas comuns: `gemini-2.5-flash-lite`, `gemini-flash-latest`. Modelos antigos (ex. `gemini-1.5-flash`) podem retornar **404** — veja [deprecações](https://ai.google.dev/gemini-api/docs/deprecations). Se aparecer **429 / quota**, troque o modelo ou a chave. Frases como *lista de pedidos para entregar essa semana* são reconhecidas **sem** chamar a IA.
 
 ## Primeiro uso (QR)
 
@@ -62,8 +62,8 @@ Com **`GEMINI_API_KEY`** no `.env`, pode perguntar em **frase livre** depois do 
 
 | Exemplo | Ação |
 |--------|------|
-| `ADNY quantos pedidos na arte?` | Via Gemini → contagem por etapa |
-| `ADNY entregas essa semana?` | Via Gemini → período seg–dom |
+| `ADNY lista de pedidos para entregar essa semana` | **Sem IA** — mesma consulta que `entregas semana` |
+| `ADNY quantos pedidos na arte?` | Com Gemini: contagem por etapa (ou use `ADNY etapa Arte` sem IA) |
 | `ADNY abertos` | Lista pedidos em aberto |
 | `ADNY busca Maria` | Busca por termo |
 | `ADNY pedido 1234` | Detalhe de um pedido |
@@ -89,5 +89,7 @@ O `Code.gs` passa a expor (GET):
 
 ## Problemas comuns
 
+- **404 / modelo não encontrado**: use `GEMINI_MODEL=gemini-2.5-flash` (ou `gemini-2.5-flash-lite`) no `.env`; evite `gemini-1.5-flash` (removido/alias inválido em muitas contas). [Deprecações e modelos](https://ai.google.dev/gemini-api/docs/deprecations).
+- **429 / quota do Gemini**: modelo mais leve (`gemini-2.5-flash-lite`) ou outra chave; entregas da semana também funcionam **sem** IA (tabela acima).
 - **Resposta não é JSON**: URL errada ou Web App não implantado como acesso que retorna JSON.
 - **Ação inválida**: Web App ainda na versão antiga do `Code.gs` — republicar implantação.

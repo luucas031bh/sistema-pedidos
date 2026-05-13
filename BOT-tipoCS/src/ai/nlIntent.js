@@ -1,14 +1,8 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { gasGet } = require('../services/gasGet');
-const {
-  formatListaAbertos,
-  formatBuscaMultipla,
-  formatBuscaUm,
-  formatRelatorio,
-  formatContagemEtapa,
-  formatEntregasPeriodo,
-  formatAgregacaoTamanhos,
-} = require('../format/respostas');
+const { generateWithModelFallback } = require('./geminiClient');
+const { synthesizeOrganicAnswer } = require('./organicReply');
+const { formatIntentFallback } = require('../format/respostas');
 
 const ALLOWED_ACTIONS = new Set([
   'none',
@@ -88,14 +82,18 @@ function pickParams(obj, keys) {
   return out;
 }
 
-async function executeIntent(config, intent) {
+/**
+ * Executa intenção: busca dados no GAS. Retorno para resposta orgânica ou texto direto.
+ * @returns {Promise<{ type: 'text', text: string } | { type: 'organic', kind: string, facts: object }>}
+ */
+async function executeIntentData(config, intent) {
   const action = intent && intent.action;
   if (!ALLOWED_ACTIONS.has(action)) {
-    return 'Resposta da IA inválida (ação desconhecida). Use comandos fixos ou tente de novo.';
+    return { type: 'text', text: 'Resposta da IA inválida (ação desconhecida). Use comandos fixos ou tente de novo.' };
   }
   if (action === 'none') {
     const r = intent.reply_pt || intent.reply || 'Não consegui interpretar. Reformule ou use *ajuda*.';
-    return String(r).slice(0, 3500);
+    return { type: 'text', text: String(r).slice(0, 3500) };
   }
 
   let params = {};
@@ -104,48 +102,48 @@ async function executeIntent(config, intent) {
       case 'contarPorEtapaProducao': {
         params = pickParams(intent, ['etapa', 'apenasAbertosOperacional', 'excluirCancelados']);
         if (!params.etapa) {
-          return 'Faltou a etapa de produção (ex.: Arte).';
+          return { type: 'text', text: 'Faltou a etapa de produção (ex.: Arte).' };
         }
         if (!params.excluirCancelados) params.excluirCancelados = 'true';
         const data = await gasGet(config, action, params);
-        return formatContagemEtapa(data);
+        return { type: 'organic', kind: 'contagem_etapa_producao', facts: data };
       }
       case 'listarPedidosEntregaPeriodo': {
         params = pickParams(intent, ['dataInicio', 'dataFim']);
         if (!params.dataInicio || !params.dataFim) {
-          return 'Faltou período de entrega (data início e fim).';
+          return { type: 'text', text: 'Faltou período de entrega (data início e fim).' };
         }
         const data = await gasGet(config, action, params);
-        return formatEntregasPeriodo(data);
+        return { type: 'organic', kind: 'entregas_no_periodo', facts: data };
       }
       case 'agregarPecasAbertos': {
         params = pickParams(intent, ['cor', 'corMalha']);
         if (params.corMalha && !params.cor) params.cor = params.corMalha;
         const data = await gasGet(config, 'agregarPecasAbertos', { cor: params.cor || '' });
-        return formatAgregacaoTamanhos(data);
+        return { type: 'organic', kind: 'pecas_por_tamanho_abertos', facts: data };
       }
       case 'listarPedidos': {
         params = pickParams(intent, ['filtro']);
         const data = await gasGet(config, action, { filtro: params.filtro || '' });
-        if (!data.sucesso) return `Erro: ${data.erro || 'listar'}`;
-        return formatListaAbertos(data.pedidos || []);
+        if (!data.sucesso) return { type: 'text', text: `Erro: ${data.erro || 'listar'}` };
+        return { type: 'organic', kind: 'lista_pedidos', facts: data };
       }
       case 'buscarPedidos': {
         params = pickParams(intent, ['termo']);
-        if (!params.termo) return 'Informe o que buscar (nome, telefone, ID…).';
+        if (!params.termo) return { type: 'text', text: 'Informe o que buscar (nome, telefone, ID…).' };
         const data = await gasGet(config, action, params);
-        return formatBuscaMultipla(data);
+        return { type: 'organic', kind: 'busca_pedidos', facts: data };
       }
       case 'buscarPedido': {
         params = pickParams(intent, ['termo']);
-        if (!params.termo) return 'Informe o pedido (ID, nome ou telefone).';
+        if (!params.termo) return { type: 'text', text: 'Informe o pedido (ID, nome ou telefone).' };
         const data = await gasGet(config, action, params);
-        return formatBuscaUm(data);
+        return { type: 'organic', kind: 'detalhe_pedido', facts: data };
       }
       case 'relatorioPedidos': {
         params = pickParams(intent, ['dataInicio', 'dataFim', 'dimensao', 'nivel']);
         if (!params.dataInicio || !params.dataFim) {
-          return 'Informe o período do relatório (duas datas YYYY-MM-DD).';
+          return { type: 'text', text: 'Informe o período do relatório (duas datas YYYY-MM-DD).' };
         }
         const data = await gasGet(config, action, {
           dataInicio: params.dataInicio,
@@ -153,18 +151,28 @@ async function executeIntent(config, intent) {
           dimensao: params.dimensao || 'tipoMalha',
           nivel: params.nivel || 'item',
         });
-        return formatRelatorio(data);
+        return { type: 'organic', kind: 'relatorio_periodo', facts: data };
       }
       default:
-        return 'Ação não suportada.';
+        return { type: 'text', text: 'Ação não suportada.' };
     }
   } catch (e) {
-    return `Erro ao consultar: ${e.message || e}`;
+    return { type: 'text', text: `Erro ao consultar: ${e.message || e}` };
   }
 }
 
+async function finalizeOrganic(config, userQuestion, exec) {
+  if (exec.type === 'text') return exec.text;
+  const organic = await synthesizeOrganicAnswer(config, userQuestion, {
+    kind: exec.kind,
+    facts: exec.facts,
+  });
+  if (organic) return organic;
+  return formatIntentFallback(exec.kind, exec.facts);
+}
+
 /**
- * Interpreta pergunta em linguagem natural e executa somente GET no Apps Script.
+ * Interpreta pergunta em linguagem natural, executa GET no Apps Script e devolve resposta organica (Gemini) quando possivel.
  */
 async function runNaturalLanguage(config, userQuestion) {
   if (!config.geminiApiKey || !config.naturalLanguageEnabled) {
@@ -172,24 +180,44 @@ async function runNaturalLanguage(config, userQuestion) {
   }
 
   const genAI = new GoogleGenerativeAI(config.geminiApiKey);
-  const model = genAI.getGenerativeModel({
-    model: config.geminiModel,
-    systemInstruction: `${buildSystemPrompt()}\n\nResponda APENAS um objeto JSON valido, sem markdown nem texto fora do JSON.`,
-    generationConfig: {
-      temperature: 0.12,
-      maxOutputTokens: 1024,
-    },
-  });
+  const userPrompt = `Pergunta do usuario (apos o gatilho do bot):\n"""${String(userQuestion).slice(0, 2000)}"""`;
 
-  const result = await model.generateContent(
-    `Pergunta do usuario (apos o gatilho do bot):\n"""${String(userQuestion).slice(0, 2000)}"""`,
+  const { result, modelUsed } = await generateWithModelFallback(
+    genAI,
+    config.geminiModel,
+    {
+      systemInstruction: `${buildSystemPrompt()}\n\nResponda APENAS um objeto JSON valido, sem markdown nem texto fora do JSON.`,
+      generationConfig: {
+        temperature: 0.12,
+        maxOutputTokens: 1024,
+      },
+    },
+    userPrompt,
   );
+  if (modelUsed !== config.geminiModel) {
+    console.log(`Gemini (roteador): fallback ${modelUsed} (config: ${config.geminiModel})`);
+  }
+
   const raw = result.response.text();
   const intent = safeJsonParse(raw);
   if (!intent || typeof intent.action !== 'string') {
     return 'Não consegui interpretar a resposta da IA. Tente de novo ou use *ajuda*.';
   }
-  return executeIntent(config, intent);
+  const exec = await executeIntentData(config, intent);
+  return finalizeOrganic(config, userQuestion, exec);
 }
 
-module.exports = { runNaturalLanguage, executeIntent, segundaDomingoISO };
+/** Compat: executa e devolve so texto (lista) sem segunda chamada Gemini. */
+async function executeIntent(config, intent) {
+  const exec = await executeIntentData(config, intent);
+  if (exec.type === 'text') return exec.text;
+  return formatIntentFallback(exec.kind, exec.facts);
+}
+
+module.exports = {
+  runNaturalLanguage,
+  executeIntent,
+  executeIntentData,
+  finalizeOrganic,
+  segundaDomingoISO,
+};

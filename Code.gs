@@ -1062,12 +1062,24 @@ function listarPedidosEntregaPeriodo(param) {
       if (!dEnt) continue;
       var tEnt = inicioDoDiaTimestamp(dEnt);
       if (tEnt >= t0 && tEnt <= t1) {
+        var rp = p.resumoProduto && typeof p.resumoProduto === 'object' ? p.resumoProduto : {};
+        var prodResumo = [
+          String(rp.tipoPeca || '').trim(),
+          String(rp.corMalha || '').trim(),
+          String(rp.tipoMalha || '').trim()
+        ]
+          .filter(function(x) {
+            return x;
+          })
+          .join(' · ');
         out.push({
           id: p.id,
+          idBusca: p.idBusca || '',
           cliente: p.cliente && p.cliente.nome ? p.cliente.nome : '',
           entrega: rawEnt,
           statusOperacional: normalizarStatusOperacional(p.statusOperacional),
-          etapaProducaoAtual: p.etapaProducaoAtual || ''
+          etapaProducaoAtual: p.etapaProducaoAtual || '',
+          resumoProduto: prodResumo
         });
       }
     }

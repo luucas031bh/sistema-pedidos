@@ -91,10 +91,14 @@ function formatEntregasPeriodo(data) {
   }
   const max = 40;
   const slice = ped.slice(0, max);
-  const linhas = slice.map(
-    (p, i) =>
-      `${i + 1}. ID ${p.id} · ${p.cliente || '—'} · entrega ${p.entrega} · ${p.statusOperacional || '—'} · ${p.etapaProducaoAtual || '—'}`,
-  );
+  const linhas = slice.map((p, i) => {
+    const busca = p.idBusca != null && String(p.idBusca).trim() !== '' ? String(p.idBusca).trim() : '—';
+    const prod =
+      p.resumoProduto != null && String(p.resumoProduto).trim() !== ''
+        ? String(p.resumoProduto).trim()
+        : '—';
+    return `${i + 1}. *Cliente:* ${p.cliente || '—'} | *ID:* ${p.id} | *Busca:* ${busca} | *Status:* ${p.statusOperacional || '—'} | *Prod:* ${prod}\n   _Entrega:_ ${p.entrega}`;
+  });
   let out = `*Entregas no período* (${data.periodo?.inicio} → ${data.periodo?.fim})\nTotal: ${ped.length}\n\n${linhas.join('\n')}`;
   if (ped.length > max) out += `\n\n_(Mostrando ${max} de ${ped.length}.)_`;
   return out;
@@ -114,18 +118,43 @@ function formatAgregacaoTamanhos(data) {
   return `*Peças por tamanho* (pedidos em aberto)${filtro}Total: *${data.totalPecas}* pç · Pedidos: *${data.pedidosComPeca}*\n\n${linhas.join('\n')}`;
 }
 
+/** Resposta em lista (fallback se a sintese organica falhar). */
+function formatIntentFallback(kind, facts) {
+  if (!facts || typeof facts !== 'object') return 'Sem dados.';
+  switch (kind) {
+    case 'contagem_etapa_producao':
+      return formatContagemEtapa(facts);
+    case 'entregas_no_periodo':
+      return formatEntregasPeriodo(facts);
+    case 'pecas_por_tamanho_abertos':
+      return formatAgregacaoTamanhos(facts);
+    case 'lista_pedidos':
+      return formatListaAbertos(facts.pedidos || []);
+    case 'busca_pedidos':
+      return formatBuscaMultipla(facts);
+    case 'detalhe_pedido':
+      return formatBuscaUm(facts);
+    case 'relatorio_periodo':
+      return formatRelatorio(facts);
+    default:
+      return JSON.stringify(facts).slice(0, 2000);
+  }
+}
+
 function helpText() {
   return [
     '*Consulta sistema-pedidos (somente leitura)*',
     'Mencione o gatilho (ex.: ADNY) e:',
     '',
-    '*Linguagem natural (Gemini):* se `GEMINI_API_KEY` estiver no .env, pode perguntar de forma livre, ex.:',
+    '*Com Gemini (`GEMINI_API_KEY`):* perguntas em linguagem natural e *respostas em texto humano* (usa so dados da planilha). Desligue com `GEMINI_ORGANIC_RESPONSES=false`.',
+    '',
+    '*Exemplos de pergunta:*',
     '· "quantos pedidos estão na etapa Arte?"',
     '· "quais entregas essa semana?"',
     '· "soma de peças por tamanho em aberto na cor preta"',
-    '(A IA só escolhe a consulta; os números vêm da planilha.)',
     '',
-    '*Comandos fixos (rápidos, sem IA):*',
+    '*Comandos fixos:*',
+    '· Frases com *lista/pedidos* + *entregar* + *esta/essa semana* → entregas da semana',
     '· `adny abertos` — fila em aberto',
     '· `adny busca João` ou `adny busca 1234`',
     '· `adny pedido 1234` — detalhe de um pedido',
@@ -147,5 +176,6 @@ module.exports = {
   formatContagemEtapa,
   formatEntregasPeriodo,
   formatAgregacaoTamanhos,
+  formatIntentFallback,
   helpText,
 };
