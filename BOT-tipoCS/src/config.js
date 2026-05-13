@@ -18,7 +18,19 @@ function loadConfig() {
   if (triggers.length === 0) triggers.push('ADNY');
 
   const geminiKey = (process.env.GEMINI_API_KEY || '').trim();
-  const geminiModel = (process.env.GEMINI_MODEL || 'gemini-2.5-flash').trim();
+  const rawGeminiModel = (process.env.GEMINI_MODEL || 'gemini-2.5-flash').trim().toLowerCase();
+  /** Modelos 1.5 costumam retornar 404 na API atual; evita fallback silencioso em todo restart. */
+  const deprecatedGeminiModel = {
+    'gemini-1.5-flash': 'gemini-2.5-flash',
+    'gemini-1.5-flash-8b': 'gemini-2.5-flash-lite',
+    'gemini-1.5-pro': 'gemini-2.5-flash',
+  };
+  const geminiModel = deprecatedGeminiModel[rawGeminiModel] || process.env.GEMINI_MODEL?.trim() || 'gemini-2.5-flash';
+  if (deprecatedGeminiModel[rawGeminiModel]) {
+    console.warn(
+      `[config] GEMINI_MODEL "${process.env.GEMINI_MODEL}" indisponível na API; usando "${geminiModel}". Atualize o .env.`,
+    );
+  }
   const organicRaw = String(process.env.GEMINI_ORGANIC_RESPONSES ?? 'true').toLowerCase();
   const geminiOrganicResponses = organicRaw !== 'false' && organicRaw !== '0';
 
