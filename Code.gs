@@ -246,6 +246,7 @@ function doGet(e) {
     if (acao === 'contarPorEtapaProducao') return resposta(contarPorEtapaProducao(e.parameter || {}));
     if (acao === 'listarPedidosEntregaPeriodo') return resposta(listarPedidosEntregaPeriodo(e.parameter || {}));
     if (acao === 'agregarPecasAbertos') return resposta(agregarPecasPedidosAbertos(e.parameter || {}));
+    if (acao === 'exportarPdfPedido') return resposta(exportarPdfPedido(e.parameter || {}));
 
     return resposta({ sucesso: false, erro: 'Ação inválida: ' + acao });
   } catch (erro) {
@@ -669,6 +670,100 @@ function salvarPedido(dados, imagens) {
     SpreadsheetApp.flush();
 
     return { sucesso: true, mensagem: 'Pedido salvo', id: idPedido, operacao: 'criado' };
+  } catch (erro) {
+    return { sucesso: false, erro: erro.toString() };
+  }
+}
+
+/** Se a propriedade BOT_WEB_TOKEN existir, exige params.token igual (use o mesmo valor do APPS_SCRIPT_TOKEN no bot). */
+function assertBotTokenForPdf(params) {
+  var expected = PropertiesService.getScriptProperties().getProperty('BOT_WEB_TOKEN');
+  if (!expected) return { ok: true };
+  var got = String((params && params.token) || '').trim();
+  if (got !== String(expected).trim()) return { ok: false, erro: 'Token inválido ou ausente para exportar PDF.' };
+  return { ok: true };
+}
+
+function escapeHtmlPdf(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function montarHtmlPdfPedido(p, tipo) {
+  var nome = escapeHtmlPdf(p.cliente && p.cliente.nome);
+  var tel = escapeHtmlPdf(p.cliente && p.cliente.telefone);
+  var id = escapeHtmlPdf(p.id);
+  var idBusca = escapeHtmlPdf(p.idBusca);
+  var st = escapeHtmlPdf(p.statusOperacional);
+  var entrega = escapeHtmlPdf(p.datas && p.datas.entrega);
+  var pedido = escapeHtmlPdf(p.datas && p.datas.pedido);
+  var pecas = escapeHtmlPdf(p.totalPecas);
+  var tot = escapeHtmlPdf(p.financeiro && p.financeiro.totalPedido);
+  var rest = escapeHtmlPdf(p.financeiro && p.financeiro.restante);
+  var etapa = escapeHtmlPdf(p.etapaProducaoAtual);
+  var obs = escapeHtmlPdf(p.observacoes);
+  var titulo = tipo === 'gp' ? 'Guia de pedido (GP)' : 'Ordem de serviço (OS)';
+  var rp = p.resumoProduto || {};
+  var resumo = escapeHtmlPdf([rp.tipoPeca, rp.tipoMalha, rp.corMalha].filter(Boolean).join(' · '));
+  return (
+    '<!DOCTYPE html><html><head><meta charset="utf-8"><style>' +
+    'body{font-family:Arial,sans-serif;font-size:11pt;padding:12mm;color:#111}' +
+    'h1{font-size:14pt;border-bottom:2px solid #000;padding-bottom:6px}' +
+    'table{width:100%;border-collapse:collapse;margin-top:10px}' +
+    'td{padding:4px 6px;border:1px solid #ccc;vertical-align:top}' +
+    'td.k{font-weight:bold;width:28%;background:#f3f4f6}' +
+    '</style></head><body>' +
+    '<h1>' + titulo + '</h1>' +
+    '<p><strong>Adonay Confecção</strong> — documento gerado para consulta (somente leitura).</p>' +
+    '<table>' +
+    '<tr><td class="k">Pedido ID</td><td>' + id + '</td></tr>' +
+    '<tr><td class="k">ID busca</td><td>' + idBusca + '</td></tr>' +
+    '<tr><td class="k">Cliente</td><td>' + nome + '</td></tr>' +
+    '<tr><td class="k">Telefone</td><td>' + tel + '</td></tr>' +
+    '<tr><td class="k">Data pedido</td><td>' + pedido + '</td></tr>' +
+    '<tr><td class="k">Data entrega</td><td>' + entrega + '</td></tr>' +
+    '<tr><td class="k">Status</td><td>' + st + '</td></tr>' +
+    '<tr><td class="k">Etapa produção</td><td>' + etapa + '</td></tr>' +
+    '<tr><td class="k">Peças</td><td>' + pecas + '</td></tr>' +
+    '<tr><td class="k">Total / Restante</td><td>' + tot + ' / ' + rest + '</td></tr>' +
+    '<tr><td class="k">Resumo produto</td><td>' + resumo + '</td></tr>' +
+    '<tr><td class="k">Observações</td><td>' + obs + '</td></tr>' +
+    '</table></body></html>'
+  );
+}
+
+/**
+ * Gera PDF do pedido (OS ou GP) — somente leitura. Opcional: propriedade BOT_WEB_TOKEN.
+ * Params: id (ID do pedido), tipo=os|gp, token (se BOT_WEB_TOKEN configurado).
+ */
+function exportarPdfPedido(params) {
+  try {
+    var tok = assertBotTokenForPdf(params || {});
+    if (!tok.ok) return { sucesso: false, erro: tok.erro };
+    var tipo = String((params && params.tipo) || 'os').toLowerCase();
+    if (tipo !== 'os' && tipo !== 'gp') tipo = 'os';
+    var id = String((params && params.id) || '').trim();
+    if (!id) return { sucesso: false, erro: 'Informe o parâmetro id do pedido.' };
+    var busca = buscarPedido(id);
+    if (!busca.sucesso || !busca.pedido) {
+      return { sucesso: false, erro: busca.erro || 'Pedido não encontrado' };
+    }
+    var pedido = busca.pedido;
+    var html = montarHtmlPdfPedido(pedido, tipo);
+    var blob = HtmlService.createHtmlOutput(html).getAs('application/pdf');
+    var bytes = blob.getBytes();
+    var nomeArquivo = (tipo === 'gp' ? 'GP_' : 'OS_') + String(pedido.id || id).replace(/[^\w.-]+/g, '_') + '.pdf';
+    return {
+      sucesso: true,
+      mimeType: 'application/pdf',
+      fileName: nomeArquivo,
+      base64: Utilities.base64Encode(bytes),
+      pedidoId: pedido.id,
+      tipo: tipo
+    };
   } catch (erro) {
     return { sucesso: false, erro: erro.toString() };
   }

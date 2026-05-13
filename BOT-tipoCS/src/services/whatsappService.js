@@ -16,4 +16,23 @@ async function sendText(sock, chatId, text, options = {}) {
   }
 }
 
-module.exports = { sendText, MAX_CHUNK };
+/**
+ * Envia PDF no chat (ex.: OS/GP gerado no Apps Script).
+ */
+async function sendPdfDocument(sock, chatId, buffer, fileName, options = {}) {
+  if (!sock) throw new Error('Socket não inicializado');
+  if (!chatId) throw new Error('chatId obrigatório');
+  if (!Buffer.isBuffer(buffer) || buffer.length === 0) return;
+  const name = String(fileName || 'documento.pdf').slice(0, 200);
+  return sock.sendMessage(
+    chatId,
+    {
+      document: buffer,
+      mimetype: 'application/pdf',
+      fileName: name,
+    },
+    options,
+  );
+}
+
+module.exports = { sendText, sendPdfDocument, MAX_CHUNK };

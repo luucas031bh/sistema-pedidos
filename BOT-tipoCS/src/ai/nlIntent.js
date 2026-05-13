@@ -4,6 +4,7 @@ const { generateWithModelFallback } = require('./geminiClient');
 const { synthesizeOrganicAnswer } = require('./organicReply');
 const { formatIntentFallback } = require('../format/respostas');
 const { buildRouterContextBlock } = require('./projectContext');
+const { formatHistoryForPrompt } = require('./chatHistory');
 
 const ALLOWED_ACTIONS = new Set([
   'none',
@@ -14,6 +15,7 @@ const ALLOWED_ACTIONS = new Set([
   'buscarPedidos',
   'buscarPedido',
   'relatorioPedidos',
+  'exportarPdfPedido',
 ]);
 
 function segundaDomingoISO(d = new Date()) {
@@ -34,12 +36,18 @@ function buildSystemPrompt(config) {
   const iso = (d) => d.toISOString().slice(0, 10);
   const { dataInicio: seg, dataFim: dom } = segundaDomingoISO(now);
   const codeRef = buildRouterContextBlock(config || {});
-  return `Voce e um ROTEADOR de intencoes para consultas de PEDIDOS (confeccao). Nao invente numeros: so escolha uma acao e parametros.
+  const baseUrl = String((config && config.sistemaBaseUrl) || '').trim();
+  const linkHint = baseUrl
+    ? `Link base do sistema (montagem: ${baseUrl}/index.html?id=ID_DO_PEDIDO): use em reply_pt quando sugerir abrir pedido no navegador.`
+    : 'SISTEMA_BASE_URL nao configurado: nao invente URLs; apenas descreva que o usuario pode abrir o pedido no sistema.';
+
+  return `Voce e o agente ADNY, funcionario virtual da confeccao no WhatsApp. Voce interpreta pedidos, monta consultas e explica dados — *somente leitura*.
+Nunca crie, edite, exclua ou finalize pedidos. Nao peca acoes de escrita. Impressao remota: apenas PDF gerado pelo sistema (acao exportarPdfPedido) ou orientar link para o usuario imprimir no PC.
 
 Responda APENAS com um objeto JSON valido (sem markdown, sem texto fora do JSON).
 
 Acoes permitidas e params:
-1) {"action":"none","reply_pt":"mensagem curta em PT-BR"} — use se a pergunta for fora do escopo (ex.: clima), ou faltarem dados essenciais (ex.: relatorio sem periodo), ou for so cumprimento.
+1) {"action":"none","reply_pt":"mensagem curta em PT-BR"} — use se a pergunta for fora do escopo (ex.: clima), ou faltarem dados essenciais (ex.: relatorio sem periodo), ou for so cumprimento. Use tambem para perguntar ao usuario se prefere *link* (abrir no PC e usar Imprimir OS/GP no sistema) ou *PDF* no WhatsApp, quando ele pedir OS/GP/imprimir sem deixar claro.
 2) {"action":"contarPorEtapaProducao","params":{"etapa":"Arte"}} — etapa uma de: Pedido em Aberto, Arte, Insumos, Corte, Estampa, Costura, Embalo, Aguardando retirada. Opcional: "apenasAbertosOperacional":"true"|"false", "excluirCancelados":"true"|"false" (padrao true).
 3) {"action":"listarPedidosEntregaPeriodo","params":{"dataInicio":"YYYY-MM-DD","dataFim":"YYYY-MM-DD"}} — pedidos com DATA DE ENTREGA nesse intervalo (inclusive).
 4) {"action":"agregarPecasAbertos","params":{}} — pecas por tamanho em pedidos em aberto. Opcional: "cor":"trecho da cor da malha" (ex.: preta).
@@ -47,6 +55,9 @@ Acoes permitidas e params:
 6) {"action":"buscarPedidos","params":{"termo":"..."}} — varios resultados por nome/telefone/id.
 7) {"action":"buscarPedido","params":{"termo":"..."}} — um pedido quando parece ID/nome bem especifico.
 8) {"action":"relatorioPedidos","params":{"dataInicio":"YYYY-MM-DD","dataFim":"YYYY-MM-DD","dimensao":"tipoMalha"}} — dimensao opcional: tipoMalha, corMalha, tipoPeca, estampa, status, etc.
+9) {"action":"exportarPdfPedido","params":{"id":"ID_EXATO_DO_PEDIDO","tipo":"os"}} ou tipo "gp" — gera PDF para envio no WhatsApp. Use *somente* quando o usuario ja tiver escolhido PDF ou pedido explicitamente; precisa do id do pedido.
+
+${linkHint}
 
 Contexto de datas (use para "esta semana", "semana atual"):
 - Hoje (ISO): ${iso(now)}
@@ -91,7 +102,7 @@ function pickParams(obj, keys) {
 
 /**
  * Executa intenção: busca dados no GAS. Retorno para resposta orgânica ou texto direto.
- * @returns {Promise<{ type: 'text', text: string } | { type: 'organic', kind: string, facts: object }>}
+ * @returns {Promise<{ type: 'text', text: string } | { type: 'organic', kind: string, facts: object } | { type: 'pdf', facts: object }>}
  */
 async function executeIntentData(config, intent) {
   const action = intent && intent.action;
@@ -160,6 +171,18 @@ async function executeIntentData(config, intent) {
         });
         return { type: 'organic', kind: 'relatorio_periodo', facts: data };
       }
+      case 'exportarPdfPedido': {
+        params = pickParams(intent, ['id', 'tipo']);
+        if (!params.id) {
+          return { type: 'text', text: 'Informe o ID do pedido para gerar o PDF (OS ou GP).' };
+        }
+        const tipo = (params.tipo || 'os').toLowerCase() === 'gp' ? 'gp' : 'os';
+        const data = await gasGet(config, 'exportarPdfPedido', { id: params.id, tipo });
+        if (!data.sucesso) {
+          return { type: 'text', text: `Não foi possível gerar o PDF: ${data.erro || 'erro desconhecido'}` };
+        }
+        return { type: 'pdf', facts: data };
+      }
       default:
         return { type: 'text', text: 'Ação não suportada.' };
     }
@@ -168,12 +191,27 @@ async function executeIntentData(config, intent) {
   }
 }
 
-async function finalizeOrganic(config, userQuestion, exec) {
+async function finalizeOrganic(config, userQuestion, exec, chatKey) {
   if (exec.type === 'text') return exec.text;
-  const organic = await synthesizeOrganicAnswer(config, userQuestion, {
-    kind: exec.kind,
-    facts: exec.facts,
-  });
+  if (exec.type === 'pdf') {
+    const f = exec.facts || {};
+    if (!f.sucesso) {
+      return { text: `Erro ao gerar PDF: ${f.erro || 'falha'}`, __pdf: null };
+    }
+    return {
+      text: '*PDF pronto* (dados da planilha, somente leitura). O arquivo segue nesta conversa.',
+      __pdf: { base64: f.base64, fileName: f.fileName || 'documento.pdf' },
+    };
+  }
+  const organic = await synthesizeOrganicAnswer(
+    config,
+    userQuestion,
+    {
+      kind: exec.kind,
+      facts: exec.facts,
+    },
+    chatKey,
+  );
   if (organic) return organic;
   return formatIntentFallback(exec.kind, exec.facts);
 }
@@ -181,13 +219,14 @@ async function finalizeOrganic(config, userQuestion, exec) {
 /**
  * Interpreta pergunta em linguagem natural, executa GET no Apps Script e devolve resposta organica (Gemini) quando possivel.
  */
-async function runNaturalLanguage(config, userQuestion) {
+async function runNaturalLanguage(config, userQuestion, chatKey) {
   if (!config.geminiApiKey || !config.naturalLanguageEnabled) {
     return null;
   }
 
   const genAI = new GoogleGenerativeAI(config.geminiApiKey);
-  const userPrompt = `Pergunta do usuario (apos o gatilho do bot):\n"""${String(userQuestion).slice(0, 2000)}"""`;
+  const hist = formatHistoryForPrompt(config, chatKey || 'default');
+  const userPrompt = `${hist}Pergunta do usuario (apos o gatilho do bot):\n"""${String(userQuestion).slice(0, 2000)}"""`;
 
   const { result, modelUsed } = await generateWithModelFallback(
     genAI,
@@ -211,7 +250,7 @@ async function runNaturalLanguage(config, userQuestion) {
     return 'Não consegui interpretar a resposta da IA. Tente de novo ou use *ajuda*.';
   }
   const exec = await executeIntentData(config, intent);
-  return finalizeOrganic(config, userQuestion, exec);
+  return finalizeOrganic(config, userQuestion, exec, chatKey);
 }
 
 /** Compat: executa e devolve so texto (lista) sem segunda chamada Gemini. */

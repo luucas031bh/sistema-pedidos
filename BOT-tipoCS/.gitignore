@@ -2,6 +2,7 @@ node_modules/
 .env
 .env.*.local
 auth_info/
+data/
 *.log
 .DS_Store
 qrcode.png

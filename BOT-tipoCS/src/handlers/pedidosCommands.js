@@ -146,14 +146,15 @@ function shouldHandle(config, text) {
   return mentionsTrigger(text, config.botTriggers);
 }
 
-async function replyFromStructured(config, rest, structured) {
+async function replyFromStructured(config, rest, structured, chatKey) {
   if (config.naturalLanguageEnabled && config.geminiOrganicResponses) {
-    return finalizeOrganic(config, rest, structured);
+    return finalizeOrganic(config, rest, structured, chatKey);
   }
   return structuredPlainText(structured);
 }
 
-async function runCommand(config, text) {
+async function runCommand(config, text, ctx = {}) {
+  const chatKey = ctx.chatKey || 'default';
   const triggers = config.botTriggers;
   const rest = stripTrigger(text, triggers);
   const lower = rest.toLowerCase();
@@ -166,7 +167,7 @@ async function runCommand(config, text) {
   let nlError = null;
   if (config.naturalLanguageEnabled) {
     try {
-      const nl = await runNaturalLanguage(config, rest);
+      const nl = await runNaturalLanguage(config, rest, chatKey);
       if (nl && nl !== NL_ROUTER_PARSE_FAIL) {
         return nl;
       }
@@ -179,7 +180,7 @@ async function runCommand(config, text) {
           const data = await gasGet(config, 'listarPedidosEntregaPeriodo', { dataInicio, dataFim });
           const exec = { type: 'organic', kind: 'entregas_no_periodo', facts: data };
           const lista = config.geminiOrganicResponses
-            ? await finalizeOrganic(config, rest, exec).catch(() => formatEntregasPeriodo(data))
+            ? await finalizeOrganic(config, rest, exec, chatKey).catch(() => formatEntregasPeriodo(data))
             : formatEntregasPeriodo(data);
           return `${lista}\n\n_(IA indisponível; dados acima vêm da planilha.)_`;
         } catch (e2) {
@@ -202,7 +203,7 @@ async function runCommand(config, text) {
 
   const structured = await tryStructuredCommand(config, rest);
   if (structured !== null) {
-    return replyFromStructured(config, rest, structured);
+    return replyFromStructured(config, rest, structured, chatKey);
   }
 
   const termoDireto = rest.trim();
@@ -211,7 +212,7 @@ async function runCommand(config, text) {
     if (dataUm.sucesso && dataUm.pedido) {
       const exec = { type: 'organic', kind: 'detalhe_pedido', facts: dataUm };
       if (config.naturalLanguageEnabled && config.geminiOrganicResponses) {
-        return finalizeOrganic(config, rest, exec);
+        return finalizeOrganic(config, rest, exec, chatKey);
       }
       return formatBuscaUm(dataUm);
     }
@@ -219,7 +220,7 @@ async function runCommand(config, text) {
     if (dataMulti.sucesso && (dataMulti.pedidos || []).length > 0) {
       const exec = { type: 'organic', kind: 'busca_pedidos', facts: dataMulti };
       if (config.naturalLanguageEnabled && config.geminiOrganicResponses) {
-        return finalizeOrganic(config, rest, exec);
+        return finalizeOrganic(config, rest, exec, chatKey);
       }
       return formatBuscaMultipla(dataMulti);
     }

@@ -15,7 +15,11 @@ async function gasGet(config, action, extraParams = {}) {
   if (!config.appsScriptUrl) {
     throw new Error('APPS_SCRIPT_URL não configurado no .env');
   }
-  const params = { action, ...extraParams };
+  const params = {
+    action,
+    ...extraParams,
+    ...(config.appsScriptToken ? { token: config.appsScriptToken } : {}),
+  };
   const url = buildUrl(config.appsScriptUrl, params);
   const headers = { Accept: 'application/json' };
   if (config.appsScriptToken) {

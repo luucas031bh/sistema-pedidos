@@ -37,6 +37,11 @@ function loadConfig() {
   const { snippet: projectContextSnippet, sourceLabel: projectContextSourceLabel } =
     loadProjectContextSnippet(process.env);
 
+  const sistemaBaseUrl = (process.env.SISTEMA_BASE_URL || '').trim().replace(/\/$/, '');
+  const chatHistoryMax = Math.min(40, Math.max(0, Number(process.env.CHAT_HISTORY_MAX) || 12));
+  const persistRaw = String(process.env.CHAT_HISTORY_PERSIST || '').toLowerCase();
+  const chatHistoryPersist = persistRaw === 'file' || persistRaw === 'true' || persistRaw === '1';
+
   return {
     port: Number(process.env.PORT) || 3010,
     allowedGroupIds: new Set(allowed),
@@ -50,6 +55,9 @@ function loadConfig() {
     naturalLanguageEnabled: geminiKey.length >= 10,
     projectContextSnippet,
     projectContextSourceLabel,
+    sistemaBaseUrl,
+    chatHistoryMax,
+    chatHistoryPersist,
   };
 }
 

@@ -14,8 +14,9 @@ const pino = require('pino');
 const { loadConfig } = require('./config');
 const { extractMessageText } = require('./middleware/extractText');
 const { checkCooldown } = require('./middleware/cooldown');
-const { shouldHandle, runCommand } = require('./handlers/pedidosCommands');
-const { sendText } = require('./services/whatsappService');
+const { shouldHandle, runCommand, stripTrigger } = require('./handlers/pedidosCommands');
+const { appendTurn, sanitizeKey } = require('./ai/chatHistory');
+const { sendText, sendPdfDocument } = require('./services/whatsappService');
 
 const authDir = path.join(__dirname, '..', 'auth_info');
 const logger = pino({ level: 'silent' });
@@ -102,8 +103,31 @@ async function initBot() {
         return;
       }
 
-      const reply = await runCommand(config, text);
-      await sendText(sock, from, reply);
+      const chatKey = sanitizeKey(isGroup ? sender : from);
+      const userLine = stripTrigger(text, config.botTriggers);
+
+      const reply = await runCommand(config, text, { chatKey });
+
+      const replyObj = reply && typeof reply === 'object' && reply !== null && 'text' in reply ? reply : null;
+      const textOut = replyObj ? replyObj.text : String(reply ?? '');
+      await sendText(sock, from, textOut);
+
+      if (replyObj && replyObj.__pdf && replyObj.__pdf.base64) {
+        await sendPdfDocument(
+          sock,
+          from,
+          Buffer.from(replyObj.__pdf.base64, 'base64'),
+          replyObj.__pdf.fileName || 'documento.pdf',
+        );
+      }
+
+      appendTurn(config, chatKey, 'user', userLine || text.trim().slice(0, 500));
+      const histAssist =
+        textOut +
+        (replyObj && replyObj.__pdf && replyObj.__pdf.fileName
+          ? ` [PDF: ${replyObj.__pdf.fileName}]`
+          : '');
+      appendTurn(config, chatKey, 'assistant', histAssist.slice(0, 4000));
     } catch (err) {
       console.error('Erro ao processar mensagem:', err);
       try {
