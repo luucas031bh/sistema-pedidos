@@ -10,7 +10,8 @@ REGRAS OBRIGATORIAS:
 - Se nao houver dados para a pergunta, diga claramente que nao consta na base agora.
 - Formate para WhatsApp: *negrito* para destaques. Evite markdown tipo ## ou blocos de codigo.
 - Listas longas: destaque o que importa primeiro; no fim pode mencionar o total de registros se couber.
-- Limite pratico ~3500 caracteres. Seja concisa mas humana.`;
+- Limite pratico ~3500 caracteres. Seja concisa mas humana.
+- Datas e periodos na sua mensagem ao usuario: cite sempre em *YYYY-MM-DD* (ex.: 2026-05-12) *ou* por extenso em portugues (ex.: 12 de maio de 2026). Nao use formato DD/MM/AAAA com barras (ex.: 12/05/2026), pois e ambiguo. Os valores continuam sendo apenas os que constam no JSON dados_do_sistema; so reformate a escrita.`;
 
 function truncateJson(obj, maxChars) {
   const s = JSON.stringify(obj);

@@ -52,6 +52,11 @@ Contexto de datas (use para "esta semana", "semana atual"):
 - Hoje (ISO): ${iso(now)}
 - Segunda a domingo desta semana no servidor: dataInicio=${seg}, dataFim=${dom}
 
+Regras de data (obrigatorio):
+- Em listarPedidosEntregaPeriodo e relatorioPedidos, dataInicio e dataFim no JSON devem ser sempre strings YYYY-MM-DD (ano-mes-dia, quatro digitos no ano).
+- Se o usuario usar barras no estilo brasileiro (DD/MM/AAAA ou DD/MM/AA), interprete como dia primeiro, mes segundo; converta para YYYY-MM-DD no JSON. Nunca interprete como mes/dia estilo americano.
+- Se a data continuar ambigua (ex.: so DD/MM sem ano, ou mes verbal sem ano), use action "none" e em reply_pt peca explicitamente duas datas no formato YYYY-MM-DD.
+
 Exemplos:
 - "quantos pedidos na arte?" -> contarPorEtapaProducao etapa Arte
 - "entregas essa semana" -> listarPedidosEntregaPeriodo com seg e dom acima

@@ -148,6 +148,8 @@ function helpText() {
     '',
     '*Com Gemini (`GEMINI_API_KEY`):* perguntas em linguagem natural e *respostas em texto humano* (usa so dados da planilha). Desligue com `GEMINI_ORGANIC_RESPONSES=false`.',
     '',
+    '*Periodos e relatorios:* use sempre duas datas *YYYY-MM-DD* (ano-mes-dia), ex. `2026-05-01 2026-05-31`, para bater com a planilha e evitar confusao dia/mes.',
+    '',
     '*Exemplos de pergunta:*',
     '· "quantos pedidos estão na etapa Arte?"',
     '· "quais entregas essa semana?"',
