@@ -141,7 +141,7 @@ function toggleSave(cod) {
   persist();
   updateBar();
   const current = inp.value.trim().toUpperCase();
-  if (listMode === "list-detail" && listDetailCod === cod) renderDetail(cod, listDetail);
+  if (listMode === "list-detail" && listDetailCod === cod) renderDetail(cod, res);
   if (listMode === "home" && current === cod) renderDetail(cod, res);
   if (listMode === "list") renderFullList();
 }
@@ -274,11 +274,12 @@ function renderFullList() {
 function showHomeView() {
   listMode = "home";
   listDetailCod = "";
-  appRoot.classList.remove("is-list-view");
+  appRoot.classList.remove("is-list-view", "is-list-detail");
   viewList.hidden = true;
   listFamilies.hidden = false;
   listDetail.hidden = true;
   listDetail.innerHTML = "";
+  res.hidden = false;
   listPageTitle.textContent = "Lista completa";
 }
 
@@ -286,24 +287,30 @@ function showListView() {
   listMode = "list";
   listDetailCod = "";
   appRoot.classList.add("is-list-view");
+  appRoot.classList.remove("is-list-detail");
   viewList.hidden = false;
   listFamilies.hidden = false;
   listDetail.hidden = true;
   listDetail.innerHTML = "";
+  res.hidden = true;
+  res.innerHTML = "";
   listPageTitle.textContent = "Lista completa";
   renderFullList();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function showListDetail(cod) {
-  if (!DADOS[cod]) return;
+  const key = String(cod || "").trim().toUpperCase();
+  if (!DADOS[key]) return;
   listMode = "list-detail";
-  listDetailCod = cod;
+  listDetailCod = key;
+  appRoot.classList.add("is-list-detail");
   listFamilies.hidden = true;
-  listDetail.hidden = false;
-  listPageTitle.textContent = cod;
-  renderDetail(cod, listDetail);
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  listDetail.hidden = true;
+  res.hidden = false;
+  listPageTitle.textContent = key;
+  renderDetail(key, res);
+  res.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function openFullList() {
@@ -484,18 +491,21 @@ function onInput() {
   renderDetail(c);
 }
 
-function handleDetailClick(e, container) {
+function handleResultClick(e) {
   const btn = e.target.closest("[data-action]");
-  if (!btn || !container.contains(btn)) return;
-  const cod = btn.getAttribute("data-cod") || "";
+  if (!btn) return;
+  const cod = (btn.getAttribute("data-cod") || "").trim().toUpperCase();
   const action = btn.getAttribute("data-action");
   if (action === "toggle-save") toggleSave(cod);
-  if (action === "pick-color") showListDetail(cod);
 }
 
-res.addEventListener("click", (e) => handleDetailClick(e, res));
-listDetail.addEventListener("click", (e) => handleDetailClick(e, listDetail));
-listFamilies.addEventListener("click", (e) => handleDetailClick(e, listFamilies));
+viewList.addEventListener("click", (e) => {
+  const pick = e.target.closest('[data-action="pick-color"]');
+  if (!pick || !viewList.contains(pick)) return;
+  showListDetail(pick.getAttribute("data-cod") || "");
+});
+
+res.addEventListener("click", handleResultClick);
 
 spList.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-action='remove-save']");
@@ -504,7 +514,7 @@ spList.addEventListener("click", (e) => {
   toggleSave(cod);
   renderPanel();
   const cur = inp.value.trim().toUpperCase();
-  if (listMode === "list-detail" && listDetailCod) renderDetail(listDetailCod, listDetail);
+  if (listMode === "list-detail" && listDetailCod) renderDetail(listDetailCod, res);
   else if (cur && DADOS[cur]) renderDetail(cur);
   if (listMode === "list") renderFullList();
 });

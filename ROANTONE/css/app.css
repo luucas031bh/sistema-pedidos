@@ -390,8 +390,11 @@ body {
   margin-top: 4px;
 }
 
-.app.is-list-view .search-block,
-.app.is-list-view #res {
+.app.is-list-view .search-block {
+  display: none;
+}
+
+.app.is-list-view:not(.is-list-detail) #res {
   display: none;
 }
 
