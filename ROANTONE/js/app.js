@@ -6,8 +6,15 @@ let DADOS = {};
 
 const el = (id) => document.getElementById(id);
 
+const appRoot = el("app");
 const res = el("res");
 const inp = el("busca");
+const btnFullList = el("btnFullList");
+const viewList = el("viewList");
+const btnListBack = el("btnListBack");
+const listPageTitle = el("listPageTitle");
+const listFamilies = el("listFamilies");
+const listDetail = el("listDetail");
 const badge = el("badge");
 const btnSaved = el("btnSaved");
 const btnClose = el("btnClose");
@@ -24,6 +31,9 @@ const hintCount = el("hintCount");
 
 let saved = [];
 let toastTimer = 0;
+/** @type {"home" | "list" | "list-detail"} */
+let listMode = "home";
+let listDetailCod = "";
 
 function escapeHtml(str) {
   return String(str)
@@ -51,6 +61,26 @@ function luminance({ r, g, b }) {
 
 function colorsReady() {
   return DADOS && Object.keys(DADOS).length > 0;
+}
+
+function getFamily(cod) {
+  const m = String(cod).match(/^([A-Z]+)/);
+  return m ? m[1] : cod;
+}
+
+function groupByFamily() {
+  /** @type {Record<string, string[]>} */
+  const groups = {};
+  Object.keys(DADOS)
+    .sort()
+    .forEach((cod) => {
+      const fam = getFamily(cod);
+      if (!groups[fam]) groups[fam] = [];
+      groups[fam].push(cod);
+    });
+  return Object.keys(groups)
+    .sort()
+    .map((family) => ({ family, codes: groups[family] }));
 }
 
 async function resolveDados() {
@@ -111,7 +141,9 @@ function toggleSave(cod) {
   persist();
   updateBar();
   const current = inp.value.trim().toUpperCase();
-  if (current === cod) renderDetail(cod);
+  if (listMode === "list-detail" && listDetailCod === cod) renderDetail(cod, listDetail);
+  if (listMode === "home" && current === cod) renderDetail(cod, res);
+  if (listMode === "list") renderFullList();
 }
 
 function emptyStateHtml() {
@@ -170,10 +202,10 @@ function buildRecipeSections(d, codSafe) {
     ${baseBlock}`;
 }
 
-function renderDetail(cod) {
+function renderDetail(cod, target = res) {
   const d = DADOS[cod];
   if (!d) {
-    res.innerHTML = notFoundHtml(cod);
+    target.innerHTML = notFoundHtml(cod);
     return;
   }
 
@@ -186,7 +218,7 @@ function renderDetail(cod) {
   const codSafe = escapeHtml(cod);
   const hexSafe = escapeHtml(d.hex);
 
-  res.innerHTML = `
+  target.innerHTML = `
     <article class="result-card">
       <div class="swatch" style="background:${escapeHtml(d.hex)}">
         <span class="hex-pill" style="background:${bg};color:${tc}">${hexSafe}</span>
@@ -207,6 +239,91 @@ function renderDetail(cod) {
         ${buildRecipeSections(d, codSafe)}
       </div>
     </article>`;
+}
+
+function renderFullList() {
+  const groups = groupByFamily();
+  listFamilies.innerHTML = groups
+    .map(({ family, codes }) => {
+      const items = codes
+        .map((cod) => {
+          const d = DADOS[cod];
+          if (!d) return "";
+          const savedCls = isSaved(cod) ? " is-saved" : "";
+          const codSafe = escapeHtml(cod);
+          const hex = escapeHtml(d.hex);
+          return `
+            <button type="button" class="list-color${savedCls}" data-action="pick-color" data-cod="${codSafe}">
+              <span class="list-color-sw" style="background:${hex}" aria-hidden="true"></span>
+              <span class="list-color-cod">${codSafe}</span>
+            </button>`;
+        })
+        .join("");
+      return `
+        <section class="family-block" id="fam-${escapeHtml(family)}">
+          <div class="family-head">
+            <h3 class="family-name">${escapeHtml(family)}</h3>
+            <span class="family-count">${codes.length} cores</span>
+          </div>
+          <div class="family-grid">${items}</div>
+        </section>`;
+    })
+    .join("");
+}
+
+function showHomeView() {
+  listMode = "home";
+  listDetailCod = "";
+  appRoot.classList.remove("is-list-view");
+  viewList.hidden = true;
+  listFamilies.hidden = false;
+  listDetail.hidden = true;
+  listDetail.innerHTML = "";
+  listPageTitle.textContent = "Lista completa";
+}
+
+function showListView() {
+  listMode = "list";
+  listDetailCod = "";
+  appRoot.classList.add("is-list-view");
+  viewList.hidden = false;
+  listFamilies.hidden = false;
+  listDetail.hidden = true;
+  listDetail.innerHTML = "";
+  listPageTitle.textContent = "Lista completa";
+  renderFullList();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function showListDetail(cod) {
+  if (!DADOS[cod]) return;
+  listMode = "list-detail";
+  listDetailCod = cod;
+  listFamilies.hidden = true;
+  listDetail.hidden = false;
+  listPageTitle.textContent = cod;
+  renderDetail(cod, listDetail);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function openFullList() {
+  if (!colorsReady()) {
+    showToast("Aguarde o carregamento das cores.");
+    return;
+  }
+  closePanel();
+  showListView();
+}
+
+function onListBack() {
+  if (listMode === "list-detail") {
+    showListView();
+    return;
+  }
+  showHomeView();
+  const q = inp.value.trim().toUpperCase();
+  if (q && DADOS[q]) renderDetail(q);
+  else if (!q) res.innerHTML = emptyStateHtml();
 }
 
 function renderPanel() {
@@ -367,12 +484,18 @@ function onInput() {
   renderDetail(c);
 }
 
-res.addEventListener("click", (e) => {
+function handleDetailClick(e, container) {
   const btn = e.target.closest("[data-action]");
-  if (!btn) return;
+  if (!btn || !container.contains(btn)) return;
   const cod = btn.getAttribute("data-cod") || "";
-  if (btn.getAttribute("data-action") === "toggle-save") toggleSave(cod);
-});
+  const action = btn.getAttribute("data-action");
+  if (action === "toggle-save") toggleSave(cod);
+  if (action === "pick-color") showListDetail(cod);
+}
+
+res.addEventListener("click", (e) => handleDetailClick(e, res));
+listDetail.addEventListener("click", (e) => handleDetailClick(e, listDetail));
+listFamilies.addEventListener("click", (e) => handleDetailClick(e, listFamilies));
 
 spList.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-action='remove-save']");
@@ -381,9 +504,13 @@ spList.addEventListener("click", (e) => {
   toggleSave(cod);
   renderPanel();
   const cur = inp.value.trim().toUpperCase();
-  if (cur && DADOS[cur]) renderDetail(cur);
+  if (listMode === "list-detail" && listDetailCod) renderDetail(listDetailCod, listDetail);
+  else if (cur && DADOS[cur]) renderDetail(cur);
+  if (listMode === "list") renderFullList();
 });
 
+btnFullList.addEventListener("click", openFullList);
+btnListBack.addEventListener("click", onListBack);
 btnSaved.addEventListener("click", openPanel);
 btnClose.addEventListener("click", closePanel);
 overlay.addEventListener("click", closePanel);

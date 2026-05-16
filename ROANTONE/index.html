@@ -44,7 +44,17 @@
           />
           <span class="input-hint" id="hintCount" hidden></span>
         </div>
+        <button type="button" class="btn-list-full" id="btnFullList">Lista completa</button>
       </section>
+
+      <div id="viewList" class="view-list-page" hidden>
+        <div class="list-top">
+          <button type="button" class="btn-back" id="btnListBack">Voltar</button>
+          <h2 class="list-page-title" id="listPageTitle">Lista completa</h2>
+        </div>
+        <div class="list-families" id="listFamilies" aria-label="Todas as cores por família"></div>
+        <section class="result-wrap list-detail-wrap" id="listDetail" aria-live="polite" hidden></section>
+      </div>
 
       <section class="result-wrap" id="res" aria-live="polite"></section>
 
