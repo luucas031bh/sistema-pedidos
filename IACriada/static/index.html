@@ -27,8 +27,14 @@
         <span>Permitir internet</span>
       </label>
       <div class="model-row">
-        <label for="sel-modelo">Modelo</label>
+        <label for="sel-modelo">Modelo Ollama (chat)</label>
         <select id="sel-modelo"></select>
+        <p class="model-hint" id="model-hint">Lista = modelos baixados com ollama pull</p>
+      </div>
+      <div class="panel-integracoes">
+        <h3>Outras IAs (terminal)</h3>
+        <p class="integracoes-hint">Claude e OpenClaw usam o Ollama, mas abrem fora deste chat.</p>
+        <div id="lista-integracoes" class="lista-integracoes"></div>
       </div>
       <div class="model-row">
         <label for="inp-api-base">URL do servidor</label>

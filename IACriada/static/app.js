@@ -15,6 +15,8 @@ const filePdf = document.getElementById("file-pdf");
 const btnPdf = document.getElementById("btn-pdf");
 const memoriaHint = document.getElementById("memoria-hint");
 const inpApiBase = document.getElementById("inp-api-base");
+const listaIntegracoes = document.getElementById("lista-integracoes");
+const modelHint = document.getElementById("model-hint");
 
 const SESSAO_KEY = "adonay_sessao_id";
 const API_BASE_KEY = "adonay_api_base";
@@ -158,6 +160,42 @@ function removeTyping() {
   document.getElementById("typing-row")?.remove();
 }
 
+function renderIntegracoes(lista) {
+  if (!listaIntegracoes) return;
+  if (!lista.length) {
+    listaIntegracoes.innerHTML =
+      '<p class="integracoes-vazio">Nenhuma integracao configurada.</p>';
+    return;
+  }
+  listaIntegracoes.innerHTML = lista
+    .map(
+      (i) =>
+        `<button type="button" class="btn-integracao" data-id="${i.id}" title="Modelo: ${i.modelo || "qwen2.5:7b"}">
+          <strong>${i.nome}</strong>
+          <span>${i.descricao || "Abre no terminal"}</span>
+        </button>`
+    )
+    .join("");
+  listaIntegracoes.querySelectorAll(".btn-integracao").forEach((btn) => {
+    btn.addEventListener("click", () => abrirIntegracao(btn.dataset.id));
+  });
+}
+
+async function abrirIntegracao(id) {
+  try {
+    const r = await fetch(apiUrl("/api/launch-integracao"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nome: id }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || "Erro");
+    alert(d.mensagem || "Abrindo…");
+  } catch (err) {
+    alert("Nao foi possivel abrir: " + err.message);
+  }
+}
+
 async function carregarClientes() {
   try {
     const r = await fetch(apiUrl("/api/clientes"));
@@ -191,13 +229,24 @@ async function carregarStatus() {
     const r = await fetch(apiUrl("/api/status"));
     const d = await r.json();
     selModelo.innerHTML = "";
-    (d.modelos || []).forEach((m) => {
+    const modelos = [...new Set(d.modelos || [])];
+    modelos.forEach((m) => {
       const o = document.createElement("option");
       o.value = m;
       o.textContent = m;
       if (m === d.modelo_padrao) o.selected = true;
       selModelo.appendChild(o);
     });
+    if (modelHint) {
+      const sug = (d.modelos_sugeridos || []).filter((m) => !modelos.includes(m));
+      modelHint.textContent =
+        modelos.length <= 1 && sug.length
+          ? `So ha 1 modelo local. Para mais: ollama pull ${sug[0]}`
+          : modelos.length
+            ? `${modelos.length} modelo(s) no Ollama`
+            : "Nenhum modelo — rode: ollama pull qwen2.5:7b";
+    }
+    renderIntegracoes(d.integracoes_ollama || []);
     if (d.ollama) {
       const idx = d.indexador?.arquivos_indexados ?? 0;
       const sp = d.indexador_sistema?.arquivos ?? 0;

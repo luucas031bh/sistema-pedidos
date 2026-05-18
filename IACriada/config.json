@@ -4,13 +4,18 @@
     "modelo_integracoes": "qwen2.5:7b",
     "anthropic_base_url": "http://localhost:11434",
     "anthropic_auth_token": "ollama",
+    "modelos_sugeridos": ["qwen2.5:7b", "qwen2.5:14b", "qwen3.5"],
     "integracoes": {
       "claude": {
+        "nome": "Claude Code",
+        "descricao": "Agente de codigo no terminal (usa Ollama local)",
         "comando": "ollama launch claude",
         "modelo": "qwen2.5:7b",
         "launcher": "LAUNCH_CLAUDE.bat"
       },
       "openclaw": {
+        "nome": "OpenClaw",
+        "descricao": "Assistente com ferramentas no terminal",
         "comando": "ollama launch openclaw",
         "modelo": "qwen2.5:7b",
         "launcher": "LAUNCH_OPENCLAW.bat",

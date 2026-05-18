@@ -142,6 +142,27 @@ class Handler(BaseHTTPRequestHandler):
             d = diagnostico_ollama()
             idx = estatisticas_index()
             idx_sp = estatisticas_sistema_index()
+            from config import carregar_config
+
+            cfg = carregar_config()
+            oll = cfg.get("ollama") or {}
+            integracoes = []
+            for chave, info in (oll.get("integracoes") or {}).items():
+                if isinstance(info, dict):
+                    integracoes.append(
+                        {
+                            "id": chave,
+                            "nome": info.get("nome")
+                            or ("Claude Code" if chave == "claude" else "OpenClaw"),
+                            "modelo": info.get("modelo", oll.get("modelo_integracoes")),
+                            "launcher": info.get("launcher", ""),
+                            "descricao": info.get(
+                                "descricao",
+                                "Abre no terminal com Ollama local",
+                            ),
+                        }
+                    )
+            modelos = list(dict.fromkeys(d.get("modelos") or []))
             return _json_response(
                 self,
                 200,
@@ -153,8 +174,10 @@ class Handler(BaseHTTPRequestHandler):
                     "instalado": d.get("instalado", False),
                     "mensagem": d.get("mensagem", ""),
                     "passos": d.get("passos", []),
-                    "modelos": d.get("modelos", []),
+                    "modelos": modelos,
                     "modelo_padrao": d.get("modelo_padrao"),
+                    "integracoes_ollama": integracoes,
+                    "modelos_sugeridos": oll.get("modelos_sugeridos", []),
                     "recomendado": "qwen2.5:7b (suporte a ferramentas)",
                     "indexador": idx,
                     "indexador_sistema": idx_sp,
@@ -200,7 +223,22 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/config":
             from config import carregar_config
 
-            return _json_response(self, 200, carregar_config())
+            cfg = carregar_config()
+            oll = cfg.get("ollama") or {}
+            integracoes = []
+            for chave, info in (oll.get("integracoes") or {}).items():
+                if isinstance(info, dict):
+                    integracoes.append(
+                        {
+                            "id": chave,
+                            "nome": info.get("nome") or chave.replace("_", " ").title(),
+                            "modelo": info.get("modelo", oll.get("modelo_integracoes")),
+                            "launcher": info.get("launcher", ""),
+                            "comando": info.get("comando", ""),
+                        }
+                    )
+            cfg["integracoes_ollama"] = integracoes
+            return _json_response(self, 200, cfg)
 
         if path.startswith("/static/"):
             rel = path[len("/static/") :]
@@ -320,7 +358,40 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/upload-pdf":
             return self._upload_pdf()
 
+        if path == "/api/launch-integracao":
+            return self._launch_integracao()
+
         self.send_error(404)
+
+    def _launch_integracao(self):
+        try:
+            req = _ler_body(self)
+        except json.JSONDecodeError:
+            return _json_response(self, 400, {"detail": "JSON invalido"})
+
+        nome = (req.get("nome") or req.get("id") or "").strip().lower()
+        mapa = {
+            "claude": PASTA / "LAUNCH_CLAUDE.bat",
+            "openclaw": PASTA / "LAUNCH_OPENCLAW.bat",
+        }
+        bat = mapa.get(nome)
+        if not bat or not bat.is_file():
+            return _json_response(
+                self, 404, {"detail": f"Integracao desconhecida: {nome}"}
+            )
+
+        import subprocess
+
+        subprocess.Popen(
+            ["cmd", "/c", "start", "", str(bat)],
+            cwd=str(PASTA),
+            shell=False,
+        )
+        return _json_response(
+            self,
+            200,
+            {"ok": True, "mensagem": f"Abrindo {nome} em nova janela…"},
+        )
 
     def _upload_pdf(self):
         ctype = self.headers.get("Content-Type", "")
