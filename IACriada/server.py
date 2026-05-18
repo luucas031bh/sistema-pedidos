@@ -38,12 +38,29 @@ UPLOAD_PDF = PASTA / "data" / "uploads"
 _indexar_status = {"rodando": False, "resultado": None}
 _indexar_sistema_status = {"rodando": False, "resultado": None}
 
+CORS_ORIGINS = frozenset(
+    {
+        "https://luucas031bh.github.io",
+    }
+)
+
+
+def _set_cors(handler):
+    origin = handler.headers.get("Origin", "")
+    if origin in CORS_ORIGINS:
+        handler.send_header("Access-Control-Allow-Origin", origin)
+    elif origin.startswith(("http://127.0.0.1:", "http://localhost:")):
+        handler.send_header("Access-Control-Allow-Origin", origin)
+    handler.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+    handler.send_header("Access-Control-Allow-Headers", "Content-Type")
+
 
 def _json_response(handler, status, data):
     body = json.dumps(data, ensure_ascii=False).encode("utf-8")
     handler.send_response(status)
     handler.send_header("Content-Type", "application/json; charset=utf-8")
     handler.send_header("Content-Length", str(len(body)))
+    _set_cors(handler)
     handler.end_headers()
     handler.wfile.write(body)
 
@@ -64,6 +81,7 @@ def _servir_arquivo(handler, caminho: Path, content_type: str):
     handler.send_response(200)
     handler.send_header("Content-Type", content_type)
     handler.send_header("Content-Length", str(len(data)))
+    _set_cors(handler)
     handler.end_headers()
     handler.wfile.write(data)
 
@@ -94,12 +112,29 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         pass
 
+    def do_OPTIONS(self):
+        path = urlparse(self.path).path
+        if path.startswith("/api/"):
+            self.send_response(204)
+            _set_cors(self)
+            self.end_headers()
+            return
+        self.send_error(404)
+
     def do_GET(self):
         path = urlparse(self.path).path
         qs = parse_qs(urlparse(self.path).query)
 
         if path in ("/", "/index.html"):
             return _servir_arquivo(self, STATIC / "index.html", "text/html; charset=utf-8")
+
+        if path == "/style.css":
+            return _servir_arquivo(self, STATIC / "style.css", "text/css; charset=utf-8")
+
+        if path == "/app.js":
+            return _servir_arquivo(
+                self, STATIC / "app.js", "application/javascript; charset=utf-8"
+            )
 
         if path == "/api/status":
             from config import path_contexto_pasta, path_historico_db

@@ -14,8 +14,35 @@ const listaClientes = document.getElementById("lista-clientes");
 const filePdf = document.getElementById("file-pdf");
 const btnPdf = document.getElementById("btn-pdf");
 const memoriaHint = document.getElementById("memoria-hint");
+const inpApiBase = document.getElementById("inp-api-base");
 
 const SESSAO_KEY = "adonay_sessao_id";
+const API_BASE_KEY = "adonay_api_base";
+const DEFAULT_API_BASE = "http://127.0.0.1:8765";
+
+function getApiBase() {
+  const saved = localStorage.getItem(API_BASE_KEY);
+  if (saved) return saved.replace(/\/$/, "");
+  if (
+    location.hostname === "127.0.0.1" ||
+    location.hostname === "localhost"
+  ) {
+    return location.origin;
+  }
+  return DEFAULT_API_BASE;
+}
+
+function setApiBase(url) {
+  const clean = (url || "").trim().replace(/\/$/, "");
+  if (clean) localStorage.setItem(API_BASE_KEY, clean);
+  else localStorage.removeItem(API_BASE_KEY);
+}
+
+function apiUrl(path) {
+  const base = getApiBase();
+  const p = path.startsWith("/") ? path : "/" + path;
+  return base + p;
+}
 
 let enviando = false;
 
@@ -133,7 +160,7 @@ function removeTyping() {
 
 async function carregarClientes() {
   try {
-    const r = await fetch("/api/clientes");
+    const r = await fetch(apiUrl("/api/clientes"));
     const d = await r.json();
     const lista = d.clientes || [];
     if (!lista.length) {
@@ -161,7 +188,7 @@ async function carregarClientes() {
 
 async function carregarStatus() {
   try {
-    const r = await fetch("/api/status");
+    const r = await fetch(apiUrl("/api/status"));
     const d = await r.json();
     selModelo.innerHTML = "";
     (d.modelos || []).forEach((m) => {
@@ -204,9 +231,9 @@ async function carregarStatus() {
 btnIndexarSistema?.addEventListener("click", async () => {
   indexStatus.textContent = "Indexando sistema-pedidos…";
   try {
-    await fetch("/api/indexar-sistema", { method: "POST" });
+    await fetch(apiUrl("/api/indexar-sistema"), { method: "POST" });
     const poll = setInterval(async () => {
-      const r = await fetch("/api/indexar-sistema/status");
+      const r = await fetch(apiUrl("/api/indexar-sistema/status"));
       const s = await r.json();
       if (s.rodando) {
         indexStatus.textContent = "Indexando código… aguarde";
@@ -227,9 +254,9 @@ btnIndexarSistema?.addEventListener("click", async () => {
 btnIndexar.addEventListener("click", async () => {
   indexStatus.textContent = "Iniciando…";
   try {
-    await fetch("/api/indexar", { method: "POST" });
+    await fetch(apiUrl("/api/indexar"), { method: "POST" });
     const poll = setInterval(async () => {
-      const r = await fetch("/api/indexar/status");
+      const r = await fetch(apiUrl("/api/indexar/status"));
       const s = await r.json();
       if (s.rodando) {
         indexStatus.textContent = "Indexando… aguarde";
@@ -256,7 +283,7 @@ filePdf.addEventListener("change", async () => {
   const fd = new FormData();
   fd.append("file", f);
   try {
-    const r = await fetch("/api/upload-pdf", { method: "POST", body: fd });
+    const r = await fetch(apiUrl("/api/upload-pdf"), { method: "POST", body: fd });
     const d = await r.json();
     if (!r.ok) throw new Error(d.detail);
     input.value = `leia o pdf em ${d.caminho}`;
@@ -281,7 +308,7 @@ form.addEventListener("submit", async (e) => {
   addTyping();
 
   try {
-    const r = await fetch("/api/chat", {
+    const r = await fetch(apiUrl("/api/chat"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -320,7 +347,9 @@ async function carregarHistorico() {
   const sessao = obterSessaoId();
   try {
     const r = await fetch(
-      "/api/historico?sessao=" + encodeURIComponent(sessao) + "&limite=200"
+      apiUrl(
+        "/api/historico?sessao=" + encodeURIComponent(sessao) + "&limite=200"
+      )
     );
     const d = await r.json();
     const msgs = d.mensagens || [];
@@ -341,7 +370,7 @@ async function carregarHistorico() {
 
 btnNovo.addEventListener("click", async () => {
   const antiga = obterSessaoId();
-  await fetch("/api/limpar?sessao=" + encodeURIComponent(antiga), {
+  await fetch(apiUrl("/api/limpar?sessao=" + encodeURIComponent(antiga)), {
     method: "POST",
   });
   novaSessaoId();
@@ -365,6 +394,16 @@ function bindChips() {
 }
 
 bindChips();
+
+if (inpApiBase) {
+  inpApiBase.value = getApiBase();
+  inpApiBase.addEventListener("change", () => {
+    setApiBase(inpApiBase.value);
+    carregarStatus();
+    carregarClientes();
+  });
+}
+
 carregarStatus();
 carregarClientes();
 carregarHistorico();

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Assistente Adonay</title>
-  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   
@@ -28,6 +28,10 @@
       <div class="model-row">
         <label for="sel-modelo">Modelo</label>
         <select id="sel-modelo"></select>
+      </div>
+      <div class="model-row">
+        <label for="inp-api-base">URL do servidor</label>
+        <input type="url" id="inp-api-base" placeholder="http://127.0.0.1:8765 ou túnel HTTPS" spellcheck="false" />
       </div>
       <div class="panel-clientes">
         <h3>Clientes (índice)</h3>
@@ -61,6 +65,6 @@
       </div>
     </main>
   </div>
-  <script src="/static/app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
