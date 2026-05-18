@@ -5,6 +5,9 @@ const input = document.getElementById("input");
 const btnSend = document.getElementById("btn-send");
 const statusBox = document.getElementById("status-box");
 const selModelo = document.getElementById("sel-modelo");
+const selProvedor = document.getElementById("sel-provedor");
+const modelHint = document.getElementById("model-hint");
+const provedorHint = document.getElementById("provedor-hint");
 const chkInternet = document.getElementById("chk-internet");
 const btnNovo = document.getElementById("btn-novo");
 const btnIndexar = document.getElementById("btn-indexar");
@@ -13,24 +16,52 @@ const indexStatus = document.getElementById("index-status");
 const listaClientes = document.getElementById("lista-clientes");
 const filePdf = document.getElementById("file-pdf");
 const btnPdf = document.getElementById("btn-pdf");
-const memoriaHint = document.getElementById("memoria-hint");
+const llmBar = document.getElementById("llm-bar");
+const ctxLabel = document.getElementById("ctx-label");
+const listaTerminais = document.getElementById("lista-terminais");
+const panelApiRemoto = document.getElementById("panel-api-remoto");
 const inpApiBase = document.getElementById("inp-api-base");
-const listaIntegracoes = document.getElementById("lista-integracoes");
-const modelHint = document.getElementById("model-hint");
+const llmAviso = document.getElementById("llm-aviso");
 
 const SESSAO_KEY = "adonay_sessao_id";
+const PROVEDOR_KEY = "adonay_provedor";
+const MODO_KEY = "adonay_modo";
 const API_BASE_KEY = "adonay_api_base";
 const DEFAULT_API_BASE = "http://127.0.0.1:8765";
+
+const PROVEDOR_LABELS = {
+  adonay: "OLLAMA",
+  claude: "CLAUDE",
+  openclaw: "CLAW",
+  ollama: "OLLAMA",
+};
+
+const HINTS = {
+  adonay: "OLLAMA: pedidos RP, OneDrive e acoes no PC (contexto compartilhado)",
+  claude:
+    "CLAUDE: responde no chat (codigo). Terminal opcional — botao na barra lateral.",
+  openclaw:
+    "CLAW: responde no chat. Pode demorar 1–3 min. Terminal opcional na lateral.",
+};
+
+const AVISOS_PROVEDOR = {
+  claude: "Dica: para codigo longo, use tambem o terminal Claude (barra lateral).",
+  openclaw: "Dica: CLAW no chat pode demorar; mensagens curtas funcionam melhor.",
+};
+
+let modoAtual = localStorage.getItem(MODO_KEY) || "auto";
+let enviando = false;
+
+function isLocalUi() {
+  return (
+    location.hostname === "127.0.0.1" || location.hostname === "localhost"
+  );
+}
 
 function getApiBase() {
   const saved = localStorage.getItem(API_BASE_KEY);
   if (saved) return saved.replace(/\/$/, "");
-  if (
-    location.hostname === "127.0.0.1" ||
-    location.hostname === "localhost"
-  ) {
-    return location.origin;
-  }
+  if (isLocalUi()) return location.origin;
   return DEFAULT_API_BASE;
 }
 
@@ -42,11 +73,8 @@ function setApiBase(url) {
 
 function apiUrl(path) {
   const base = getApiBase();
-  const p = path.startsWith("/") ? path : "/" + path;
-  return base + p;
+  return base + (path.startsWith("/") ? path : "/" + path);
 }
-
-let enviando = false;
 
 function obterSessaoId() {
   let id = localStorage.getItem(SESSAO_KEY);
@@ -69,6 +97,148 @@ function novaSessaoId() {
   return id;
 }
 
+function obterProvedorId() {
+  if (selProvedor?.value) return selProvedor.value;
+  const ativo = llmBar?.querySelector(".llm-pill.active");
+  return ativo?.dataset.provedor || localStorage.getItem(PROVEDOR_KEY) || "adonay";
+}
+
+function definirProvedor(id) {
+  localStorage.setItem(PROVEDOR_KEY, id);
+  if (selProvedor) selProvedor.value = id;
+  llmBar?.querySelectorAll(".llm-pill").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.provedor === id);
+  });
+  atualizarHintProvedor();
+}
+
+function atualizarHintProvedor() {
+  if (!provedorHint) return;
+  const id = obterProvedorId();
+  provedorHint.textContent = HINTS[id] || HINTS.adonay;
+  if (llmAviso) llmAviso.textContent = AVISOS_PROVEDOR[id] || "";
+  if (ctxLabel) {
+    const label = PROVEDOR_LABELS[id] || id.toUpperCase();
+    ctxLabel.textContent = `Contexto compartilhado · ${label}`;
+  }
+}
+
+async function abrirTerminalIntegracao(id) {
+  try {
+    const r = await fetch(apiUrl("/api/launch-integracao"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || "Falha ao abrir");
+    if (statusBox) {
+      statusBox.textContent = d.mensagem || "Terminal aberto";
+      statusBox.className = "status-box ok";
+    }
+  } catch (err) {
+    const msg =
+      err.message +
+      "\n\n• Servidor local ligado? (AdonayPainel → Servidor web)\n" +
+      "• URL correta: http://127.0.0.1:8765\n" +
+      "• Ou use AdonayPainel.exe → Ligar em Claude / OpenClaw";
+    alert(msg);
+  }
+}
+
+function renderTerminais(integracoes) {
+  if (!listaTerminais) return;
+  const lista = integracoes || [];
+  if (!lista.length) {
+    listaTerminais.innerHTML =
+      '<p class="ias-help muted">Terminais: use AdonayPainel.exe</p>';
+    return;
+  }
+  listaTerminais.innerHTML = lista
+    .map(
+      (i) =>
+        `<button type="button" class="btn-terminal" data-id="${i.id}">Abrir ${i.nome || i.id}</button>`
+    )
+    .join("");
+  listaTerminais.querySelectorAll(".btn-terminal").forEach((btn) => {
+    btn.addEventListener("click", () => abrirTerminalIntegracao(btn.dataset.id));
+  });
+}
+
+function initApiRemoto() {
+  if (!panelApiRemoto) return;
+  if (isLocalUi()) {
+    panelApiRemoto.hidden = true;
+    return;
+  }
+  panelApiRemoto.hidden = false;
+  if (inpApiBase) {
+    inpApiBase.value = getApiBase();
+    inpApiBase.addEventListener("change", () => {
+      setApiBase(inpApiBase.value);
+      carregarStatus();
+      carregarClientes();
+      carregarHistorico();
+    });
+  }
+  if (statusBox) {
+    statusBox.textContent =
+      "Pagina no GitHub — aponte o servidor para http://127.0.0.1:8765";
+    statusBox.className = "status-box err";
+  }
+}
+
+function initLlmPills() {
+  const salvo = localStorage.getItem(PROVEDOR_KEY) || "adonay";
+  definirProvedor(salvo);
+  llmBar?.querySelectorAll(".llm-pill").forEach((btn) => {
+    btn.addEventListener("click", () => definirProvedor(btn.dataset.provedor));
+  });
+  selProvedor?.addEventListener("change", () => definirProvedor(selProvedor.value));
+}
+
+function renderProvedoresChat(lista) {
+  if (!selProvedor || !lista?.length) return;
+  const salvo = localStorage.getItem(PROVEDOR_KEY) || "adonay";
+  const ordem = ["adonay", "claude", "openclaw", "ollama"];
+  selProvedor.innerHTML = "";
+  lista
+    .slice()
+    .sort((a, b) => ordem.indexOf(a.id) - ordem.indexOf(b.id))
+    .forEach((p) => {
+      if (p.id === "ollama") return;
+      const o = document.createElement("option");
+      o.value = p.id;
+      o.textContent = p.nome || p.id;
+      if (p.id === salvo) o.selected = true;
+      selProvedor.appendChild(o);
+    });
+  definirProvedor(selProvedor.value || salvo);
+}
+
+function initModoButtons() {
+  document.querySelectorAll(".mode-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.mode === modoAtual);
+    btn.addEventListener("click", () => {
+      modoAtual = btn.dataset.mode;
+      localStorage.setItem(MODO_KEY, modoAtual);
+      document.querySelectorAll(".mode-btn").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      const ph = {
+        auto: "Pergunta ou acao — a IA decide…",
+        pergunta: "Faca uma pergunta…",
+        acao: "Descreva a acao (abrir, listar, consultar RP)…",
+      };
+      input.placeholder = ph[modoAtual] || ph.auto;
+    });
+  });
+  input.placeholder = "Pergunta ou acao — a IA decide…";
+}
+
+document.getElementById("btn-toggle-side")?.addEventListener("click", () => {
+  document.querySelector(".app")?.classList.toggle("sidebar-collapsed");
+});
+
 function autoResize() {
   input.style.height = "auto";
   input.style.height = Math.min(input.scrollHeight, 200) + "px";
@@ -83,7 +253,7 @@ input.addEventListener("keydown", (e) => {
 });
 
 function esconderWelcome() {
-  if (welcomeEl) welcomeEl.remove();
+  welcomeEl?.remove();
 }
 
 function formatPasso(p) {
@@ -95,6 +265,11 @@ function formatPasso(p) {
       ? JSON.stringify(p.resultado)
       : String(p.resultado);
   return `⚙ ${p.ferramenta}: ${r.slice(0, 160)}`;
+}
+
+function labelProvedor(meta) {
+  const id = meta?.provedor || "adonay";
+  return PROVEDOR_LABELS[id] || String(id).toUpperCase();
 }
 
 function addMessage(role, text, passos = [], meta = null) {
@@ -114,20 +289,12 @@ function addMessage(role, text, passos = [], meta = null) {
   row.appendChild(bubble);
 
   const logs = [];
-  if (meta?.rp_direto) {
-    logs.push("✓ Dados reais do RP (planilha) — resposta sem inventar pedidos");
-  }
-  if (meta?.sistema_codigo) {
-    logs.push(
-      "✓ Código sistema-pedidos (pasta local indexada): " +
-        (meta.arquivos || []).slice(0, 5).join(", ")
-    );
-  }
-  if (meta?.intencao) {
-    logs.push(`Intenção: ${meta.intencao} · executar: ${meta.executar}`);
-  }
+  if (meta?.provedor) logs.push(`IA: ${labelProvedor(meta)}`);
+  if (meta?.rp_direto) logs.push("✓ Dados reais do RP");
+  if (meta?.sistema_codigo) logs.push("✓ Codigo sistema-pedidos");
+  if (meta?.intencao) logs.push(`Intencao: ${meta.intencao}`);
   (meta?.bloqueados || []).forEach((b) => {
-    logs.push(`🚫 Bloqueado: ${b.ferramenta} — ${b.motivo}`);
+    logs.push(`🚫 ${b.ferramenta}: ${b.motivo}`);
   });
   if (passos.length && role === "bot") {
     passos.forEach((p) => logs.push(formatPasso(p)));
@@ -160,59 +327,24 @@ function removeTyping() {
   document.getElementById("typing-row")?.remove();
 }
 
-function renderIntegracoes(lista) {
-  if (!listaIntegracoes) return;
-  if (!lista.length) {
-    listaIntegracoes.innerHTML =
-      '<p class="integracoes-vazio">Nenhuma integracao configurada.</p>';
-    return;
-  }
-  listaIntegracoes.innerHTML = lista
-    .map(
-      (i) =>
-        `<button type="button" class="btn-integracao" data-id="${i.id}" title="Modelo: ${i.modelo || "qwen2.5:7b"}">
-          <strong>${i.nome}</strong>
-          <span>${i.descricao || "Abre no terminal"}</span>
-        </button>`
-    )
-    .join("");
-  listaIntegracoes.querySelectorAll(".btn-integracao").forEach((btn) => {
-    btn.addEventListener("click", () => abrirIntegracao(btn.dataset.id));
-  });
-}
-
-async function abrirIntegracao(id) {
-  try {
-    const r = await fetch(apiUrl("/api/launch-integracao"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nome: id }),
-    });
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.detail || "Erro");
-    alert(d.mensagem || "Abrindo…");
-  } catch (err) {
-    alert("Nao foi possivel abrir: " + err.message);
-  }
-}
-
 async function carregarClientes() {
+  if (!listaClientes) return;
   try {
     const r = await fetch(apiUrl("/api/clientes"));
     const d = await r.json();
     const lista = d.clientes || [];
     if (!lista.length) {
-      listaClientes.textContent = "Indexe o OneDrive primeiro.";
+      listaClientes.textContent = "Indexe o OneDrive.";
       return;
     }
     listaClientes.innerHTML = lista
       .slice(0, 40)
       .map(
         (c) =>
-          `<button type="button" class="cliente-item" data-msg="abrir pasta do ${c.cliente} ${c.ultimos_4_digitos}">${c.cliente} ${c.ultimos_4_digitos} (${c.n})</button>`
+          `<button type="button" class="cliente-item" data-msg="abrir pasta do ${c.cliente} ${c.ultimos_4_digitos}">${c.cliente} ${c.ultimos_4_digitos}</button>`
       )
       .join("");
-    document.querySelectorAll(".cliente-item").forEach((btn) => {
+    listaClientes.querySelectorAll(".cliente-item").forEach((btn) => {
       btn.addEventListener("click", () => {
         input.value = btn.dataset.msg;
         autoResize();
@@ -220,7 +352,7 @@ async function carregarClientes() {
       });
     });
   } catch {
-    listaClientes.textContent = "Erro ao carregar clientes.";
+    listaClientes.textContent = "Servidor offline.";
   }
 }
 
@@ -228,105 +360,85 @@ async function carregarStatus() {
   try {
     const r = await fetch(apiUrl("/api/status"));
     const d = await r.json();
-    selModelo.innerHTML = "";
-    const modelos = [...new Set(d.modelos || [])];
-    modelos.forEach((m) => {
-      const o = document.createElement("option");
-      o.value = m;
-      o.textContent = m;
-      if (m === d.modelo_padrao) o.selected = true;
-      selModelo.appendChild(o);
-    });
-    if (modelHint) {
-      const sug = (d.modelos_sugeridos || []).filter((m) => !modelos.includes(m));
-      modelHint.textContent =
-        modelos.length <= 1 && sug.length
-          ? `So ha 1 modelo local. Para mais: ollama pull ${sug[0]}`
-          : modelos.length
-            ? `${modelos.length} modelo(s) no Ollama`
-            : "Nenhum modelo — rode: ollama pull qwen2.5:7b";
+    if (selModelo) {
+      selModelo.innerHTML = "";
+      const modelos = [...new Set(d.modelos || [])];
+      modelos.forEach((m) => {
+        const o = document.createElement("option");
+        o.value = m;
+        o.textContent = m;
+        if (m === d.modelo_padrao) o.selected = true;
+        selModelo.appendChild(o);
+      });
+      if (modelHint) {
+        const sug = (d.modelos_sugeridos || []).filter((m) => !modelos.includes(m));
+        modelHint.textContent = modelos.length
+          ? `${modelos.length} modelo(s) Ollama. Claude/CLAW: menu "Quem responde no chat".`
+          : `Nenhum modelo. Rode: ollama pull ${sug[0] || "qwen2.5:7b"}`;
+      }
     }
-    renderIntegracoes(d.integracoes_ollama || []);
+    renderProvedoresChat(d.provedores || []);
+    const diag = d.diagnostico_ias || {};
+    if (diag.claude && !diag.claude.instalado && provedorHint) {
+      provedorHint.textContent =
+        "CLAUDE nao instalado. Rode INSTALAR_CLAUDE_E_CLAW.bat";
+    }
+    if (llmAviso && diag.openclaw) {
+      llmAviso.textContent = diag.openclaw.instalado
+        ? "CLAW no chat pode demorar 1–3 min; prefira CLAUDE se der erro."
+        : "CLAW nao instalado. Rode INSTALAR_CLAUDE_E_CLAW.bat";
+    }
     if (d.ollama) {
       const idx = d.indexador?.arquivos_indexados ?? 0;
-      const sp = d.indexador_sistema?.arquivos ?? 0;
-      statusBox.textContent = `Ollama OK · ${d.modelo_padrao || ""} · OneDrive: ${idx} · sistema: ${sp} arq`;
+      statusBox.textContent = `Ollama OK · ${d.modelo_padrao || ""} · ${idx} arq`;
       statusBox.className = "status-box ok";
-    } else if (d.estado === "nao_instalado") {
-      statusBox.textContent = "Ollama não instalado — ollama pull qwen2.5:7b";
-      statusBox.className = "status-box err";
-    } else if (d.estado === "sem_modelos") {
-      statusBox.textContent = "Falta modelo: ollama pull qwen2.5:7b";
-      statusBox.className = "status-box err";
     } else {
-      statusBox.textContent = d.mensagem || "Ollama offline";
+      statusBox.textContent = d.mensagem || "Ollama offline — use ABRIR_PAINEL.bat";
       statusBox.className = "status-box err";
     }
-    if (d.indexando) {
-      indexStatus.textContent = "Indexando…";
-    } else if (d.indexador) {
+    if (d.indexando) indexStatus.textContent = "Indexando…";
+    else if (d.indexador)
       indexStatus.textContent = `${d.indexador.arquivos_indexados || 0} arquivos`;
-    }
-    if (memoriaHint && d.contexto_pasta) {
-      memoriaHint.textContent = "Contexto: " + d.contexto_pasta;
-      memoriaHint.title = d.historico_db || d.contexto_pasta;
-    }
-  } catch {
-    statusBox.textContent = "Servidor offline — INICIAR.bat";
+    renderTerminais(d.integracoes_ollama || []);
+  } catch (err) {
+    statusBox.textContent = isLocalUi()
+      ? "Offline — AdonayPainel.exe ou INICIAR_TUDO.bat"
+      : `Sem conexao com ${getApiBase()} — ligue o servidor no PC`;
     statusBox.className = "status-box err";
+    renderTerminais([]);
   }
 }
 
 btnIndexarSistema?.addEventListener("click", async () => {
-  indexStatus.textContent = "Indexando sistema-pedidos…";
-  try {
-    await fetch(apiUrl("/api/indexar-sistema"), { method: "POST" });
-    const poll = setInterval(async () => {
-      const r = await fetch(apiUrl("/api/indexar-sistema/status"));
-      const s = await r.json();
-      if (s.rodando) {
-        indexStatus.textContent = "Indexando código… aguarde";
-        return;
-      }
-      clearInterval(poll);
-      const res = s.resultado || {};
-      indexStatus.textContent = res.total_arquivos
-        ? `Sistema: ${res.total_arquivos} arquivos, ${res.total_chunks} trechos`
-        : res.erro || "Concluído";
-      carregarStatus();
-    }, 2000);
-  } catch {
-    indexStatus.textContent = "Erro ao indexar sistema";
-  }
+  indexStatus.textContent = "Indexando sistema…";
+  await fetch(apiUrl("/api/indexar-sistema"), { method: "POST" });
+  const poll = setInterval(async () => {
+    const s = await (await fetch(apiUrl("/api/indexar-sistema/status"))).json();
+    if (s.rodando) return;
+    clearInterval(poll);
+    indexStatus.textContent = s.resultado?.total_arquivos
+      ? `Sistema: ${s.resultado.total_arquivos} arq`
+      : "OK";
+    carregarStatus();
+  }, 2000);
 });
 
-btnIndexar.addEventListener("click", async () => {
-  indexStatus.textContent = "Iniciando…";
-  try {
-    await fetch(apiUrl("/api/indexar"), { method: "POST" });
-    const poll = setInterval(async () => {
-      const r = await fetch(apiUrl("/api/indexar/status"));
-      const s = await r.json();
-      if (s.rodando) {
-        indexStatus.textContent = "Indexando… aguarde";
-        return;
-      }
-      clearInterval(poll);
-      const res = s.resultado || {};
-      indexStatus.textContent = res.total
-        ? `OK: ${res.total} arquivos`
-        : res.erro || "Concluído";
-      carregarStatus();
-      carregarClientes();
-    }, 2000);
-  } catch {
-    indexStatus.textContent = "Erro ao indexar";
-  }
+btnIndexar?.addEventListener("click", async () => {
+  indexStatus.textContent = "Indexando…";
+  await fetch(apiUrl("/api/indexar"), { method: "POST" });
+  const poll = setInterval(async () => {
+    const s = await (await fetch(apiUrl("/api/indexar/status"))).json();
+    if (s.rodando) return;
+    clearInterval(poll);
+    indexStatus.textContent = s.resultado?.total ? `OK: ${s.resultado.total}` : "OK";
+    carregarStatus();
+    carregarClientes();
+  }, 2000);
 });
 
-btnPdf.addEventListener("click", () => filePdf.click());
+btnPdf?.addEventListener("click", () => filePdf.click());
 
-filePdf.addEventListener("change", async () => {
+filePdf?.addEventListener("change", async () => {
   const f = filePdf.files[0];
   if (!f) return;
   const fd = new FormData();
@@ -363,8 +475,10 @@ form.addEventListener("submit", async (e) => {
       body: JSON.stringify({
         mensagem: texto,
         sessao: obterSessaoId(),
-        modelo: selModelo.value || null,
-        permitir_internet: chkInternet.checked,
+        provedor: obterProvedorId(),
+        modo: modoAtual,
+        modelo: selModelo?.value || null,
+        permitir_internet: chkInternet?.checked,
       }),
     });
     const d = await r.json();
@@ -373,7 +487,19 @@ form.addEventListener("submit", async (e) => {
     addMessage("bot", d.resposta, d.passos || [], d.meta || null);
   } catch (err) {
     removeTyping();
-    addMessage("bot", "Erro: " + err.message);
+    let msg = err.message;
+    const pid = obterProvedorId();
+    if (pid === "claude" || pid === "openclaw") {
+      msg +=
+        "\n\nNo chat: so envie mensagem com a pílula " +
+        (PROVEDOR_LABELS[pid] || pid) +
+        " ativa.\n" +
+        "Terminal (opcional): botao na barra lateral ou AdonayPainel.exe.";
+    }
+    if (!isLocalUi() && /fetch|network|failed/i.test(msg)) {
+      msg += "\n\nConfira o campo Servidor no PC (porta 8765) na barra lateral.";
+    }
+    addMessage("bot", "Erro: " + msg);
   }
 
   enviando = false;
@@ -381,53 +507,42 @@ form.addEventListener("submit", async (e) => {
   input.focus();
 });
 
-const WELCOME_HTML =
-  "<h1>Olá</h1>" +
-  "<p>Converse normalmente ou dê comandos claros: abrir programa, pasta do cliente, CDR, RP.</p>" +
-  '<div class="chips">' +
-  '<button type="button" class="chip" data-msg="abrir corel">Abrir Corel</button>' +
-  '<button type="button" class="chip" data-msg="abrir pasta do Victor 0032">Pasta Victor 0032</button>' +
-  '<button type="button" class="chip" data-msg="abrir fila do RP">Fila RP</button>' +
-  '<button type="button" class="chip" data-msg="me mostrar todos os pedidos com status em arte">Pedidos em ARTE</button>' +
-  '<button type="button" class="chip" data-msg="como funciona o Code.gs do sistema de pedidos?">Como funciona Code.gs</button>' +
-  "</div>";
+const WELCOME_HTML = document.getElementById("welcome")?.outerHTML || "";
 
 async function carregarHistorico() {
-  const sessao = obterSessaoId();
   try {
     const r = await fetch(
-      apiUrl(
-        "/api/historico?sessao=" + encodeURIComponent(sessao) + "&limite=200"
-      )
+      apiUrl("/api/historico?sessao=" + encodeURIComponent(obterSessaoId()) + "&limite=200")
     );
     const d = await r.json();
     const msgs = d.mensagens || [];
     if (!msgs.length) return;
     esconderWelcome();
     msgs.forEach((m) => {
-      const role = m.role === "user" ? "user" : "bot";
-      addMessage(role, m.content || "");
+      addMessage(m.role === "user" ? "user" : "bot", m.content || "");
     });
-    if (memoriaHint && d.total) {
-      const base = memoriaHint.textContent || "Contexto salvo";
-      memoriaHint.textContent = base + " · " + d.total + " mensagens";
-    }
   } catch {
-    /* sem historico */
+    /* vazio */
   }
 }
 
-btnNovo.addEventListener("click", async () => {
+btnNovo?.addEventListener("click", async () => {
   const antiga = obterSessaoId();
-  await fetch(apiUrl("/api/limpar?sessao=" + encodeURIComponent(antiga)), {
-    method: "POST",
-  });
+  await fetch(apiUrl("/api/limpar?sessao=" + encodeURIComponent(antiga)), { method: "POST" });
   novaSessaoId();
   messagesEl.innerHTML = "";
   const w = document.createElement("div");
   w.className = "welcome";
   w.id = "welcome";
-  w.innerHTML = WELCOME_HTML;
+  w.innerHTML = `
+    <div class="welcome-icon">◇</div>
+    <h2>Como posso ajudar?</h2>
+    <p>Pergunte ou peca uma acao. Troque a IA embaixo (OLLAMA, CLAUDE, CLAW).</p>
+    <div class="chips">
+      <button type="button" class="chip" data-msg="resumo financeiro dos pedidos em aberto">Resumo RP</button>
+      <button type="button" class="chip" data-msg="abrir corel">Abrir Corel</button>
+    </div>
+  `;
   messagesEl.appendChild(w);
   bindChips();
 });
@@ -442,17 +557,10 @@ function bindChips() {
   });
 }
 
+initApiRemoto();
+initLlmPills();
+initModoButtons();
 bindChips();
-
-if (inpApiBase) {
-  inpApiBase.value = getApiBase();
-  inpApiBase.addEventListener("change", () => {
-    setApiBase(inpApiBase.value);
-    carregarStatus();
-    carregarClientes();
-  });
-}
-
 carregarStatus();
 carregarClientes();
 carregarHistorico();

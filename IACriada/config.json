@@ -23,6 +23,28 @@
       }
     }
   },
+  "provedores": {
+    "adonay": {
+      "nome": "Adonay (completo)",
+      "descricao": "Pedidos RP, OneDrive, ferramentas Windows",
+      "ferramentas": true
+    },
+    "ollama": {
+      "nome": "Ollama (chat)",
+      "descricao": "Conversa simples, sem ferramentas",
+      "ferramentas": false
+    },
+    "claude": {
+      "nome": "Claude Code",
+      "descricao": "Agente de codigo via Ollama",
+      "timeout_seg": 180
+    },
+    "openclaw": {
+      "nome": "OpenClaw",
+      "descricao": "Assistente OpenClaw (pode demorar)",
+      "timeout_seg": 120
+    }
+  },
   "onedrive_trabalho": "C:\\Users\\PC CASA\\OneDrive - Adonay Confecções\\TRABALHO",
   "sqlite_index": "data/adonay_index.db",
   "contexto_pasta": "D:\\TOD CONTEXTO DA I.A. LOCAL",

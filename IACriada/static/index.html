@@ -1,77 +1,102 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Assistente Adonay</title>
+  <title>Adonay IA</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  
-  
   <div class="app">
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="logo">◇</div>
-        <span>Assistente Adonay</span>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <button type="button" class="btn-new" id="btn-novo">+ Nova conversa</button>
+        <button type="button" class="btn-icon" id="btn-toggle-side" title="Recolher">☰</button>
       </div>
-      <a href="../../home.html" class="btn-side btn-side-link">← Voltar à fila</a>
-      <button type="button" class="btn-side" id="btn-novo">+ Nova conversa</button>
-      <div class="status-box" id="status-box">Verificando Ollama…</div>
-      <button type="button" class="btn-side" id="btn-indexar">Indexar OneDrive</button>
-      <button type="button" class="btn-side" id="btn-indexar-sistema">Indexar sistema-pedidos</button>
+      <div class="status-box" id="status-box">Verificando…</div>
+      <nav class="sidebar-nav">
+        <button type="button" class="nav-item" id="btn-indexar">Indexar OneDrive</button>
+        <button type="button" class="nav-item" id="btn-indexar-sistema">Indexar sistema-pedidos</button>
+        <a href="../../home.html" class="nav-item link">← Fila RP</a>
+      </nav>
       <div class="index-status" id="index-status"></div>
-      <div class="memoria-hint" id="memoria-hint"></div>
+      <div class="sidebar-models">
+        <label for="sel-modelo">Modelo Ollama (motor)</label>
+        <select id="sel-modelo"></select>
+        <p id="model-hint" class="ias-help muted">Só modelos do ollama pull. Claude/Claw não entram aqui.</p>
+      </div>
+      <div class="sidebar-provedor">
+        <label for="sel-provedor">Quem responde no chat</label>
+        <select id="sel-provedor">
+          <option value="adonay">OLLAMA — Adonay (RP, arquivos, PC)</option>
+          <option value="claude">CLAUDE — código</option>
+          <option value="openclaw">CLAW — OpenClaw</option>
+        </select>
+      </div>
       <label class="toggle-net">
         <input type="checkbox" id="chk-internet" />
-        <span>Permitir internet</span>
+        <span>Internet</span>
       </label>
-      <div class="model-row">
-        <label for="sel-modelo">Modelo Ollama (chat)</label>
-        <select id="sel-modelo"></select>
-        <p class="model-hint" id="model-hint">Lista = modelos baixados com ollama pull</p>
-      </div>
-      <div class="panel-integracoes">
+      <div class="panel-ias" id="panel-ias">
         <h3>Outras IAs (terminal)</h3>
-        <p class="integracoes-hint">Claude e OpenClaw usam o Ollama, mas abrem fora deste chat.</p>
-        <div id="lista-integracoes" class="lista-integracoes"></div>
+        <p class="ias-help muted">Opcional: janela no PC. No chat use o menu acima ou as pílulas embaixo.</p>
+        <div id="lista-terminais" class="lista-terminais"></div>
       </div>
-      <div class="model-row">
-        <label for="inp-api-base">URL do servidor</label>
-        <input type="url" id="inp-api-base" placeholder="http://127.0.0.1:8765 ou túnel HTTPS" spellcheck="false" />
+      <div class="panel-api" id="panel-api-remoto" hidden>
+        <label for="inp-api-base">Servidor no PC</label>
+        <input type="url" id="inp-api-base" placeholder="http://127.0.0.1:8765" />
+        <p class="ias-help muted">GitHub: porta <strong>8765</strong>. <a href="http://127.0.0.1:8765" target="_blank" rel="noopener">Abrir local ↗</a></p>
       </div>
       <div class="panel-clientes">
-        <h3>Clientes (índice)</h3>
+        <h3>Clientes</h3>
         <div id="lista-clientes" class="lista-clientes">—</div>
       </div>
-      <p class="hint-side">Só abre e lê — não salva nem altera arquivos.</p>
     </aside>
 
-    <main class="chat-area">
+    <main class="main">
+      <header class="topbar">
+        <h1>Adonay IA</h1>
+        <span class="topbar-sub" id="ctx-label">Contexto compartilhado</span>
+      </header>
+
       <div class="messages" id="messages">
         <div class="welcome" id="welcome">
-          <h1>Olá</h1>
-          <p>Converse normalmente ou dê comandos claros: abrir programa, pasta do cliente, CDR, RP.</p>
+          <div class="welcome-icon">◇</div>
+          <h2>Como posso ajudar?</h2>
+          <p>Pergunte algo ou peça uma ação (abrir programa, pedidos RP, pasta do cliente).</p>
           <div class="chips">
+            <button type="button" class="chip" data-msg="resumo financeiro dos pedidos em aberto">Resumo financeiro RP</button>
             <button type="button" class="chip" data-msg="abrir corel">Abrir Corel</button>
-            <button type="button" class="chip" data-msg="abrir pasta do Victor 0032">Pasta Victor 0032</button>
-            <button type="button" class="chip" data-msg="abrir fila do RP">Fila RP</button>
+            <button type="button" class="chip" data-msg="pedidos em insumos">Pedidos em insumos</button>
           </div>
         </div>
       </div>
-      <div class="composer-wrap">
+
+      <footer class="composer-panel">
+        <div class="mode-row">
+          <button type="button" class="mode-btn active" data-mode="auto" id="mode-auto">Auto</button>
+          <button type="button" class="mode-btn" data-mode="pergunta" id="mode-pergunta">Pergunta</button>
+          <button type="button" class="mode-btn" data-mode="acao" id="mode-acao">Ação</button>
+        </div>
         <form class="composer" id="form-chat">
           <input type="file" id="file-pdf" accept=".pdf" hidden />
-          <button type="button" class="btn-attach" id="btn-pdf" title="Anexar PDF">PDF</button>
-          <textarea id="input" rows="1" placeholder="Envie uma mensagem…"></textarea>
-          <button type="submit" id="btn-send" aria-label="Enviar">
+          <button type="button" class="btn-icon" id="btn-pdf" title="PDF">📎</button>
+          <textarea id="input" rows="1" placeholder="Mensagem para a IA…"></textarea>
+          <button type="submit" class="btn-send" id="btn-send" aria-label="Enviar">
             <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
           </button>
         </form>
-        <p class="footer-note">Ollama local · Adonay</p>
-      </div>
+        <div class="llm-bar" id="llm-bar">
+          <span class="llm-label">IA:</span>
+          <button type="button" class="llm-pill active" data-provedor="adonay" data-label="OLLAMA">OLLAMA</button>
+          <button type="button" class="llm-pill" data-provedor="claude" data-label="CLAUDE">CLAUDE</button>
+          <button type="button" class="llm-pill" data-provedor="openclaw" data-label="CLAW">CLAW</button>
+        </div>
+        <p class="llm-hint" id="provedor-hint">OLLAMA: pedidos RP e ações no PC · mesma conversa para todas as IAs</p>
+        <p class="llm-hint llm-hint-sub" id="llm-aviso"></p>
+      </footer>
     </main>
   </div>
-  <script src="app.js"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>

@@ -136,6 +136,16 @@ class Handler(BaseHTTPRequestHandler):
                 self, STATIC / "app.js", "application/javascript; charset=utf-8"
             )
 
+        if path == "/api/ping":
+            return _json_response(self, 200, {"ok": True})
+
+        if path == "/api/diagnostico-ias":
+            from provedores_llm import diagnostico_provedores
+
+            return _json_response(
+                self, 200, {"ollama": ollama_online(), "provedores": diagnostico_provedores()}
+            )
+
         if path == "/api/status":
             from config import path_contexto_pasta, path_historico_db
 
@@ -163,6 +173,9 @@ class Handler(BaseHTTPRequestHandler):
                         }
                     )
             modelos = list(dict.fromkeys(d.get("modelos") or []))
+            from provedores_llm import diagnostico_provedores
+
+            diag_ias = diagnostico_provedores()
             return _json_response(
                 self,
                 200,
@@ -178,6 +191,10 @@ class Handler(BaseHTTPRequestHandler):
                     "modelo_padrao": d.get("modelo_padrao"),
                     "integracoes_ollama": integracoes,
                     "modelos_sugeridos": oll.get("modelos_sugeridos", []),
+                    "provedores": __import__(
+                        "provedores_llm", fromlist=["listar_provedores"]
+                    ).listar_provedores(),
+                    "diagnostico_ias": diag_ias,
                     "recomendado": "qwen2.5:7b (suporte a ferramentas)",
                     "indexador": idx,
                     "indexador_sistema": idx_sp,
@@ -282,39 +299,34 @@ class Handler(BaseHTTPRequestHandler):
             hist = carregar_mensagens(sessao)
 
             try:
-                from agente import (
-                    _tentar_resposta_rp_direta,
-                    _tentar_resposta_sistema_codigo,
-                    chat_com_ferramentas,
-                    resolver_modelo,
+                from provedores_llm import chat_por_provedor
+
+                provedor = (req.get("provedor") or "adonay").strip().lower()
+                modo = (req.get("modo") or "auto").strip().lower()
+                if modo == "pergunta":
+                    provedor = "ollama"
+                elif modo == "acao":
+                    provedor = "adonay"
+                if origem == "whatsapp" and provedor not in ("adonay", "ollama"):
+                    provedor = "adonay"
+
+                out = chat_por_provedor(
+                    provedor,
+                    msg_user,
+                    req.get("modelo"),
+                    hist,
+                    sessao,
+                    permitir_internet=bool(req.get("permitir_internet")),
+                    ctx=ctx_req,
                 )
-
-                modelo = resolver_modelo(req.get("modelo"))
-                if not modelo:
-                    raise ConnectionError(mensagem_erro_ollama())
-
-                from rp_router import tema_parece_rp
-
-                forcar_rp = origem == "whatsapp" and tema_parece_rp(msg_user)
-                out = _tentar_resposta_sistema_codigo(msg_user, modelo, hist)
-                if out is None:
-                    out = _tentar_resposta_rp_direta(
-                        msg_user,
-                        modelo,
-                        historico=hist,
-                        sessao=sessao,
-                        forcar=forcar_rp,
-                    )
-                if out is None:
-                    out = chat_com_ferramentas(
-                        hist,
-                        req.get("modelo"),
-                        permitir_internet=bool(req.get("permitir_internet")),
-                        sessao=sessao,
-                        ctx=ctx_req,
-                    )
             except ConnectionError as exc:
                 return _json_response(self, 503, {"detail": str(exc)})
+            except FileNotFoundError as exc:
+                return _json_response(self, 503, {"detail": str(exc)})
+            except Exception as exc:
+                return _json_response(
+                    self, 500, {"detail": f"Erro no provedor {provedor}: {exc}"}
+                )
 
             resposta = out["resposta"]
             salvar_mensagem(sessao, "assistant", resposta)
@@ -369,24 +381,27 @@ class Handler(BaseHTTPRequestHandler):
         except json.JSONDecodeError:
             return _json_response(self, 400, {"detail": "JSON invalido"})
 
-        nome = (req.get("nome") or req.get("id") or "").strip().lower()
-        mapa = {
-            "claude": PASTA / "LAUNCH_CLAUDE.bat",
-            "openclaw": PASTA / "LAUNCH_OPENCLAW.bat",
-        }
-        bat = mapa.get(nome)
-        if not bat or not bat.is_file():
+        bruto = (req.get("id") or req.get("nome") or "").strip().lower()
+        nome = None
+        if bruto in ("claude", "openclaw"):
+            nome = bruto
+        elif "claude" in bruto:
+            nome = "claude"
+        elif "openclaw" in bruto or bruto in ("claw", "open claw"):
+            nome = "openclaw"
+        if not nome:
             return _json_response(
-                self, 404, {"detail": f"Integracao desconhecida: {nome}"}
+                self, 404, {"detail": f"Integracao desconhecida: {bruto}"}
             )
+        try:
+            import servicos_launcher as svc
 
-        import subprocess
-
-        subprocess.Popen(
-            ["cmd", "/c", "start", "", str(bat)],
-            cwd=str(PASTA),
-            shell=False,
-        )
+            if nome == "claude":
+                svc.iniciar_claude()
+            else:
+                svc.iniciar_openclaw()
+        except (OSError, FileNotFoundError, ConnectionError) as exc:
+            return _json_response(self, 500, {"detail": str(exc)})
         return _json_response(
             self,
             200,
@@ -438,6 +453,8 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
+    import os
+
     STATIC.mkdir(exist_ok=True)
     (PASTA / "data").mkdir(exist_ok=True)
     url = f"http://127.0.0.1:{PORTA}"
@@ -448,8 +465,20 @@ def main():
     print("  Ollama:", "OK" if ollama_online() else "OFFLINE")
     print("  Ctrl+C para encerrar")
     print("=" * 50)
-    webbrowser.open(url)
-    server = ThreadingHTTPServer(("127.0.0.1", PORTA), Handler)
+    try:
+        server = ThreadingHTTPServer(("127.0.0.1", PORTA), Handler)
+    except OSError as exc:
+        print(f"  ERRO: porta {PORTA} ja esta em uso.")
+        print(f"  Feche a janela antiga do servidor ou execute INICIAR_TUDO.bat de novo.")
+        print(f"  Detalhe: {exc}")
+        raise SystemExit(1) from exc
+    if os.environ.get("ADONAY_NO_BROWSER", "").strip().lower() not in (
+        "1",
+        "true",
+        "yes",
+    ):
+        threading.Thread(target=webbrowser.open, args=(url,), daemon=True).start()
+    print(f"  Servidor ouvindo em {url}")
     server.serve_forever()
 
 
