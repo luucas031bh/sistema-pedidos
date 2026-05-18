@@ -1,0 +1,25 @@
+{
+  "onedrive_trabalho": "C:\\Users\\PC CASA\\OneDrive - Adonay Confecções\\TRABALHO",
+  "sqlite_index": "data/adonay_index.db",
+  "contexto_pasta": "D:\\TOD CONTEXTO DA I.A. LOCAL",
+  "sqlite_historico": "historico.db",
+  "sqlite_sistema_pedidos": "data/sistema_pedidos_index.db",
+  "sistema_pedidos_path": "C:\\Users\\PC CASA\\Documents\\GitHub\\sistema-pedidos",
+  "rp_url_home": "https://luucas031bh.github.io/sistema-pedidos/home.html",
+  "rp_url_base": "https://luucas031bh.github.io/sistema-pedidos/",
+  "rp_apps_script_url": "https://script.google.com/macros/s/AKfycby9LFyzYkXW_Zo9i_u3jdGfRweu5UaDvf4PsGWyTh8UB0hXGEls2l_oELjJSDkpZwDoAQ/exec",
+  "whatsapp": {
+    "admins": ["5531999999999"]
+  },
+  "rp": {
+    "base_url": "https://luucas031bh.github.io/sistema-pedidos/",
+    "url_home": "https://luucas031bh.github.io/sistema-pedidos/home.html",
+    "apps_script_url": "https://script.google.com/macros/s/AKfycby9LFyzYkXW_Zo9i_u3jdGfRweu5UaDvf4PsGWyTh8UB0hXGEls2l_oELjJSDkpZwDoAQ/exec",
+    "rotas": {
+      "sistema": "index.html",
+      "fila": "home.html",
+      "pedido": "home.html",
+      "pedido_id": "index.html?id={codigo}"
+    }
+  }
+}

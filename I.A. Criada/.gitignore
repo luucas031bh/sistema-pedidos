@@ -1,0 +1,5 @@
+whatsapp-qr.png
+data/
+__pycache__/
+*.pyc
+.env

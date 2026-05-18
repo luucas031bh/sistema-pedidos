@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Assistente Adonay</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  
+  
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">◇</div>
+        <span>Assistente Adonay</span>
+      </div>
+      <button type="button" class="btn-side" id="btn-novo">+ Nova conversa</button>
+      <div class="status-box" id="status-box">Verificando Ollama…</div>
+      <button type="button" class="btn-side" id="btn-indexar">Indexar OneDrive</button>
+      <button type="button" class="btn-side" id="btn-indexar-sistema">Indexar sistema-pedidos</button>
+      <div class="index-status" id="index-status"></div>
+      <div class="memoria-hint" id="memoria-hint"></div>
+      <label class="toggle-net">
+        <input type="checkbox" id="chk-internet" />
+        <span>Permitir internet</span>
+      </label>
+      <div class="model-row">
+        <label for="sel-modelo">Modelo</label>
+        <select id="sel-modelo"></select>
+      </div>
+      <div class="panel-clientes">
+        <h3>Clientes (índice)</h3>
+        <div id="lista-clientes" class="lista-clientes">—</div>
+      </div>
+      <p class="hint-side">Só abre e lê — não salva nem altera arquivos.</p>
+    </aside>
+
+    <main class="chat-area">
+      <div class="messages" id="messages">
+        <div class="welcome" id="welcome">
+          <h1>Olá</h1>
+          <p>Converse normalmente ou dê comandos claros: abrir programa, pasta do cliente, CDR, RP.</p>
+          <div class="chips">
+            <button type="button" class="chip" data-msg="abrir corel">Abrir Corel</button>
+            <button type="button" class="chip" data-msg="abrir pasta do Victor 0032">Pasta Victor 0032</button>
+            <button type="button" class="chip" data-msg="abrir fila do RP">Fila RP</button>
+          </div>
+        </div>
+      </div>
+      <div class="composer-wrap">
+        <form class="composer" id="form-chat">
+          <input type="file" id="file-pdf" accept=".pdf" hidden />
+          <button type="button" class="btn-attach" id="btn-pdf" title="Anexar PDF">PDF</button>
+          <textarea id="input" rows="1" placeholder="Envie uma mensagem…"></textarea>
+          <button type="submit" id="btn-send" aria-label="Enviar">
+            <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+          </button>
+        </form>
+        <p class="footer-note">Ollama local · Adonay</p>
+      </div>
+    </main>
+  </div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
