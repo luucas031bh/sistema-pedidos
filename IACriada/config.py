@@ -42,6 +42,12 @@ _DEFAULT = {
             "pedido_id": "index.html?id={codigo}",
         },
     },
+    "ollama": {
+        "modelo_padrao": "qwen2.5:7b",
+        "modelo_integracoes": "qwen2.5:7b",
+        "anthropic_base_url": "http://localhost:11434",
+        "anthropic_auth_token": "ollama",
+    },
 }
 
 
@@ -60,6 +66,8 @@ def carregar_config() -> dict:
         if dados.get("rp_url_base"):
             cfg["rp_url_base"] = dados["rp_url_base"]
             cfg["rp"]["base_url"] = dados["rp_url_base"].rstrip("/") + "/"
+        if "ollama" in dados:
+            cfg["ollama"] = {**_DEFAULT.get("ollama", {}), **dados["ollama"]}
         return cfg
     return dict(_DEFAULT)
 

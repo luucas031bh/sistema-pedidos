@@ -1,4 +1,23 @@
 {
+  "ollama": {
+    "modelo_padrao": "qwen2.5:7b",
+    "modelo_integracoes": "qwen2.5:7b",
+    "anthropic_base_url": "http://localhost:11434",
+    "anthropic_auth_token": "ollama",
+    "integracoes": {
+      "claude": {
+        "comando": "ollama launch claude",
+        "modelo": "qwen2.5:7b",
+        "launcher": "LAUNCH_CLAUDE.bat"
+      },
+      "openclaw": {
+        "comando": "ollama launch openclaw",
+        "modelo": "qwen2.5:7b",
+        "launcher": "LAUNCH_OPENCLAW.bat",
+        "config": "%USERPROFILE%\\.openclaw\\openclaw.json"
+      }
+    }
+  },
   "onedrive_trabalho": "C:\\Users\\PC CASA\\OneDrive - Adonay Confecções\\TRABALHO",
   "sqlite_index": "data/adonay_index.db",
   "contexto_pasta": "D:\\TOD CONTEXTO DA I.A. LOCAL",
