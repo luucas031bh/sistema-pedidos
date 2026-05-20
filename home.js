@@ -15,9 +15,15 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch(`${CONFIG.APPS_SCRIPT_URL}?action=online`).catch(() => {});
     }
     document.getElementById('btnToggleKpis')?.addEventListener('click', alternarVisibilidadeKpis);
+    document.querySelectorAll('[data-filtro-entrega]').forEach((btn) => {
+        btn.addEventListener('click', () => definirFiltroEntrega(btn.getAttribute('data-filtro-entrega')));
+    });
     atualizarBotaoVisibilidadeKpis();
     carregarHome();
 });
+
+let pedidosAbertosCache = [];
+let filtroEntregaAtivo = 'todos';
 
 let kpisVisiveis = false;
 const estadoKpisValores = {
@@ -483,11 +489,111 @@ function renderizarKpisHome(abertos) {
     aplicarVisibilidadeKpis();
 }
 
+/** Segunda-feira 00:00 da semana que contém a data de referência. */
+function segundaFeiraDaSemana(ref) {
+    const d = new Date(ref);
+    d.setHours(0, 0, 0, 0);
+    const dia = d.getDay();
+    const diff = dia === 0 ? -6 : 1 - dia;
+    d.setDate(d.getDate() + diff);
+    return d;
+}
+
+function calcularIntervaloFiltroEntrega(tipo) {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    if (tipo === 'semana') {
+        const ini = segundaFeiraDaSemana(hoje);
+        const fim = new Date(ini);
+        fim.setDate(fim.getDate() + 6);
+        return { ini, fim, rotulo: 'Entregas para essa semana' };
+    }
+    if (tipo === 'quinzena') {
+        const ini = segundaFeiraDaSemana(hoje);
+        const fim = new Date(ini);
+        fim.setDate(fim.getDate() + 13);
+        return { ini, fim, rotulo: 'Entregas da quinzena' };
+    }
+    if (tipo === 'mes') {
+        const ini = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+        const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+        return { ini, fim, rotulo: 'Entregas do mês' };
+    }
+    return null;
+}
+
+function pedidoEntregaNoIntervalo(pedido, ini, fim) {
+    const entrega = parseDataEntregaLocal(pedido.datas?.entrega);
+    if (!entrega) return false;
+    entrega.setHours(0, 0, 0, 0);
+    return entrega.getTime() >= ini.getTime() && entrega.getTime() <= fim.getTime();
+}
+
+function filtrarPedidosPorEntrega(pedidos, tipo) {
+    if (!tipo || tipo === 'todos') return pedidos;
+    const intervalo = calcularIntervaloFiltroEntrega(tipo);
+    if (!intervalo) return pedidos;
+    return pedidos.filter((p) => pedidoEntregaNoIntervalo(p, intervalo.ini, intervalo.fim));
+}
+
+function definirFiltroEntrega(tipo) {
+    filtroEntregaAtivo = tipo || 'todos';
+    aplicarFiltroEFila();
+}
+
+function atualizarUIFiltroEntrega() {
+    document.querySelectorAll('[data-filtro-entrega]').forEach((btn) => {
+        const ativo = btn.getAttribute('data-filtro-entrega') === filtroEntregaAtivo;
+        btn.classList.toggle('is-active', ativo);
+        btn.setAttribute('aria-pressed', ativo ? 'true' : 'false');
+    });
+    const info = document.getElementById('homeFiltroEntregaInfo');
+    if (!info) return;
+    if (!filtroEntregaAtivo || filtroEntregaAtivo === 'todos') {
+        info.textContent = '';
+        info.classList.add('hidden');
+        return;
+    }
+    const intervalo = calcularIntervaloFiltroEntrega(filtroEntregaAtivo);
+    if (!intervalo) {
+        info.textContent = '';
+        info.classList.add('hidden');
+        return;
+    }
+    info.textContent = `${intervalo.rotulo}: ${formatarDataEntregaBR(intervalo.ini)} a ${formatarDataEntregaBR(intervalo.fim)}`;
+    info.classList.remove('hidden');
+}
+
+function atualizarContagemFila(mostrando, total) {
+    const el = document.getElementById('homeFilaContagem');
+    if (!el) return;
+    if (!filtroEntregaAtivo || filtroEntregaAtivo === 'todos') {
+        el.textContent = total > 0 ? `(${total})` : '';
+        return;
+    }
+    el.textContent = total > 0 ? `(${mostrando} de ${total})` : '';
+}
+
+function aplicarFiltroEFila() {
+    const filtrados = filtrarPedidosPorEntrega(pedidosAbertosCache, filtroEntregaAtivo);
+    renderizarFilaHome(filtrados);
+    renderizarFilaMobile(filtrados);
+    atualizarContagemFila(filtrados.length, pedidosAbertosCache.length);
+    atualizarUIFiltroEntrega();
+}
+
+function mensagemFilaVaziaHome() {
+    if (filtroEntregaAtivo && filtroEntregaAtivo !== 'todos') {
+        return 'Nenhum pedido com entrega neste período.';
+    }
+    return 'Nenhum pedido em aberto.';
+}
+
 function renderizarFilaHome(abertos) {
     const tbody = document.getElementById('homeFilaBody');
     if (!tbody) return;
     if (!abertos.length) {
-        tbody.innerHTML = '<tr><td colspan="10">Nenhum pedido em aberto.</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="10">${escapeHtmlHome(mensagemFilaVaziaHome())}</td></tr>`;
         return;
     }
     tbody.innerHTML = abertos.map((pedido) => {
@@ -520,7 +626,7 @@ function renderizarFilaMobile(abertos) {
     const container = document.getElementById('homeFilaCards');
     if (!container) return;
     if (!abertos.length) {
-        container.innerHTML = '<p style="text-align:center;color:var(--texto-secundario);padding:24px 0;">Nenhum pedido em aberto.</p>';
+        container.innerHTML = `<p style="text-align:center;color:var(--texto-secundario);padding:24px 0;">${escapeHtmlHome(mensagemFilaVaziaHome())}</p>`;
         return;
     }
     container.innerHTML = abertos.map((pedido) => {
@@ -679,9 +785,10 @@ async function carregarHome() {
         if (!res.ok || data.sucesso === false) {
             const msg = data.erro || `Erro HTTP ${res.status}`;
             tbody.innerHTML = `<tr><td colspan="10">${escapeHtmlHome(msg)}</td></tr>`;
+            pedidosAbertosCache = [];
             renderizarKpisHome([]);
-            renderizarFilaMobile([]);
             renderizarGraficoEtapas([]);
+            aplicarFiltroEFila();
             return;
         }
         const todos = data.pedidos || [];
@@ -692,16 +799,17 @@ async function carregarHome() {
             const db = parseDataEntregaLocal(b.datas?.entrega)?.getTime() ?? 0;
             return da - db;
         });
+        pedidosAbertosCache = abertos;
         renderizarKpisHome(abertosParaKpi);
-        renderizarFilaHome(abertos);
-        renderizarFilaMobile(abertos);
         renderizarGraficoEtapas(abertos);
+        aplicarFiltroEFila();
     } catch (err) {
         console.error(err);
         esconderSkeletonHome();
         tbody.innerHTML = '<tr><td colspan="10">Falha ao carregar dados (rede ou resposta inválida).</td></tr>';
+        pedidosAbertosCache = [];
         renderizarKpisHome([]);
-        renderizarFilaMobile([]);
         renderizarGraficoEtapas([]);
+        aplicarFiltroEFila();
     }
 }

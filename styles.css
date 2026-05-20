@@ -1976,6 +1976,39 @@ body {
     gap: 8px;
 }
 
+.home-filtro-ajuda {
+    font-size: 0.9rem;
+    color: var(--texto-secundario);
+    margin-bottom: var(--espacamento-md);
+    line-height: 1.5;
+}
+
+.home-filtro-botoes {
+    gap: 10px;
+}
+
+.home-filtro-botoes .btn.is-active {
+    background: var(--dourado-primario);
+    border-color: var(--dourado-primario);
+    color: #1a1a1a;
+    font-weight: 700;
+}
+
+.home-filtro-info {
+    margin-top: var(--espacamento-md);
+    padding: 10px 14px;
+    border-left: 3px solid var(--dourado-primario);
+    background: rgba(212, 175, 55, 0.08);
+    color: var(--dourado-secundario);
+    font-size: 0.9rem;
+}
+
+.home-fila-contagem {
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--texto-secundario);
+}
+
 @media (min-width: 1024px) {
     .home-kpi-grid {
         grid-template-columns: repeat(5, minmax(0, 1fr));

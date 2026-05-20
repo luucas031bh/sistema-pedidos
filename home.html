@@ -14,7 +14,7 @@
     <title>HOME - Fila visual | Adonay Confecção</title>
     <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👕</text></svg>">
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="styles.css?v=6">
+    <link rel="stylesheet" href="styles.css?v=7">
 </head>
 <body class="page-home">
     <header class="header header--home">
@@ -103,8 +103,20 @@
             <div class="home-chart-container" id="homeGraficoEtapas"></div>
         </section>
 
+        <section class="card home-filtro-entrega">
+            <h2 class="card-title">Filtro por data de entrega</h2>
+            <p class="home-filtro-ajuda">Filtra a fila abaixo pela <strong>data de entrega</strong> do pedido. A semana começa na segunda-feira e termina no domingo.</p>
+            <div class="home-filtro-botoes btn-group flex-wrap">
+                <button type="button" class="btn btn-secondary" data-filtro-entrega="semana">Entregas para essa semana</button>
+                <button type="button" class="btn btn-secondary" data-filtro-entrega="quinzena">Entregas da quinzena</button>
+                <button type="button" class="btn btn-secondary" data-filtro-entrega="mes">Entregas do mês</button>
+                <button type="button" class="btn btn-secondary" data-filtro-entrega="todos">Todos os pedidos</button>
+            </div>
+            <p id="homeFiltroEntregaInfo" class="home-filtro-info hidden" role="status"></p>
+        </section>
+
         <section class="card">
-            <h2 class="card-title">Fila</h2>
+            <h2 class="card-title">Fila <span id="homeFilaContagem" class="home-fila-contagem"></span></h2>
             <div class="tabela-dinamica tabela-home-fila">
                 <table>
                     <thead>
@@ -132,6 +144,6 @@
 
     <script src="config.js?v=5"></script>
     <script src="utils.js"></script>
-    <script src="home.js?v=3"></script>
+    <script src="home.js?v=4"></script>
 </body>
 </html>
