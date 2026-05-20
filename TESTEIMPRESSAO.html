@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste visual — OS e GP | Adonay Confecção</title>
+    <link rel="stylesheet" href="print.css?v=5">
+    <style>
+        /* Apenas tela de navegação — não imprime */
+        body.teste-impressao-nav {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #1a1a1a;
+            color: #eee;
+            margin: 0;
+            padding: 0;
+        }
+        .teste-nav {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: #0f0f0f;
+            border-bottom: 2px solid #d4af37;
+            padding: 14px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .teste-nav h1 {
+            font-size: 1rem;
+            margin: 0;
+            color: #d4af37;
+        }
+        .teste-nav p {
+            margin: 4px 0 0;
+            font-size: 0.8rem;
+            color: #999;
+            width: 100%;
+        }
+        .teste-nav-btns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .teste-nav-btns button,
+        .teste-nav-btns a {
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: 1px solid #555;
+            background: #2d2d2d;
+            color: #fff;
+            cursor: pointer;
+            font-size: 0.85rem;
+            text-decoration: none;
+        }
+        .teste-nav-btns button:hover,
+        .teste-nav-btns a:hover {
+            border-color: #d4af37;
+            color: #f0d98d;
+        }
+        .teste-nav-btns .btn-primary {
+            background: #d4af37;
+            color: #1a1a1a;
+            border-color: #d4af37;
+            font-weight: 700;
+        }
+        .teste-preview-wrap {
+            max-width: 210mm;
+            margin: 24px auto 48px;
+            padding: 0 16px;
+        }
+        .teste-doc-label {
+            text-align: center;
+            color: #d4af37;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin: 32px 0 12px;
+            padding: 8px;
+            border: 1px dashed #444;
+            border-radius: 8px;
+            background: #252525;
+        }
+        .teste-doc-sheet {
+            background: #fff;
+            color: #000;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            padding: 10mm;
+            margin-bottom: 24px;
+        }
+
+        /* —— Estilos extras do protótipo (tela + impressão) —— */
+        .proto-os-faixa {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: stretch;
+            border: 2px solid #000;
+            padding: 10px 12px;
+            margin-bottom: 14px;
+            background: #fafafa;
+        }
+        .proto-os-id {
+            font-size: 22pt;
+            font-weight: 800;
+            line-height: 1;
+            min-width: 80px;
+        }
+        .proto-os-id small {
+            display: block;
+            font-size: 7pt;
+            font-weight: 600;
+            color: #444;
+            margin-top: 4px;
+            word-break: break-all;
+        }
+        .proto-os-entrega {
+            flex: 1;
+            min-width: 140px;
+            padding: 8px 12px;
+            border: 2px solid #166534;
+            background: #f0fdf4;
+            border-radius: 4px;
+        }
+        .proto-os-entrega--alerta {
+            border-color: #b45309;
+            background: #fffbeb;
+        }
+        .proto-os-entrega-lbl {
+            font-size: 7pt;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #444;
+        }
+        .proto-os-entrega-val {
+            font-size: 14pt;
+            font-weight: 800;
+            color: #14532d;
+        }
+        .proto-os-meta-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+            font-size: 9pt;
+        }
+        .proto-os-meta-grid span strong { font-weight: 700; }
+        .proto-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 8pt;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .proto-badge--prod { background: #dbeafe; color: #1e40af; }
+        .proto-badge--op { background: #fef3c7; color: #92400e; }
+        .proto-os-cliente {
+            border: 1px solid #ccc;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+        }
+        .proto-os-cliente h2 {
+            font-size: 10pt;
+            margin: 0 0 8px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 4px;
+        }
+        .proto-os-obs {
+            margin-top: 8px;
+            padding: 8px;
+            background: #fffbeb;
+            border-left: 3px solid #f59e0b;
+            font-size: 9pt;
+        }
+        .proto-produto-bloco {
+            border: 2px solid #333;
+            margin-bottom: 16px;
+            page-break-inside: avoid;
+        }
+        .proto-produto-head {
+            background: #1a1a1a;
+            color: #fff;
+            padding: 8px 12px;
+            font-size: 11pt;
+            font-weight: 700;
+        }
+        .proto-produto-body { padding: 10px 12px; }
+        .proto-spec-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 10px;
+            font-size: 9pt;
+        }
+        .proto-spec-item {
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            background: #f9f9f9;
+        }
+        .proto-spec-item--destaque {
+            background: #fef9c3;
+            border-color: #ca8a04;
+            font-weight: 600;
+        }
+        .proto-tab {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9pt;
+            margin: 8px 0;
+        }
+        .proto-tab th,
+        .proto-tab td {
+            border: 1px solid #000;
+            padding: 5px 8px;
+            text-align: left;
+        }
+        .proto-tab th { background: #eee; font-weight: 700; }
+        .proto-tab .num { text-align: center; }
+        .proto-tab tfoot td { font-weight: 700; background: #f5f5f5; }
+        .proto-mockup-box {
+            border: 2px dashed #999;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
+            background: #f5f5f5;
+            color: #666;
+            font-size: 9pt;
+        }
+        .proto-checklist {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 16px;
+            margin-top: 12px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            font-size: 9pt;
+        }
+        .proto-checklist label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .proto-checklist input { width: 14px; height: 14px; }
+        .proto-lista-alunos { font-size: 8pt; }
+        .proto-lista-alunos th { font-size: 7pt; }
+
+        /* GP protótipo */
+        .proto-gp-titulo-doc {
+            text-align: center;
+            font-size: 13pt;
+            font-weight: 700;
+            margin: 0 0 4px;
+            letter-spacing: 0.02em;
+        }
+        .proto-gp-subtitulo {
+            text-align: center;
+            font-size: 9pt;
+            color: #444;
+            margin-bottom: 12px;
+        }
+        .proto-gp-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .proto-gp-card {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+            border-radius: 4px;
+        }
+        .proto-gp-card--total {
+            grid-column: 1 / -1;
+            border: 2px solid #b8941e;
+            background: #fffbeb;
+        }
+        .proto-gp-card-lbl {
+            font-size: 7pt;
+            text-transform: uppercase;
+            color: #666;
+        }
+        .proto-gp-card-val {
+            font-size: 14pt;
+            font-weight: 800;
+            color: #000;
+        }
+        .proto-gp-card--total .proto-gp-card-val {
+            font-size: 18pt;
+            color: #92400e;
+        }
+        .proto-gp-desc-produto {
+            font-size: 9pt;
+            line-height: 1.5;
+            margin: 10px 0;
+            padding: 10px;
+            background: #fafafa;
+            border-left: 3px solid #b8941e;
+        }
+        .proto-gp-desc-produto ul {
+            margin: 6px 0 0;
+            padding-left: 18px;
+        }
+        .proto-gp-financeiro {
+            border: 2px solid #000;
+            padding: 12px 14px;
+            margin-top: 14px;
+        }
+        .proto-gp-fin-linha {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid #ddd;
+            font-size: 10pt;
+        }
+        .proto-gp-fin-linha:last-child { border-bottom: none; }
+        .proto-gp-fin-linha--destaque {
+            font-size: 12pt;
+            font-weight: 800;
+            padding-top: 10px;
+            margin-top: 6px;
+            border-top: 2px solid #000;
+        }
+        .proto-gp-fin-linha--saldo {
+            background: #f0fdf4;
+            margin: 8px -14px -12px;
+            padding: 10px 14px;
+            border-top: 2px solid #166534;
+        }
+        .proto-gp-condicoes {
+            font-size: 8pt;
+            color: #444;
+            margin-top: 12px;
+            line-height: 1.45;
+        }
+        .proto-gp-condicoes li { margin-bottom: 4px; }
+
+        @media print {
+            body.teste-impressao-nav .teste-nav,
+            body.teste-impressao-nav .teste-doc-label {
+                display: none !important;
+            }
+            body.teste-impressao-nav {
+                background: #fff;
+            }
+            .teste-preview-wrap {
+                max-width: none;
+                margin: 0;
+                padding: 0;
+            }
+            .teste-doc-sheet {
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+                page-break-after: always;
+            }
+            .teste-doc-sheet:last-child {
+                page-break-after: auto;
+            }
+            .teste-doc-sheet--hide-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="teste-impressao-nav">
+
+    <nav class="teste-nav">
+        <div>
+            <h1>TESTEIMPRESSAO.html — protótipo OS &amp; GP</h1>
+            <p>Pedido de exemplo: Colégio São José — 48 camisetas formatura (dados fictícios baseados no formulário real)</p>
+        </div>
+        <div class="teste-nav-btns">
+            <button type="button" onclick="mostrarSo('os')">Ver só OS</button>
+            <button type="button" onclick="mostrarSo('gp')">Ver só GP</button>
+            <button type="button" onclick="mostrarSo('ambos')">Ver ambos</button>
+            <button type="button" class="btn-primary" onclick="window.print()">Imprimir / PDF</button>
+            <a href="index.html">Voltar ao sistema</a>
+        </div>
+    </nav>
+
+    <div class="teste-preview-wrap">
+
+        <p class="teste-doc-label" id="labelOs">▼ Ordem de Serviço (produção — uso interno)</p>
+        <div class="teste-doc-sheet" id="sheetOs">
+
+            <div class="os-doc proto-os-doc">
+                <!-- Faixa superior -->
+                <div class="proto-os-faixa">
+                    <div class="proto-os-id">
+                        2490
+                        <small>PED-1746652800-2490-042</small>
+                    </div>
+                    <div class="proto-os-entrega">
+                        <div class="proto-os-entrega-lbl">Data de entrega</div>
+                        <div class="proto-os-entrega-val">20/06/2026</div>
+                        <div style="font-size:8pt;margin-top:4px;color:#166534;">31 dias para entrega</div>
+                    </div>
+                    <div style="flex:1;min-width:180px;">
+                        <div class="proto-os-meta-grid">
+                            <span><strong>Etapa PROD.:</strong> <span class="proto-badge proto-badge--prod">Estampa</span></span>
+                            <span><strong>Status OP:</strong> <span class="proto-badge proto-badge--op">Em produção</span></span>
+                            <span><strong>Vendedor:</strong> ISABELA SIRAY</span>
+                            <span><strong>Tag:</strong> PEDIDO</span>
+                            <span><strong>Pedido em:</strong> 05/05/2026</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="proto-os-cliente">
+                    <h2>Cliente</h2>
+                    <div><strong>Nome:</strong> Colégio São José — Turma 9º Ano</div>
+                    <div><strong>Telefone:</strong> (31) 98603-2490</div>
+                    <div class="proto-os-obs">
+                        <strong>Observações gerais:</strong><br>
+                        Entregar na portaria do colégio após 14h. Conferir lista de nomes antes da costura.
+                        Gola reforçada conforme amostra aprovada em 02/05.
+                    </div>
+                </div>
+
+                <!-- Produto 1 -->
+                <div class="proto-produto-bloco">
+                    <div class="proto-produto-head">📦 PRODUTO 1 — Camisetas Formatura Turma 2026</div>
+                    <div class="proto-produto-body">
+                        <div class="proto-spec-grid">
+                            <div class="proto-spec-item">
+                                <strong>Tipo de peça</strong><br>
+                                Camisas Comum
+                            </div>
+                            <div class="proto-spec-item">
+                                <strong>Detalhe</strong><br>
+                                Gola O — Manga Curta — Com Punho Personalizado
+                            </div>
+                            <div class="proto-spec-item proto-spec-item--destaque">
+                                <strong>Malha</strong><br>
+                                PV (65% Poliéster 35% Viscose)
+                            </div>
+                            <div class="proto-spec-item proto-spec-item--destaque">
+                                <strong>Cor da malha</strong><br>
+                                Azul Royal
+                            </div>
+                        </div>
+
+                        <strong style="font-size:9pt;">GRADE DE TAMANHOS</strong>
+                        <table class="proto-tab">
+                            <thead>
+                                <tr>
+                                    <th>Tamanho</th>
+                                    <th class="num">PP</th>
+                                    <th class="num">P</th>
+                                    <th class="num">M</th>
+                                    <th class="num">G</th>
+                                    <th class="num">GG</th>
+                                    <th class="num">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Quantidade</td>
+                                    <td class="num">4</td>
+                                    <td class="num">8</td>
+                                    <td class="num">14</td>
+                                    <td class="num">16</td>
+                                    <td class="num">6</td>
+                                    <td class="num"><strong>48</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <strong style="font-size:9pt;">ESTAMPAS (detalhe para produção)</strong>
+                        <table class="proto-tab">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Tipo</th>
+                                    <th>Localidade</th>
+                                    <th>Cores (Silk)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="num">1</td>
+                                    <td>Silk Screen</td>
+                                    <td>Frente A4</td>
+                                    <td>3 Cores</td>
+                                </tr>
+                                <tr>
+                                    <td class="num">2</td>
+                                    <td>DTF (Direct to Film)</td>
+                                    <td>Costas A3</td>
+                                    <td>—</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="proto-mockup-box">
+                            [ Mockup do produto — referência visual aprovada ]
+                        </div>
+                    </div>
+                </div>
+
+                <section class="gp-artes" style="margin-bottom:12px;">
+                    <h2 class="gp-sec-titulo gp-sec-titulo--sub">Artes do pedido (referência)</h2>
+                    <div class="gp-artes-grid">
+                        <div class="gp-arte-item proto-mockup-box" style="min-height:70px;">Arte 1 — Logo frente</div>
+                        <div class="gp-arte-item proto-mockup-box" style="min-height:70px;">Arte 2 — Nomes costas</div>
+                    </div>
+                </section>
+
+                <strong style="font-size:9pt;">LISTA DE PERSONALIZAÇÃO (amostra)</strong>
+                <table class="proto-tab proto-lista-alunos">
+                    <thead>
+                        <tr>
+                            <th>Aluno</th>
+                            <th>Nome / Apelido</th>
+                            <th>Tam.</th>
+                            <th>Tipo</th>
+                            <th>Cor</th>
+                            <th class="num">Qtd</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Ana Silva</td><td>ANA</td><td>M</td><td>GOLA O</td><td>Azul Royal</td><td class="num">1</td></tr>
+                        <tr><td>Bruno Costa</td><td>BRUNO</td><td>G</td><td>GOLA O</td><td>Azul Royal</td><td class="num">1</td></tr>
+                        <tr><td>Carla Mendes</td><td>CARLA</td><td>P</td><td>GOLA O</td><td>Azul Royal</td><td class="num">1</td></tr>
+                        <tr><td colspan="6" style="text-align:center;color:#666;">… + 45 linhas na planilha completa …</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="proto-checklist">
+                    <strong style="width:100%;margin-bottom:4px;">Checklist de produção (marcar na fábrica)</strong>
+                    <label><input type="checkbox"> Arte</label>
+                    <label><input type="checkbox"> Insumos</label>
+                    <label><input type="checkbox"> Corte</label>
+                    <label><input type="checkbox" checked> Estampa</label>
+                    <label><input type="checkbox"> Costura</label>
+                    <label><input type="checkbox"> Embalo</label>
+                    <label><input type="checkbox"> Aguardando retirada</label>
+                </div>
+
+                <div style="margin-top:14px;padding-top:8px;border-top:2px solid #000;font-size:11pt;">
+                    <strong>TOTAL GERAL DE PEÇAS:</strong> 48 &nbsp;|&nbsp;
+                    <span style="font-size:8pt;color:#666;">Impresso em 20/05/2026 — OS interna — sem valores comerciais</span>
+                </div>
+            </div>
+        </div>
+
+        <p class="teste-doc-label" id="labelGp">▼ Guia de Pedido (GP — documento para o cliente)</p>
+        <div class="teste-doc-sheet" id="sheetGp">
+
+            <div class="gp-doc proto-gp-doc">
+                <div class="gp-header">
+                    <div class="gp-marca">ADONAY CONFECÇÃO</div>
+                    <p class="proto-gp-titulo-doc">Guia de Pedido</p>
+                    <p class="proto-gp-subtitulo">Proposta comercial e especificação do pedido</p>
+                    <div class="gp-meta">
+                        <span>CNPJ: 42.522.845/0001-97</span>
+                        <span>ID Busca: 2490</span>
+                        <span>(31) 3950-3089</span>
+                    </div>
+                    <div class="gp-endereco">Rua Geraldo Teixeira da Costa, São Benedito, Santa Luzia - MG · @adonayconfeccao</div>
+                </div>
+
+                <section class="gp-info-cliente">
+                    <h2 class="gp-sec-titulo">Cliente e prazos</h2>
+                    <div class="gp-info-cliente-grid">
+                        <div class="gp-cel">
+                            <span class="gp-label">Cliente</span>
+                            <span class="gp-val">Colégio São José — Turma 9º Ano</span>
+                        </div>
+                        <div class="gp-cel">
+                            <span class="gp-label">Telefone</span>
+                            <span class="gp-val">(31) 98603-2490</span>
+                        </div>
+                        <div class="gp-cel">
+                            <span class="gp-label">Data do pedido</span>
+                            <span class="gp-val">05/05/2026</span>
+                        </div>
+                        <div class="gp-cel gp-cel--entrega">
+                            <span class="gp-label">Previsão de entrega</span>
+                            <span class="gp-val">20/06/2026</span>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="proto-gp-cards">
+                    <div class="proto-gp-card">
+                        <div class="proto-gp-card-lbl">Total de peças</div>
+                        <div class="proto-gp-card-val">48</div>
+                    </div>
+                    <div class="proto-gp-card">
+                        <div class="proto-gp-card-lbl">Produtos no pedido</div>
+                        <div class="proto-gp-card-val">1</div>
+                    </div>
+                    <div class="proto-gp-card proto-gp-card--total">
+                        <div class="proto-gp-card-lbl">Valor total do pedido</div>
+                        <div class="proto-gp-card-val">R$ 12.400,00</div>
+                    </div>
+                </div>
+
+                <section class="gp-produto">
+                    <h3 class="gp-produto-tit">Camisetas Formatura Turma 2026</h3>
+
+                    <div class="proto-gp-desc-produto">
+                        <strong>O que você está encomendando:</strong>
+                        <ul>
+                            <li><strong>Modelo:</strong> Camisa comum, gola O, manga curta, com punho personalizado.</li>
+                            <li><strong>Tecido:</strong> PV (65% poliéster, 35% viscose), cor <strong>Azul Royal</strong>.</li>
+                            <li><strong>Personalização:</strong> Silk screen na frente (tamanho A4, 3 cores) + estampa DTF nas costas (A3).</li>
+                            <li><strong>Quantidade:</strong> 48 peças nos tamanhos PP (4), P (8), M (14), G (16), GG (6).</li>
+                            <li>Nomes individuais na parte de trás conforme lista de personalização anexa ao pedido.</li>
+                        </ul>
+                    </div>
+
+                    <table class="gp-tabela">
+                        <thead>
+                            <tr>
+                                <th>Qtd</th>
+                                <th>Tamanho</th>
+                                <th>Tipo</th>
+                                <th>Descrição</th>
+                                <th class="gp-moeda">Preço un.</th>
+                                <th class="gp-moeda">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td class="gp-num">4</td><td>PP</td><td>GOLA O</td><td class="gp-desc">PV — Azul Royal</td><td class="gp-moeda">R$ 258,33</td><td class="gp-moeda">R$ 1.033,32</td></tr>
+                            <tr><td class="gp-num">8</td><td>P</td><td>GOLA O</td><td class="gp-desc">PV — Azul Royal</td><td class="gp-moeda">R$ 258,33</td><td class="gp-moeda">R$ 2.066,64</td></tr>
+                            <tr><td class="gp-num">14</td><td>M</td><td>GOLA O</td><td class="gp-desc">PV — Azul Royal</td><td class="gp-moeda">R$ 258,33</td><td class="gp-moeda">R$ 3.616,62</td></tr>
+                            <tr><td class="gp-num">16</td><td>G</td><td>GOLA O</td><td class="gp-desc">PV — Azul Royal</td><td class="gp-moeda">R$ 258,33</td><td class="gp-moeda">R$ 4.133,28</td></tr>
+                            <tr><td class="gp-num">6</td><td>GG</td><td>GOLA O</td><td class="gp-desc">PV — Azul Royal</td><td class="gp-moeda">R$ 258,33</td><td class="gp-moeda">R$ 1.549,98</td></tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="5" style="text-align:right;font-weight:700;">Subtotal deste produto</td>
+                                <td class="gp-moeda">R$ 12.400,00</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <div class="gp-mockup gp-mockup--prod">
+                        <div class="gp-mockup-leg">Referência visual aprovada</div>
+                        <div class="proto-mockup-box" style="min-height:100px;border:none;">[ Mockup — Camisetas Formatura ]</div>
+                    </div>
+                </section>
+
+                <section class="gp-desc-pedido">
+                    <h2 class="gp-sec-titulo gp-sec-titulo--sub">Observações do pedido</h2>
+                    <p class="gp-desc-texto">Entrega na portaria do colégio após 14h. Lista de nomes conferida pelo responsável da turma.</p>
+                </section>
+
+                <div class="proto-gp-financeiro">
+                    <h2 class="gp-sec-titulo" style="border:none;padding:0;margin:0 0 10px;">Resumo financeiro</h2>
+                    <div class="proto-gp-fin-linha">
+                        <span>Subtotal dos produtos</span>
+                        <span>R$ 12.400,00</span>
+                    </div>
+                    <div class="proto-gp-fin-linha proto-gp-fin-linha--destaque">
+                        <span>Valor total do pedido</span>
+                        <span>R$ 12.400,00</span>
+                    </div>
+                    <div class="proto-gp-fin-linha">
+                        <span>Entrada / sinal já pago</span>
+                        <span>R$ 4.000,00</span>
+                    </div>
+                    <div class="proto-gp-fin-linha proto-gp-fin-linha--saldo">
+                        <span><strong>Saldo a pagar na retirada</strong></span>
+                        <span><strong>R$ 8.400,00</strong></span>
+                    </div>
+                    <p style="font-size:8pt;margin:10px 0 0;color:#555;">Forma de pagamento do saldo: PIX ou dinheiro, na entrega.</p>
+                </div>
+
+                <ul class="proto-gp-condicoes">
+                    <li>O prazo de entrega conta a partir da aprovação das artes e do mockup.</li>
+                    <li>Alterações após aprovação podem gerar custo adicional e novo prazo.</li>
+                    <li>O pedido segue para produção após confirmação da entrada acordada.</li>
+                </ul>
+
+                <div class="gp-rodape-valores" style="margin-top:20px;">
+                    <div class="gp-assinatura" style="max-width:100%;">
+                        <p class="gp-assinatura-texto">Declaro ter lido e estar de acordo com as especificações, quantidades, valores e prazo descritos nesta guia.</p>
+                        <div class="gp-linha-assinatura"></div>
+                        <p class="gp-assinatura-rotulo">Assinatura do cliente &nbsp;·&nbsp; Data: ___/___/______</p>
+                    </div>
+                </div>
+                <div class="gp-rodape">GP — Guia de Pedido</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function mostrarSo(qual) {
+            const os = document.getElementById('sheetOs');
+            const gp = document.getElementById('sheetGp');
+            const labelOs = document.getElementById('labelOs');
+            const labelGp = document.getElementById('labelGp');
+            os.classList.remove('teste-doc-sheet--hide-print');
+            gp.classList.remove('teste-doc-sheet--hide-print');
+            labelOs.style.display = '';
+            labelGp.style.display = '';
+            if (qual === 'os') {
+                gp.style.display = 'none';
+                labelGp.style.display = 'none';
+                gp.classList.add('teste-doc-sheet--hide-print');
+            } else if (qual === 'gp') {
+                os.style.display = 'none';
+                labelOs.style.display = 'none';
+                os.classList.add('teste-doc-sheet--hide-print');
+            } else {
+                os.style.display = '';
+                gp.style.display = '';
+            }
+        }
+    </script>
+</body>
+</html>
