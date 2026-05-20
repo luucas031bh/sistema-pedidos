@@ -3,73 +3,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="Relatórios e comparativos — Adonay Confecção">
+    <meta name="description" content="Central de Relatórios — Adonay Confecção">
     <meta name="theme-color" content="#d4af37">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <title>Relatórios | Adonay Confecção</title>
+    <title>Central de Relatórios | Adonay Confecção</title>
     <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="styles.css?v=6">
+    <link rel="stylesheet" href="styles.css?v=7">
     <style>
-        .relatorio-grid-filtros {
+        .rel-grid-filtros {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
             gap: 12px;
             align-items: end;
         }
-        .relatorio-periodo-bloco {
+        .rel-periodo-bloco {
             border: 1px solid rgba(212, 175, 55, 0.2);
             border-radius: var(--radius-md, 10px);
             padding: 14px;
             background: rgba(0, 0, 0, 0.15);
+            margin-top: 14px;
         }
-        .relatorio-periodo-bloco h3 {
-            font-size: 0.85rem;
+        .rel-periodo-bloco h3 {
+            font-size: 0.82rem;
             color: var(--dourado-secundario, #f0d98d);
             margin-bottom: 10px;
             text-transform: uppercase;
             letter-spacing: 0.06em;
         }
-        .relatorio-chart-wrap {
-            position: relative;
-            min-height: 280px;
-            max-height: 520px;
-            margin-top: var(--espacamento-md);
+        .rel-presets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
         }
-        .relatorio-tabela-scroll {
+        .rel-presets .btn { padding: 6px 12px; font-size: 0.8rem; }
+        .rel-msg-erro { color: #f87171; margin-top: 12px; font-size: 0.95rem; }
+        .rel-msg-info {
+            margin-top: 10px;
+            font-size: 0.88rem;
+            color: rgba(255, 255, 255, 0.65);
+        }
+        .rel-subtitulo {
+            font-size: 0.95rem;
+            color: var(--texto-secundario);
+            margin-top: 4px;
+            font-weight: 400;
+        }
+        .rel-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: var(--espacamento-md);
+        }
+        .rel-tab {
+            padding: 10px 16px;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--texto-secundario);
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+        .rel-tab:hover { border-color: rgba(212, 175, 55, 0.5); color: var(--texto-primario); }
+        .rel-tab.is-active {
+            background: var(--dourado-primario);
+            border-color: var(--dourado-primario);
+            color: #1a1a1a;
+        }
+        .rel-tab-panel { display: none; }
+        .rel-tab-panel.is-active { display: block; }
+        .rel-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: var(--espacamento-md);
+        }
+        @media (min-width: 768px) {
+            .rel-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+        @media (min-width: 1100px) {
+            .rel-kpi-grid--6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+            .rel-kpi-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        }
+        .rel-kpi-mini {
+            background: linear-gradient(145deg, #252525, #1e1e1e);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+            border-radius: var(--radius-lg);
+            padding: 14px 16px;
+            text-align: center;
+        }
+        .rel-kpi-mini-val {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--dourado-primario);
+            line-height: 1.1;
+        }
+        .rel-kpi-mini-val--sm { font-size: 1.05rem; }
+        .rel-kpi-mini-lbl {
+            font-size: 0.72rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 4px;
+        }
+        .rel-kpi-var {
+            font-size: 0.75rem;
+            margin-top: 4px;
+            font-weight: 600;
+        }
+        .rel-kpi-var--up { color: #4ade80; }
+        .rel-kpi-var--down { color: #f87171; }
+        .rel-kpi-var--neutro { color: rgba(255,255,255,0.45); }
+        .rel-chart-row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-bottom: var(--espacamento-md);
+        }
+        @media (min-width: 900px) {
+            .rel-chart-row--2 { grid-template-columns: 1fr 1fr; }
+        }
+        .rel-chart-box {
+            position: relative;
+            min-height: 260px;
+            max-height: 420px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(212, 175, 55, 0.12);
+            border-radius: var(--radius-md);
+            padding: 12px;
+        }
+        .rel-chart-box canvas { width: 100% !important; }
+        .rel-chart-titulo {
+            font-size: 0.85rem;
+            color: var(--dourado-secundario);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .rel-tabela-scroll {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
-            max-height: 420px;
+            max-height: 460px;
             margin-top: var(--espacamento-md);
         }
-        .relatorio-doc-caixa {
+        .rel-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .rel-doc-caixa {
             font-size: 0.88rem;
             color: rgba(255, 255, 255, 0.72);
             line-height: 1.55;
             border-left: 3px solid rgba(212, 175, 55, 0.45);
             padding-left: 14px;
-            margin-top: var(--espacamento-md);
         }
-        .relatorio-doc-caixa strong {
-            color: var(--dourado-primario, #d4af37);
-        }
-        .relatorio-msg-erro {
-            color: #f87171;
-            margin-top: 12px;
-            font-size: 0.95rem;
-        }
-        .relatorio-presets {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 8px;
-        }
-        .relatorio-presets button {
-            padding: 6px 12px;
-            font-size: 0.8rem;
-        }
+        .rel-doc-caixa strong { color: var(--dourado-primario); }
+        .rel-badge-atraso { color: #f87171; font-weight: 700; }
+        .rel-badge-ok { color: #4ade80; }
+        .text-right { text-align: right; }
     </style>
 </head>
 <body class="page-home">
@@ -83,7 +182,10 @@
     <main class="container container--home">
         <section class="card">
             <div class="flex-between flex-wrap gap-1">
-                <h2 class="card-title">Relatórios</h2>
+                <div>
+                    <h2 class="card-title">Central de Relatórios</h2>
+                    <p class="rel-subtitulo">Financeiro, produção, operação e comparativos</p>
+                </div>
                 <div class="flex flex-wrap gap-1">
                     <a href="home.html" class="btn btn-secondary">Fila (HOME)</a>
                     <a href="index.html" class="btn btn-primary">Novo pedido</a>
@@ -92,39 +194,40 @@
         </section>
 
         <section class="card">
-            <h2 class="card-title">Filtros</h2>
-            <div class="relatorio-grid-filtros">
+            <h2 class="card-title">Filtros globais</h2>
+            <div class="rel-grid-filtros">
                 <div class="form-group">
-                    <label class="form-label" for="relDimensao">Agrupar por</label>
-                    <select id="relDimensao" class="form-select">
-                        <option value="tipoMalha">Tipo de malha</option>
-                        <option value="corMalha">Cor da malha</option>
-                        <option value="tipoPeca">Tipo de camisa / peça</option>
-                        <option value="estampa">Tipo de estampa (resumo)</option>
-                        <option value="detalhePeca">Detalhe da peça</option>
-                        <option value="statusOperacional">Status operacional</option>
+                    <label class="form-label" for="relTipoData">Filtrar por data</label>
+                    <select id="relTipoData" class="form-select">
+                        <option value="pedido">Data do pedido</option>
+                        <option value="entrega">Data de entrega</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="relNivel">Nível do dado</label>
+                    <label class="form-label" for="relNivel">Nível (produção)</label>
                     <select id="relNivel" class="form-select">
                         <option value="item">Por produto (recomendado)</option>
-                        <option value="pedido">Por pedido (resumo da planilha)</option>
+                        <option value="pedido">Por pedido (resumo)</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="relMetrica">Métrica no gráfico</label>
-                    <select id="relMetrica" class="form-select">
-                        <option value="valor">Valor de vendas (R$)</option>
-                        <option value="pecas">Quantidade de peças</option>
-                        <option value="pedidos">Quantidade de pedidos</option>
-                        <option value="ticketMedio">Ticket médio (R$ / pedido)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="relStatus">Status (opcional)</label>
+                    <label class="form-label" for="relStatus">Status operacional</label>
                     <select id="relStatus" class="form-select">
                         <option value="">Todos</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="relVendedor">Vendedor</label>
+                    <select id="relVendedor" class="form-select">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="relTag">Tag</label>
+                    <select id="relTag" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="PEDIDO">PEDIDO</option>
+                        <option value="ORÇAMENTO">ORÇAMENTO</option>
                     </select>
                 </div>
                 <div class="form-group flex flex-center gap-1" style="min-height: 52px;">
@@ -135,15 +238,21 @@
                 </div>
                 <div class="form-group flex flex-center gap-1" style="min-height: 52px;">
                     <label class="flex gap-1" style="align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="relExcluirOrcamentos" checked>
+                        <span>Excluir orçamentos</span>
+                    </label>
+                </div>
+                <div class="form-group flex flex-center gap-1" style="min-height: 52px;">
+                    <label class="flex gap-1" style="align-items: center; cursor: pointer;">
                         <input type="checkbox" id="relComparar">
-                        <span>Comparar com 2º período</span>
+                        <span>Comparar 2º período</span>
                     </label>
                 </div>
             </div>
 
-            <div class="relatorio-periodo-bloco mt-2">
+            <div class="rel-periodo-bloco">
                 <h3>Período principal</h3>
-                <div class="relatorio-grid-filtros">
+                <div class="rel-grid-filtros">
                     <div class="form-group">
                         <label class="form-label" for="relIniA">Data início</label>
                         <input type="date" id="relIniA" class="form-input">
@@ -153,16 +262,17 @@
                         <input type="date" id="relFimA" class="form-input">
                     </div>
                 </div>
-                <div class="relatorio-presets">
+                <div class="rel-presets">
                     <button type="button" class="btn btn-secondary btn-small" data-preset="7d">Últimos 7 dias</button>
                     <button type="button" class="btn btn-secondary btn-small" data-preset="mes">Este mês</button>
                     <button type="button" class="btn btn-secondary btn-small" data-preset="mesAnt">Mês passado</button>
+                    <button type="button" class="btn btn-secondary btn-small" data-preset="semana">Esta semana (seg–dom)</button>
                 </div>
             </div>
 
-            <div class="relatorio-periodo-bloco mt-2 hidden" id="relBlocoPeriodoB">
+            <div class="rel-periodo-bloco hidden" id="relBlocoPeriodoB">
                 <h3>Período comparativo</h3>
-                <div class="relatorio-grid-filtros">
+                <div class="rel-grid-filtros">
                     <div class="form-group">
                         <label class="form-label" for="relIniB">Data início</label>
                         <input type="date" id="relIniB" class="form-input">
@@ -172,33 +282,130 @@
                         <input type="date" id="relFimB" class="form-input">
                     </div>
                 </div>
+                <div class="rel-presets">
+                    <button type="button" class="btn btn-secondary btn-small" data-preset-b="mesAnt">Mês passado</button>
+                    <button type="button" class="btn btn-secondary btn-small" id="relBtnPeriodoAnterior">Período anterior (mesma duração)</button>
+                </div>
             </div>
 
             <div class="btn-group" style="margin-top: 16px;">
                 <button type="button" id="relBtnGerar" class="btn btn-success">Gerar relatório</button>
             </div>
-            <p id="relErro" class="relatorio-msg-erro hidden" role="alert"></p>
+            <p id="relErro" class="rel-msg-erro hidden" role="alert"></p>
+            <p id="relInfoPeriodo" class="rel-msg-info hidden"></p>
         </section>
 
         <section class="card hidden" id="relCardResultado">
-            <h2 class="card-title">Resultado</h2>
-            <div id="relResumoTotais" class="home-busca-msg mb-2"></div>
-            <div class="relatorio-chart-wrap">
-                <canvas id="relChart" aria-label="Gráfico do relatório"></canvas>
+            <div class="rel-tabs" role="tablist">
+                <button type="button" class="rel-tab is-active" data-tab="financeiro" role="tab">💰 Financeiro</button>
+                <button type="button" class="rel-tab" data-tab="producao" role="tab">👕 Produção</button>
+                <button type="button" class="rel-tab" data-tab="operacional" role="tab">🧭 Operacional</button>
+                <button type="button" class="rel-tab" data-tab="comparativo" role="tab">📈 Comparativo</button>
             </div>
-            <div id="relTabelas"></div>
+
+            <!-- FINANCEIRO -->
+            <div class="rel-tab-panel is-active" id="relPanelFinanceiro" role="tabpanel">
+                <div class="rel-kpi-grid rel-kpi-grid--6" id="relKpiFinanceiro"></div>
+                <div class="rel-chart-row rel-chart-row--2">
+                    <div class="rel-chart-box">
+                        <div class="rel-chart-titulo">Recebido vs a receber</div>
+                        <canvas id="relChartFinanceiroCaixa" aria-label="Caixa"></canvas>
+                    </div>
+                    <div class="rel-chart-box">
+                        <div class="rel-chart-titulo">Faturamento por status operacional</div>
+                        <canvas id="relChartFinanceiroStatus" aria-label="Por status"></canvas>
+                    </div>
+                </div>
+                <div class="rel-toolbar">
+                    <h3 class="card-subtitle" style="margin:0;">Pedidos no período</h3>
+                    <button type="button" class="btn btn-secondary btn-small" id="relExportFinanceiro">Exportar CSV</button>
+                </div>
+                <div class="rel-tabela-scroll" id="relTabelaFinanceiro"></div>
+            </div>
+
+            <!-- PRODUÇÃO -->
+            <div class="rel-tab-panel" id="relPanelProducao" role="tabpanel">
+                <div class="rel-kpi-grid rel-kpi-grid--4" id="relKpiProducao"></div>
+                <div class="rel-toolbar">
+                    <div class="form-group" style="min-width:200px;margin:0;">
+                        <label class="form-label" for="relDimensaoProducao">Agrupar por</label>
+                        <select id="relDimensaoProducao" class="form-select">
+                            <option value="tipoPeca">Tipo de peça</option>
+                            <option value="tipoMalha">Tipo de malha</option>
+                            <option value="corMalha">Cor da malha</option>
+                            <option value="estampa">Tipo de estampa</option>
+                            <option value="detalhePeca">Detalhe da peça</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-small" id="relExportProducao">Exportar CSV</button>
+                </div>
+                <div class="rel-chart-box">
+                    <div class="rel-chart-titulo">Quantidade de peças por grupo</div>
+                    <canvas id="relChartProducao" aria-label="Produção"></canvas>
+                </div>
+                <div class="rel-tabela-scroll" id="relTabelaProducao"></div>
+            </div>
+
+            <!-- OPERACIONAL -->
+            <div class="rel-tab-panel" id="relPanelOperacional" role="tabpanel">
+                <div class="rel-kpi-grid rel-kpi-grid--4" id="relKpiOperacional"></div>
+                <div class="rel-chart-row rel-chart-row--2">
+                    <div class="rel-chart-box">
+                        <div class="rel-chart-titulo">Pedidos por etapa de produção</div>
+                        <canvas id="relChartOperacionalEtapa" aria-label="Etapas"></canvas>
+                    </div>
+                    <div class="rel-chart-box">
+                        <div class="rel-chart-titulo">Entregas por dia da semana</div>
+                        <canvas id="relChartOperacionalDiaSemana" aria-label="Dias"></canvas>
+                    </div>
+                </div>
+                <div class="rel-toolbar">
+                    <h3 class="card-subtitle" style="margin:0;">Detalhe operacional</h3>
+                    <button type="button" class="btn btn-secondary btn-small" id="relExportOperacional">Exportar CSV</button>
+                </div>
+                <div class="rel-tabela-scroll" id="relTabelaOperacional"></div>
+            </div>
+
+            <!-- COMPARATIVO -->
+            <div class="rel-tab-panel" id="relPanelComparativo" role="tabpanel">
+                <p id="relComparativoAviso" class="rel-msg-info hidden"></p>
+                <div class="rel-kpi-grid" id="relKpiComparativo"></div>
+                <div class="rel-toolbar">
+                    <div class="form-group" style="min-width:180px;margin:0;">
+                        <label class="form-label" for="relMetricaComparativo">Métrica</label>
+                        <select id="relMetricaComparativo" class="form-select">
+                            <option value="valor">Faturamento (R$)</option>
+                            <option value="pecas">Peças</option>
+                            <option value="pedidos">Pedidos</option>
+                            <option value="recebido">Valor recebido</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="min-width:200px;margin:0;">
+                        <label class="form-label" for="relDimensaoComparativo">Agrupar por</label>
+                        <select id="relDimensaoComparativo" class="form-select">
+                            <option value="tipoPeca">Tipo de peça</option>
+                            <option value="tipoMalha">Tipo de malha</option>
+                            <option value="corMalha">Cor da malha</option>
+                            <option value="estampa">Tipo de estampa</option>
+                            <option value="statusOperacional">Status operacional</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="rel-chart-box">
+                    <div class="rel-chart-titulo">Período A vs Período B</div>
+                    <canvas id="relChartComparativo" aria-label="Comparativo"></canvas>
+                </div>
+                <div class="rel-tabela-scroll" id="relTabelaComparativo"></div>
+            </div>
         </section>
 
         <section class="card">
             <h2 class="card-title">Como interpretamos os dados</h2>
-            <div class="relatorio-doc-caixa">
-                <p><strong>Por produto:</strong> cada item do pedido entra separado na quebra (cor, malha, tipo de camisa, etc.).
-                O <strong>valor em R$</strong> do pedido é dividido entre os produtos na proporção das <strong>quantidades por tamanho</strong>
-                de cada produto (para não duplicar o total do pedido).</p>
-                <p class="mt-1"><strong>Por pedido:</strong> usa apenas o <strong>resumo</strong> gravado na planilha (equivalente ao primeiro produto / colunas de resumo).
-                É mais rápido de entender, mas menos preciso se um pedido tiver vários produtos com características diferentes.</p>
-                <p class="mt-1"><strong>Período:</strong> consideramos a <strong>data do pedido</strong>. Cancelados podem ser excluídos pelo checkbox acima.</p>
-                <p class="mt-1"><strong>Backend:</strong> após alterar <code>Code.gs</code>, publique uma <strong>nova versão</strong> da Web App para a ação <code>relatorioPedidos</code> responder.</p>
+            <div class="rel-doc-caixa">
+                <p><strong>Financeiro:</strong> usa a data escolhida nos filtros (pedido ou entrega). Valores de entrada e restante vêm de cada pedido na planilha.</p>
+                <p class="mt-1"><strong>Produção:</strong> no nível <em>por produto</em>, o valor do pedido é dividido entre os itens na proporção das peças (igual ao relatório anterior). Gráficos de peças mostram o que foi produzido/vendido no período.</p>
+                <p class="mt-1"><strong>Operacional:</strong> etapas de produção e atrasos consideram pedidos filtrados; atraso = data de entrega anterior a hoje e pedido ainda em aberto.</p>
+                <p class="mt-1"><strong>Comparativo:</strong> ative «Comparar 2º período» e preencha as datas B, ou use «Período anterior» para calcular automaticamente.</p>
             </div>
         </section>
     </main>
@@ -206,6 +413,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="config.js?v=5"></script>
     <script src="utils.js?v=2"></script>
-    <script src="relatorio.js?v=1"></script>
+    <script src="relatorio.js?v=2"></script>
 </body>
 </html>
