@@ -1503,7 +1503,7 @@ async function carregarPedidoViaURL() {
     const id = (params.get('id') || '').trim();
     if (!id) return;
     if (window.location.protocol === 'file:') return;
-    mostrarLoading('Carregando pedido...');
+    mostrarLoading('Preparando sua produção...');
     try {
         const resposta = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=buscarPedido&acao=buscarPedido&termo=${encodeURIComponent(id)}`);
         const resultado = await resposta.json();
@@ -1538,14 +1538,36 @@ function enviarWhatsApp() {
     window.open(`https://wa.me/55${telefone}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
-function mostrarLoading(mensagem = 'Carregando...') {
+function mostrarLoading(mensagem = 'Carregando...', subtitulo = 'Por favor, aguarde.') {
     const existente = document.getElementById('loadingOverlay');
     if (existente) {
-        const txt = existente.querySelector('p');
+        const txt = existente.querySelector('.loading-silk-msg');
+        const sub = existente.querySelector('.loading-silk-sub');
         if (txt) txt.textContent = mensagem;
+        if (sub) sub.textContent = subtitulo;
         return;
     }
-    document.body.insertAdjacentHTML('beforeend', `<div class="loading-overlay" id="loadingOverlay"><div class="loading-content"><div class="loading loading-big"></div><p>${mensagem}</p></div></div>`);
+    const overlay = document.createElement('div');
+    overlay.id = 'loadingOverlay';
+    overlay.className = 'loading-overlay loading-silk';
+    overlay.setAttribute('role', 'alert');
+    overlay.setAttribute('aria-live', 'polite');
+    overlay.setAttribute('aria-busy', 'true');
+    overlay.innerHTML = `
+      <div class="silk-frame">
+        <div class="hand left" aria-hidden="true">✊</div>
+        <div class="hand right" aria-hidden="true">✊</div>
+        <div class="squeegee" aria-hidden="true"></div>
+        <div class="screen">
+          <div class="logo" aria-hidden="true">A</div>
+        </div>
+      </div>
+      <p class="loading-silk-msg"></p>
+      <span class="loading-silk-sub"></span>
+    `;
+    overlay.querySelector('.loading-silk-msg').textContent = mensagem;
+    overlay.querySelector('.loading-silk-sub').textContent = subtitulo;
+    document.body.appendChild(overlay);
 }
 
 function esconderLoading() {
