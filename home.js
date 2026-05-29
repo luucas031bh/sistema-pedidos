@@ -89,6 +89,46 @@ function pedidoEstaAberto(pedido) {
     return true;
 }
 
+const TERMO_BUSCA_ORCAMENTOS = '__ORCAMENTOS__';
+const DIAS_ORCAMENTO_NA_FILA = 10;
+
+function isPedidoOrcamento(pedido) {
+    const tag = String(pedido?.tagPedido || '').normalize('NFC').trim().toLowerCase();
+    const st = String(pedido?.statusOperacional || '').normalize('NFC').trim().toLowerCase();
+    return tag === 'orçamento' || tag === 'orcamento' || st === 'orçamento' || st === 'orcamento';
+}
+
+function diasDesdeCriacaoOrcamento(pedido) {
+    const raw = pedido?.dataCriacao ?? pedido?.datas?.pedido;
+    const d = parseDataEntregaLocal(raw);
+    if (!d) return null;
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    d.setHours(0, 0, 0, 0);
+    return Math.round((hoje.getTime() - d.getTime()) / 86400000);
+}
+
+function orcamentoExpiradoNaFila(pedido) {
+    if (!isPedidoOrcamento(pedido)) return false;
+    const dias = diasDesdeCriacaoOrcamento(pedido);
+    if (dias === null) return false;
+    return dias >= DIAS_ORCAMENTO_NA_FILA;
+}
+
+function pedidoVisivelNaFila(pedido) {
+    return pedidoEstaAberto(pedido) && !orcamentoExpiradoNaFila(pedido);
+}
+
+function termoEhListaOrcamentos(valor) {
+    const t = String(valor || '').trim().normalize('NFC').toLowerCase();
+    return t === 'orcamento' || t === 'orçamento' || t === 'orcamentos' || t === 'orçamentos';
+}
+
+function timestampCriacaoPedidoHome(p) {
+    const d = parseDataEntregaLocal(p?.dataCriacao ?? p?.datas?.pedido);
+    return d ? d.getTime() : 0;
+}
+
 function obterResumoProdutoPedidoHome(pedido) {
     const resumo = pedido.resumoProduto || {};
     if (resumo.tipoPeca || resumo.tipoMalha || resumo.corMalha || resumo.detalhePeca || resumo.estampaResumo) {
@@ -277,10 +317,11 @@ function escapeHtmlHome(texto) {
         .replace(/"/g, '&quot;');
 }
 
-/** Telefone completo → últimos 4 dígitos; senão texto para nome/ID. */
+/** Telefone completo → últimos 4 dígitos; senão texto para nome/ID; ou lista de orçamentos. */
 function termoBuscaHomeParaApi(valorBruto) {
     const t = String(valorBruto || '').trim();
     if (!t) return '';
+    if (termoEhListaOrcamentos(t)) return TERMO_BUSCA_ORCAMENTOS;
     const soDigitos = t.replace(/\D/g, '');
     if (soDigitos.length >= 4) return soDigitos.slice(-4);
     return t;
@@ -350,8 +391,13 @@ function pedidoContaNosIndicadores(pedido) {
 /** Se o Apps Script implantado ainda não tiver buscarPedidos, filtra após listarPedidos. */
 function filtrarPedidosPorTermoLocal(pedidos, termoApi) {
     const t = String(termoApi || '').trim();
-    const soDigitos = t.replace(/\D/g, '');
     const lista = Array.isArray(pedidos) ? pedidos : [];
+    if (t === TERMO_BUSCA_ORCAMENTOS) {
+        return lista
+            .filter(isPedidoOrcamento)
+            .sort((a, b) => timestampCriacaoPedidoHome(b) - timestampCriacaoPedidoHome(a));
+    }
+    const soDigitos = t.replace(/\D/g, '');
     if (soDigitos.length === 4) {
         return lista.filter((p) => pedidoMatchTermo4Digitos(p, soDigitos));
     }
@@ -399,7 +445,10 @@ async function executarBuscaPedidoHome() {
 
     const termo = termoBuscaHomeParaApi(input.value);
     if (!termo) {
-        mostrarMsgBuscaHome('Informe os 4 últimos dígitos do telefone, nome ou ID do pedido.', 'erro');
+        mostrarMsgBuscaHome(
+            'Informe os 4 últimos dígitos do telefone, nome, ID do pedido ou digite orçamento.',
+            'erro'
+        );
         wrap.classList.add('hidden');
         wrap.innerHTML = '';
         return;
@@ -425,8 +474,12 @@ async function executarBuscaPedidoHome() {
             mostrarMsgBuscaHome('Nenhum pedido encontrado para esse termo.', 'erro');
             return;
         }
-        const msgLista =
-            lista.length === 1
+        const listaOrcamentos = termo === TERMO_BUSCA_ORCAMENTOS;
+        const msgLista = listaOrcamentos
+            ? lista.length === 1
+                ? '1 orçamento encontrado. Clique em Abrir.'
+                : `${lista.length} orçamentos encontrados. Escolha qual abrir:`
+            : lista.length === 1
                 ? '1 pedido encontrado. Clique em Abrir para abrir a página do pedido.'
                 : `${lista.length} pedidos encontrados. Escolha qual abrir:`;
         mostrarMsgBuscaHome(msgLista, 'ok');
@@ -438,6 +491,7 @@ async function executarBuscaPedidoHome() {
                         <tr>
                             <th>Cliente</th>
                             <th>Data do pedido</th>
+                            <th>Status</th>
                             <th>ID Busca</th>
                             <th>ID pedido</th>
                             <th></th>
@@ -448,12 +502,14 @@ async function executarBuscaPedidoHome() {
                             const id = p.id || '';
                             const nome = escapeHtmlHome(p.cliente?.nome || '—');
                             const dp = formatarDataHoraPedidoHome(p.datas?.pedido || p.dataCriacao);
+                            const st = escapeHtmlHome(String(p.statusOperacional || '—'));
                             const idBuscaEx = escapeHtmlHome(obterIdBuscaExibicaoPedido(p));
                             const idEsc = encodeURIComponent(id);
                             return `
                                 <tr>
                                     <td>${nome}</td>
                                     <td>${escapeHtmlHome(dp)}</td>
+                                    <td>${st}</td>
                                     <td>${idBuscaEx}</td>
                                     <td class="home-busca-id-cell">${escapeHtmlHome(String(id))}</td>
                                     <td><a class="btn btn-small btn-primary" href="index.html?id=${idEsc}">Abrir</a></td>
@@ -792,7 +848,7 @@ async function carregarHome() {
             return;
         }
         const todos = data.pedidos || [];
-        const abertos = todos.filter(pedidoEstaAberto);
+        const abertos = todos.filter(pedidoVisivelNaFila);
         const abertosParaKpi = abertos.filter(pedidoContaNosIndicadores);
         abertos.sort((a, b) => {
             const da = parseDataEntregaLocal(a.datas?.entrega)?.getTime() ?? 0;

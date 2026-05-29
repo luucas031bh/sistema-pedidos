@@ -841,6 +841,24 @@ function buscarPedidos(termo) {
     var termoStr = String(termo || '').trim();
     if (!termoStr) return { sucesso: false, erro: 'Informe um termo de busca' };
 
+    var termoListaOrc = termoStr.toLowerCase();
+    if (termoListaOrc === 'orcamento' || termoListaOrc === 'orçamento' ||
+        termoListaOrc === 'orcamentos' || termoListaOrc === 'orçamentos') {
+      var baseOrc = listarPedidosBase();
+      var orcamentos = [];
+      var o;
+      for (o = 0; o < baseOrc.length; o++) {
+        var po = baseOrc[o];
+        var stOrc = String(normalizarStatusOperacional(po.statusOperacional) || '').toLowerCase();
+        var tagOrc = String(po.tagPedido || '').trim().toLowerCase();
+        if (stOrc === 'orçamento' || stOrc === 'orcamento' ||
+            tagOrc === 'orçamento' || tagOrc === 'orcamento') {
+          orcamentos.push(po);
+        }
+      }
+      return { sucesso: true, pedidos: orcamentos };
+    }
+
     var resultados = [];
     var termoSoDigitos = normalizarTelefone(termoStr);
     var termoId = normalizarId(termoStr);

@@ -50,11 +50,11 @@
 
         <section class="card home-busca-pedido">
             <h2 class="card-title">Buscar pedido salvo</h2>
-            <p class="home-busca-ajuda">Use os <strong>últimos 4 dígitos</strong> do telefone cadastrado (como no sistema antigo). Você pode colar o número completo — extraímos os 4 finais.</p>
+            <p class="home-busca-ajuda">Use os <strong>últimos 4 dígitos</strong> do telefone, nome ou ID do pedido. Você pode colar o número completo — extraímos os 4 finais. Digite <strong>orçamento</strong> para listar todos os orçamentos do sistema (incluindo os que saíram da fila após 10 dias).</p>
             <div class="form-row home-busca-linha">
                 <div class="form-group flex-grow">
-                    <label class="form-label" for="inputBuscaIdBusca">Final do telefone (4 dígitos)</label>
-                    <input type="text" id="inputBuscaIdBusca" class="form-input" inputmode="numeric" maxlength="16" placeholder="Ex.: 2490 ou (31) 98603-2490" autocomplete="off">
+                    <label class="form-label" for="inputBuscaIdBusca">Busca (telefone, nome, ID ou orçamento)</label>
+                    <input type="text" id="inputBuscaIdBusca" class="form-input" maxlength="64" placeholder="Ex.: 2490, nome do cliente, orçamento" autocomplete="off">
                 </div>
                 <div class="form-group home-busca-acoes">
                     <span class="form-label home-busca-label-spacer">&nbsp;</span>
@@ -144,6 +144,6 @@
 
     <script src="config.js?v=5"></script>
     <script src="utils.js"></script>
-    <script src="home.js?v=4"></script>
+    <script src="home.js?v=5"></script>
 </body>
 </html>
