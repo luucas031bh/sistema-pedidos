@@ -515,6 +515,33 @@ select optgroup {
     margin-top: var(--espacamento-md);
 }
 
+.custos-container--referencia {
+    border: 1px dashed rgba(212, 175, 55, 0.25);
+    background-color: rgba(58, 58, 58, 0.65);
+}
+
+.campo-referencia-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--texto-terciario);
+    margin-left: 4px;
+    vertical-align: middle;
+}
+
+.campo-referencia.campo-somente-leitura,
+.campo-referencia[readonly] {
+    opacity: 0.92;
+    cursor: default;
+    background-color: rgba(255, 255, 255, 0.04);
+    border-style: dashed;
+    border-color: rgba(212, 175, 55, 0.2);
+    color: var(--dourado-secundario);
+    font-weight: 600;
+}
+
 .custo-item {
     display: flex;
     justify-content: space-between;
