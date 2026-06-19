@@ -660,8 +660,7 @@ function removerProduto(produtoId) {
     }
     document.getElementById(`produto-${produtoId}`)?.remove();
     estadoApp.produtos = estadoApp.produtos.filter((p) => p.id !== produtoId);
-    calcularTotalPecas();
-    calcularResumoFinanceiro();
+    sincronizarTotaisPedido();
 }
 
 function atualizarDetalhesPeca(produtoId) {
@@ -685,7 +684,7 @@ function removerLinhaTamanho(btn) {
     const tbody = tr?.parentElement;
     if (!tbody || tbody.children.length <= 1) return Utils.mostrarNotificacao('Deve haver pelo menos uma linha de tamanho.', 'error');
     tr.remove();
-    calcularTotalPecas();
+    sincronizarTotaisPedido();
 }
 
 function calcularTotalPecas() {
@@ -695,6 +694,10 @@ function calcularTotalPecas() {
     if (el) el.value = total;
     atualizarBadgesPecasPorProduto();
     estadoApp.produtos.forEach((p) => atualizarTotalProduto(p.id, false));
+}
+
+function sincronizarTotaisPedido() {
+    calcularTotalPecas();
     calcularResumoFinanceiro();
 }
 
@@ -703,7 +706,7 @@ function aoMudarEspecificacoesProduto(produtoId) {
 }
 
 function aoMudarQuantidadeProduto(produtoId) {
-    calcularTotalPecas();
+    sincronizarTotaisPedido();
 }
 
 /** Atualiza "N-peças" em cada produto e o resumo global entre Status e financeiro. */
@@ -904,7 +907,6 @@ function calcularCustoEstampas(produtoId) {
 }
 
 function calcularResumoFinanceiro() {
-    calcularTotalPecas();
     let totalPedido = 0;
     estadoApp.produtos.forEach((produto) => {
         totalPedido += Utils.limparMoeda(document.getElementById(`valorTotalProduto-${produto.id}`)?.value || '0');
@@ -1224,8 +1226,7 @@ function preencherFormularioCompleto(pedido) {
     });
 
     sincronizarBotoesRemocaoProdutosIndex();
-    calcularTotalPecas();
-    calcularResumoFinanceiro();
+    sincronizarTotaisPedido();
     preencherListaPersonalizacao(pedido.listaPersonalizacao || null);
     carregarImagensSalvas(pedido);
 }
@@ -1554,7 +1555,7 @@ function limparFormulario() {
     configurarValoresPadraoFormulario();
     adicionarProduto();
     atualizarBotoesImpressaoTopo();
-    calcularTotalPecas();
+    sincronizarTotaisPedido();
 }
 
 async function carregarPedidoViaURL() {
