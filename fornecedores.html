@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fornecedores</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #1a1a2e; min-height: 100vh; }
+
+/* ── HEADER ── */
+.header { background: #1a1a2e; color: white; padding: 0 28px; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 200; }
+.header-left { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.header-icon { width: 36px; height: 36px; background: #4f46e5; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.header h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+.header p { font-size: 11px; color: #9ca3af; margin-top: 1px; }
+.btn-header-novo { padding: 9px 20px; background: #4f46e5; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.2s; white-space: nowrap; }
+.btn-header-novo:hover { background: #4338ca; }
+
+/* ── PÁGINAS ── */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ══════════════════════════════════
+   HOME
+══════════════════════════════════ */
+.home-hero { background: linear-gradient(135deg, #1a1a2e 0%, #2d2b5e 100%); padding: 40px 28px 36px; color: white; }
+.home-hero h2 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; }
+.home-hero p { color: #a5b4fc; font-size: 14px; margin-bottom: 24px; }
+.hero-stats { display: flex; gap: 16px; flex-wrap: wrap; }
+.hero-stat { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 14px 20px; min-width: 110px; }
+.hero-stat .stat-num { font-size: 28px; font-weight: 800; color: white; line-height: 1; }
+.hero-stat .stat-label { font-size: 11px; color: #a5b4fc; margin-top: 4px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+.hero-stat.s-costura .stat-num { color: #a5b4fc; }
+.hero-stat.s-bordado .stat-num { color: #f9a8d4; }
+.hero-stat.s-silk .stat-num { color: #86efac; }
+.hero-stat.s-dtf .stat-num { color: #fcd34d; }
+
+/* Toolbar */
+.home-toolbar { background: white; padding: 14px 28px; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; position: sticky; top: 60px; z-index: 100; }
+.search-box { position: relative; flex: 1; min-width: 200px; max-width: 360px; }
+.search-box input { width: 100%; padding: 9px 12px 9px 36px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; outline: none; font-family: inherit; color: #1a1a2e; transition: border-color 0.15s; }
+.search-box input:focus { border-color: #4f46e5; }
+.search-box .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-size: 15px; color: #9ca3af; pointer-events: none; }
+.search-box .clear-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 16px; display: none; line-height: 1; padding: 0; }
+.search-box .clear-btn.visible { display: block; }
+
+.filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { padding: 7px 14px; border: 1.5px solid #e5e7eb; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; background: white; color: #6b7280; transition: all 0.15s; white-space: nowrap; }
+.chip:hover { border-color: #c7d2fe; color: #4f46e5; }
+.chip.active { background: #4f46e5; color: white; border-color: #4f46e5; }
+.chip.c-costura.active { background: #4f46e5; border-color: #4f46e5; }
+.chip.c-bordado.active { background: #db2777; border-color: #db2777; }
+.chip.c-silk.active { background: #16a34a; border-color: #16a34a; }
+.chip.c-dtf.active { background: #d97706; border-color: #d97706; }
+
+/* Grid de cards */
+.home-body { padding: 24px 28px; }
+.results-info { font-size: 13px; color: #6b7280; margin-bottom: 16px; }
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 16px; }
+
+.fcard { background: white; border-radius: 14px; border: 1px solid #e5e7eb; overflow: hidden; cursor: pointer; transition: box-shadow 0.15s, transform 0.15s; }
+.fcard:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); transform: translateY(-2px); }
+.fcard-top { padding: 18px 18px 14px; display: flex; align-items: center; gap: 12px; }
+.fcard-avatar { width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; flex-shrink: 0; }
+.fcard-name { font-size: 15px; font-weight: 700; color: #1a1a2e; line-height: 1.2; }
+.fcard-tel { font-size: 12px; color: #6b7280; margin-top: 3px; }
+.fcard-strip { padding: 10px 18px; border-top: 1px solid #f3f4f6; display: flex; align-items: center; justify-content: space-between; }
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 10px; font-size: 11px; font-weight: 700; }
+.badge-costura { background: #e0e7ff; color: #3730a3; }
+.badge-bordado { background: #fce7f3; color: #9d174d; }
+.badge-silk { background: #dcfce7; color: #14532d; }
+.badge-dtf { background: #fef3c7; color: #78350f; }
+.fcard-arrow { font-size: 16px; color: #d1d5db; }
+.fcard:hover .fcard-arrow { color: #4f46e5; }
+
+.fcard-addr { padding: 0 18px 12px; font-size: 12px; color: #9ca3af; display: flex; align-items: center; gap: 5px; }
+
+.empty-home { text-align: center; padding: 60px 20px; color: #9ca3af; grid-column: 1/-1; }
+.empty-home .big { font-size: 52px; margin-bottom: 12px; opacity: 0.4; }
+.empty-home h3 { font-size: 17px; color: #6b7280; margin-bottom: 6px; }
+
+/* ══════════════════════════════════
+   DETALHE / FORM (layout sidebar)
+══════════════════════════════════ */
+.inner-layout { display: flex; height: calc(100vh - 60px); }
+.sidebar { width: 280px; background: white; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0; }
+.sidebar-head { padding: 16px; border-bottom: 1px solid #e5e7eb; }
+.sidebar-head h2 { font-size: 12px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+.btn-novo-side { width: 100%; padding: 10px; background: #4f46e5; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+.btn-novo-side:hover { background: #4338ca; }
+.side-filters { padding: 10px 12px; border-bottom: 1px solid #e5e7eb; display: flex; gap: 5px; flex-wrap: wrap; }
+.side-chip { padding: 4px 10px; border: 1px solid #e5e7eb; border-radius: 20px; font-size: 11px; cursor: pointer; background: white; color: #6b7280; transition: all 0.12s; }
+.side-chip.active { background: #4f46e5; color: white; border-color: #4f46e5; }
+.list-area { flex: 1; overflow-y: auto; padding: 6px; }
+.scard { padding: 10px 12px; border-radius: 8px; cursor: pointer; margin-bottom: 3px; border: 1px solid transparent; transition: background 0.12s; }
+.scard:hover { background: #f3f4f6; }
+.scard.active { background: #eef2ff; border-color: #c7d2fe; }
+.scard-row { display: flex; align-items: center; gap: 10px; }
+.scard-av { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; flex-shrink: 0; }
+.scard-info h3 { font-size: 13px; font-weight: 600; color: #1a1a2e; }
+.scard-info p { font-size: 11px; color: #6b7280; }
+.side-empty { text-align: center; padding: 30px 10px; color: #9ca3af; font-size: 13px; }
+
+.inner-main { flex: 1; overflow-y: auto; padding: 24px; }
+
+/* ── Form / Detail cards ── */
+.form-wrapper { max-width: 760px; margin: 0 auto; }
+.fwcard { background: white; border-radius: 14px; border: 1px solid #e5e7eb; margin-bottom: 18px; overflow: hidden; }
+.fwcard-head { padding: 14px 20px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 10px; }
+.fwcard-head .ci { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+.fwcard-head h3 { font-size: 14px; font-weight: 700; }
+.fwcard-body { padding: 18px 20px; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.form-row.full { grid-template-columns: 1fr; }
+.fg { display: flex; flex-direction: column; gap: 5px; }
+.fg label { font-size: 12px; font-weight: 600; color: #374151; }
+.fg input, .fg select, .fg textarea { padding: 9px 12px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; color: #1a1a2e; outline: none; font-family: inherit; background: white; transition: border-color 0.15s; }
+.fg input:focus, .fg select:focus, .fg textarea:focus { border-color: #4f46e5; }
+
+.tipo-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.ttab { padding: 8px 16px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; background: white; transition: all 0.15s; }
+.ttab:hover { border-color: #c7d2fe; }
+.ttab.active { color: white; }
+.ttab.t-costura.active { background: #4f46e5; border-color: #4f46e5; }
+.ttab.t-bordado.active { background: #db2777; border-color: #db2777; }
+.ttab.t-silk.active { background: #16a34a; border-color: #16a34a; }
+.ttab.t-dtf.active { background: #d97706; border-color: #d97706; }
+
+.sec-title { font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f3f4f6; }
+
+.ptable { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ptable th { text-align: left; padding: 7px 10px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-size: 11px; font-weight: 700; }
+.ptable td { padding: 5px 8px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+.ptable td input, .ptable td select { padding: 6px 8px; border: 1.5px solid #e5e7eb; border-radius: 6px; font-size: 13px; outline: none; font-family: inherit; background: white; color: #1a1a2e; width: 100%; }
+.ptable td input:focus, .ptable td select:focus { border-color: #4f46e5; }
+.btn-add { margin-top: 10px; padding: 7px 14px; background: white; border: 1.5px dashed #c7d2fe; color: #4f46e5; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.btn-add:hover { background: #eef2ff; }
+.btn-del { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 15px; padding: 2px 5px; border-radius: 4px; }
+.btn-del:hover { background: #fee2e2; }
+
+.silk-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+.silk-tbl th { background: #f9fafb; padding: 7px 8px; border: 1px solid #e5e7eb; color: #6b7280; font-size: 11px; font-weight: 700; text-align: center; }
+.silk-tbl td { padding: 6px 8px; border: 1px solid #e5e7eb; text-align: center; }
+.silk-tbl td:first-child { font-weight: 600; color: #374151; text-align: left; background: #f9fafb; }
+.silk-tbl td input { width: 82px; padding: 5px 7px; border: 1.5px solid #e5e7eb; border-radius: 6px; font-size: 12px; text-align: center; outline: none; background: white; color: #1a1a2e; }
+.silk-tbl td input:focus { border-color: #16a34a; }
+
+.qual-row { display: flex; gap: 14px; flex-wrap: wrap; }
+.qopt { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.qopt input[type=radio] { accent-color: #4f46e5; width: 15px; height: 15px; cursor: pointer; }
+.qopt span { font-size: 13px; font-weight: 600; cursor: pointer; }
+.qopt.q-boa span { color: #16a34a; }
+.qopt.q-media span { color: #d97706; }
+.qopt.q-ruim span { color: #dc2626; }
+
+.btn-actions { display: flex; gap: 10px; justify-content: flex-end; padding-top: 6px; }
+.btn-salvar { padding: 10px 22px; background: #4f46e5; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.btn-salvar:hover { background: #4338ca; }
+.btn-cancel { padding: 10px 20px; background: white; color: #6b7280; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; }
+.btn-cancel:hover { background: #f9fafb; }
+.btn-del-main { padding: 10px 18px; background: white; color: #ef4444; border: 1.5px solid #fca5a5; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; }
+.btn-del-main:hover { background: #fee2e2; }
+
+/* Detail */
+.detail-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+.det-av { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 20px; }
+.det-name { font-size: 20px; font-weight: 800; }
+.det-sub { font-size: 13px; color: #6b7280; margin-top: 4px; }
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ii label { font-size: 11px; color: #9ca3af; font-weight: 600; display: block; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.4px; }
+.ii p { font-size: 14px; color: #1a1a2e; font-weight: 600; }
+.dtbl { width: 100%; font-size: 13px; border-collapse: collapse; }
+.dtbl th { text-align: left; padding: 7px 10px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-size: 11px; font-weight: 700; }
+.dtbl td { padding: 9px 10px; border-bottom: 1px solid #f3f4f6; color: #1a1a2e; }
+.dtbl tr:last-child td { border-bottom: none; }
+
+.qual-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; }
+.qb-boa { background: #dcfce7; color: #14532d; }
+.qb-media { background: #fef3c7; color: #78350f; }
+.qb-ruim { background: #fee2e2; color: #7f1d1d; }
+
+.empty-inner { text-align: center; padding: 70px 20px; color: #9ca3af; }
+.empty-inner .big { font-size: 56px; margin-bottom: 14px; opacity: 0.4; }
+.empty-inner h2 { font-size: 17px; color: #6b7280; }
+
+/* ── Breadcrumb ── */
+.breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #6b7280; margin-bottom: 20px; }
+.breadcrumb a { color: #4f46e5; cursor: pointer; font-weight: 600; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb span { color: #d1d5db; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left" onclick="goHome()">
+    <div class="header-icon">🏭</div>
+    <div>
+      <h1>Fornecedores</h1>
+      <p>Gestão de terceirizados</p>
+    </div>
+  </div>
+  <button class="btn-header-novo" onclick="goForm()">＋ Novo Fornecedor</button>
+</div>
+
+<!-- PAGE: HOME -->
+<div id="pageHome" class="page active">
+  <div class="home-hero">
+    <h2>Seus Fornecedores</h2>
+    <p>Gerencie costureiras, bordado, silk e DTF num só lugar</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Total</div></div>
+      <div class="hero-stat s-costura"><div class="stat-num" id="statCostura">0</div><div class="stat-label">Costura</div></div>
+      <div class="hero-stat s-bordado"><div class="stat-num" id="statBordado">0</div><div class="stat-label">Bordado</div></div>
+      <div class="hero-stat s-silk"><div class="stat-num" id="statSilk">0</div><div class="stat-label">Silk</div></div>
+      <div class="hero-stat s-dtf"><div class="stat-num" id="statDtf">0</div><div class="stat-label">DTF</div></div>
+    </div>
+  </div>
+
+  <div class="home-toolbar">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Buscar por nome…" oninput="onSearch(this)">
+      <button class="clear-btn" id="clearBtn" onclick="clearSearch()">✕</button>
+    </div>
+    <div class="filter-chips">
+      <button class="chip active" onclick="homeFilter('todos',this)">Todos</button>
+      <button class="chip c-costura" onclick="homeFilter('costura',this)">✂️ Costura</button>
+      <button class="chip c-bordado" onclick="homeFilter('bordado',this)">🪡 Bordado</button>
+      <button class="chip c-silk" onclick="homeFilter('silk',this)">🖨️ Silk</button>
+      <button class="chip c-dtf" onclick="homeFilter('dtf',this)">🎨 DTF</button>
+    </div>
+  </div>
+
+  <div class="home-body">
+    <div class="results-info" id="resultsInfo"></div>
+    <div class="cards-grid" id="cardsGrid"></div>
+  </div>
+</div>
+
+<!-- PAGE: DETALHE / FORM -->
+<div id="pageInner" class="page">
+  <div class="inner-layout">
+    <div class="sidebar">
+      <div class="sidebar-head">
+        <h2>Fornecedores</h2>
+        <button class="btn-novo-side" onclick="goForm()">＋ Novo</button>
+      </div>
+      <div class="side-filters">
+        <button class="side-chip active" onclick="sideFilter('todos',this)">Todos</button>
+        <button class="side-chip" onclick="sideFilter('costura',this)">✂️</button>
+        <button class="side-chip" onclick="sideFilter('bordado',this)">🪡</button>
+        <button class="side-chip" onclick="sideFilter('silk',this)">🖨️</button>
+        <button class="side-chip" onclick="sideFilter('dtf',this)">🎨</button>
+      </div>
+      <div class="list-area" id="sideList"></div>
+    </div>
+    <div class="inner-main" id="innerMain">
+      <div class="empty-inner"><div class="big">📋</div><h2>Selecione um fornecedor</h2></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════ STATE ════════ */
+let db = JSON.parse(localStorage.getItem('fornecedores_v2') || '[]');
+let homeFilterVal = 'todos';
+let homeSearch = '';
+let sideFilterVal = 'todos';
+let selectedId = null;
+let currentPecas = [];
+
+const PECAS_DEFAULT = ['Gola O','Gola V','Polo','Social','Moletom Careca','Moletom Capuz','Jaqueta Escolar','Calça','Camiseta'];
+const TAM_BORD = ['Pequeno','Médio','Grande'];
+const TAM_SILK = ['A3','A4','10cm x 10cm'];
+const CORES_SILK = ['1 cor','2 cores','3 cores','4 cores','Cromia'];
+
+function save() { localStorage.setItem('fornecedores_v2', JSON.stringify(db)); }
+
+/* ════════ COLORS ════════ */
+const COLORS = {
+  costura: { bg:'#e0e7ff', fg:'#3730a3' },
+  bordado: { bg:'#fce7f3', fg:'#9d174d' },
+  silk:    { bg:'#dcfce7', fg:'#14532d' },
+  dtf:     { bg:'#fef3c7', fg:'#78350f' },
+};
+function clr(tipo) { return COLORS[tipo] || { bg:'#f3f4f6', fg:'#6b7280' }; }
+function initials(n) { return n.trim().split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase(); }
+function tipoLabel(t) { return {costura:'Costura',bordado:'Bordado',silk:'Silk',dtf:'DTF'}[t]||t; }
+function tipoIcon(t) { return {costura:'✂️',bordado:'🪡',silk:'🖨️',dtf:'🎨'}[t]||''; }
+
+/* ════════ NAVIGATION ════════ */
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function goHome() {
+  showPage('pageHome');
+  renderHome();
+}
+function goInner() {
+  showPage('pageInner');
+  renderSide();
+}
+function goForm(dados=null) {
+  goInner();
+  showForm(dados);
+}
+
+/* ════════ HOME ════════ */
+function renderHome() {
+  // stats
+  document.getElementById('statTotal').textContent = db.length;
+  ['costura','bordado','silk','dtf'].forEach(t => {
+    document.getElementById('stat'+t.charAt(0).toUpperCase()+t.slice(1)).textContent = db.filter(f=>f.tipo===t).length;
+  });
+
+  let list = db;
+  if (homeFilterVal !== 'todos') list = list.filter(f=>f.tipo===homeFilterVal);
+  if (homeSearch) list = list.filter(f=>f.nome.toLowerCase().includes(homeSearch.toLowerCase()));
+
+  const info = document.getElementById('resultsInfo');
+  info.textContent = list.length === db.length ? `${db.length} fornecedor${db.length!==1?'es':''} cadastrado${db.length!==1?'s':''}` : `${list.length} resultado${list.length!==1?'s':''} encontrado${list.length!==1?'s':''}`;
+
+  const grid = document.getElementById('cardsGrid');
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty-home"><div class="big">🔍</div><h3>${db.length===0?'Nenhum fornecedor ainda':'Nenhum resultado encontrado'}</h3><p>${db.length===0?'Clique em "Novo Fornecedor" para começar':'Tente outro filtro ou nome'}</p></div>`;
+    return;
+  }
+  grid.innerHTML = list.map(f => {
+    const c = clr(f.tipo);
+    return `
+    <div class="fcard" onclick="openDetail('${f.id}')">
+      <div class="fcard-top">
+        <div class="fcard-avatar" style="background:${c.bg};color:${c.fg}">${initials(f.nome)}</div>
+        <div>
+          <div class="fcard-name">${f.nome}</div>
+          <div class="fcard-tel">${f.telefone||'Sem telefone'}</div>
+        </div>
+      </div>
+      ${f.endereco?`<div class="fcard-addr">📍 ${f.endereco}</div>`:''}
+      <div class="fcard-strip">
+        <span class="badge badge-${f.tipo}">${tipoIcon(f.tipo)} ${tipoLabel(f.tipo)}</span>
+        <span class="fcard-arrow">›</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function homeFilter(tipo, el) {
+  homeFilterVal = tipo;
+  document.querySelectorAll('.filter-chips .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderHome();
+}
+function onSearch(el) {
+  homeSearch = el.value;
+  document.getElementById('clearBtn').classList.toggle('visible', !!el.value);
+  renderHome();
+}
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  homeSearch = '';
+  document.getElementById('clearBtn').classList.remove('visible');
+  renderHome();
+}
+function openDetail(id) {
+  selectedId = id;
+  goInner();
+  const f = db.find(x=>x.id===id);
+  if (f) showDetail(f);
+}
+
+/* ════════ SIDEBAR ════════ */
+function renderSide() {
+  const list = sideFilterVal==='todos' ? db : db.filter(f=>f.tipo===sideFilterVal);
+  const el = document.getElementById('sideList');
+  if (!list.length) { el.innerHTML=`<div class="side-empty">Nenhum fornecedor</div>`; return; }
+  el.innerHTML = list.map(f=>{
+    const c=clr(f.tipo);
+    return `<div class="scard ${selectedId===f.id?'active':''}" onclick="selectF('${f.id}')">
+      <div class="scard-row">
+        <div class="scard-av" style="background:${c.bg};color:${c.fg}">${initials(f.nome)}</div>
+        <div class="scard-info"><h3>${f.nome}</h3><p>${tipoIcon(f.tipo)} ${tipoLabel(f.tipo)}</p></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function sideFilter(tipo,el) {
+  sideFilterVal=tipo;
+  document.querySelectorAll('.side-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderSide();
+}
+function selectF(id) {
+  selectedId=id;
+  renderSide();
+  const f=db.find(x=>x.id===id);
+  if(f) showDetail(f);
+}
+
+/* ════════ DETAIL ════════ */
+function qualBadge(q) {
+  if(!q) return '—';
+  const map={boa:'qb-boa',media:'qb-media',ruim:'qb-ruim'};
+  const lab={boa:'✅ Boa',media:'⚠️ Média',ruim:'❌ Ruim'};
+  return `<span class="qual-badge ${map[q]||''}">${lab[q]||q}</span>`;
+}
+
+function showDetail(f) {
+  let spec='';
+  const c=clr(f.tipo);
+  if(f.tipo==='costura'){
+    const rows=(f.pecas||[]).map(p=>`<tr><td>${p.nome}</td><td>${p.valor?'R$ '+parseFloat(p.valor).toFixed(2):'—'}</td><td>${p.prazo?p.prazo+' dias':'—'}</td><td>${qualBadge(p.qualidade)}</td></tr>`).join('');
+    spec=`<div class="fwcard"><div class="fwcard-head"><div class="ci" style="background:#e0e7ff">✂️</div><h3>Peças e Valores</h3></div><div class="fwcard-body" style="overflow-x:auto"><table class="dtbl"><thead><tr><th>Peça</th><th>Valor</th><th>Prazo</th><th>Qualidade</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  } else if(f.tipo==='bordado'){
+    const rows=(f.tamanhos||[]).map(t=>`<tr><td>${t.nome}</td><td>${t.valor?'R$ '+parseFloat(t.valor).toFixed(2):'—'}</td><td>${t.prazo?t.prazo+' dias':'—'}</td><td>${qualBadge(t.qualidade)}</td></tr>`).join('');
+    spec=`<div class="fwcard"><div class="fwcard-head"><div class="ci" style="background:#fce7f3">🪡</div><h3>Bordado por Tamanho</h3></div><div class="fwcard-body"><table class="dtbl"><thead><tr><th>Tamanho</th><th>Valor</th><th>Prazo</th><th>Qualidade</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  } else if(f.tipo==='silk'){
+    let th=`<table class="dtbl"><thead><tr><th>Tamanho</th>${CORES_SILK.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>`;
+    TAM_SILK.forEach(tam=>{
+      th+=`<tr><td><strong>${tam}</strong></td>`;
+      CORES_SILK.forEach(cor=>{ const v=(f.silk||{})[tam]?.[cor]||''; th+=`<td>${v?'R$ '+parseFloat(v).toFixed(2):'—'}</td>`; });
+      th+='</tr>';
+    });
+    th+='</tbody></table>';
+    spec=`<div class="fwcard"><div class="fwcard-head"><div class="ci" style="background:#dcfce7">🖨️</div><h3>Silk — Valores por Tamanho e Cor</h3></div><div class="fwcard-body" style="overflow-x:auto">${th}<div style="margin-top:14px;font-size:13px">Qualidade: ${qualBadge(f.qualidadeSilk)}</div></div></div>`;
+  } else if(f.tipo==='dtf'){
+    spec=`<div class="fwcard"><div class="fwcard-head"><div class="ci" style="background:#fef3c7">🎨</div><h3>DTF</h3></div><div class="fwcard-body"><div class="info-grid"><div class="ii"><label>Valor do Metro</label><p>${f.dtf?.valorMetro?'R$ '+parseFloat(f.dtf.valorMetro).toFixed(2):'—'}</p></div><div class="ii"><label>Cabeça de Impressão</label><p>${f.dtf?.cabeca||'—'}</p></div><div class="ii"><label>Qualidade</label><p>${qualBadge(f.dtf?.qualidade)}</p></div></div></div></div>`;
+  }
+
+  document.getElementById('innerMain').innerHTML=`
+    <div class="form-wrapper">
+      <div class="breadcrumb"><a onclick="goHome()">🏠 Home</a><span>›</span><span>${f.nome}</span></div>
+      <div class="detail-header">
+        <div class="det-av" style="background:${c.bg};color:${c.fg}">${initials(f.nome)}</div>
+        <div><div class="det-name">${f.nome}</div><div class="det-sub"><span class="badge badge-${f.tipo}">${tipoIcon(f.tipo)} ${tipoLabel(f.tipo)}</span></div></div>
+      </div>
+      <div class="fwcard">
+        <div class="fwcard-head"><div class="ci" style="background:#f3f4f6">👤</div><h3>Dados Gerais</h3></div>
+        <div class="fwcard-body"><div class="info-grid">
+          <div class="ii"><label>Telefone</label><p>${f.telefone||'—'}</p></div>
+          <div class="ii"><label>Endereço</label><p>${f.endereco||'—'}</p></div>
+        </div></div>
+      </div>
+      ${spec}
+      <div class="btn-actions">
+        <button class="btn-del-main" onclick="excluir('${f.id}')">🗑 Excluir</button>
+        <button class="btn-cancel" onclick="goForm(db.find(x=>x.id==='${f.id}'))">✏️ Editar</button>
+      </div>
+    </div>`;
+}
+
+/* ════════ EXCLUIR ════════ */
+function excluir(id) {
+  if(!confirm('Confirmar exclusão?')) return;
+  db=db.filter(f=>f.id!==id); save();
+  selectedId=null;
+  renderSide();
+  renderHome();
+  document.getElementById('innerMain').innerHTML=`<div class="empty-inner"><div class="big">📋</div><h2>Selecione um fornecedor</h2></div>`;
+}
+
+/* ════════ FORM ════════ */
+function showForm(dados=null) {
+  const isEdit=!!dados;
+  const tipo=dados?.tipo||'costura';
+  window._currentTipo=tipo;
+
+  document.getElementById('innerMain').innerHTML=`
+    <div class="form-wrapper">
+      <div class="breadcrumb"><a onclick="goHome()">🏠 Home</a><span>›</span><span>${isEdit?'Editar Fornecedor':'Novo Fornecedor'}</span></div>
+      <h2 style="font-size:18px;font-weight:800;margin-bottom:18px">${isEdit?'Editar Fornecedor':'Novo Fornecedor'}</h2>
+      <div class="fwcard">
+        <div class="fwcard-head"><div class="ci" style="background:#f3f4f6">👤</div><h3>Dados Gerais</h3></div>
+        <div class="fwcard-body">
+          <div class="form-row">
+            <div class="fg"><label>Nome do Fornecedor *</label><input type="text" id="fNome" placeholder="Ex: Maria Costura" value="${dados?.nome||''}"></div>
+            <div class="fg"><label>Telefone</label><input type="text" id="fTel" placeholder="(XX) X XXXX-XXXX" maxlength="16" value="${dados?.telefone||''}"></div>
+          </div>
+          <div class="form-row full">
+            <div class="fg"><label>Endereço</label><input type="text" id="fEnd" placeholder="Rua, número, bairro, cidade" value="${dados?.endereco||''}"></div>
+          </div>
+          <div class="fg" style="margin-top:4px">
+            <label style="margin-bottom:10px">Tipo de Serviço *</label>
+            <div class="tipo-tabs">
+              <button class="ttab t-costura ${tipo==='costura'?'active':''}" onclick="selectTipo('costura')">✂️ Costura</button>
+              <button class="ttab t-bordado ${tipo==='bordado'?'active':''}" onclick="selectTipo('bordado')">🪡 Bordado</button>
+              <button class="ttab t-silk ${tipo==='silk'?'active':''}" onclick="selectTipo('silk')">🖨️ Silk</button>
+              <button class="ttab t-dtf ${tipo==='dtf'?'active':''}" onclick="selectTipo('dtf')">🎨 DTF</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="especArea"></div>
+      <div class="btn-actions">
+        ${isEdit?`<button class="btn-del-main" onclick="excluir('${dados.id}')">🗑 Excluir</button>`:''}
+        <button class="btn-cancel" onclick="${isEdit?`goInner();selectF('${dados.id}')`:'goHome()'}">Cancelar</button>
+        <button class="btn-salvar" onclick="salvar('${dados?.id||''}')">💾 Salvar</button>
+      </div>
+    </div>`;
+
+  const tel=document.getElementById('fTel');
+  tel.addEventListener('input',function(){
+    let v=this.value.replace(/\D/g,'').substring(0,11);
+    if(v.length>6) v='('+v.substring(0,2)+') '+v.substring(2,3)+' '+v.substring(3,7)+'-'+v.substring(7);
+    else if(v.length>2) v='('+v.substring(0,2)+') '+v.substring(2);
+    else if(v.length>0) v='('+v;
+    this.value=v;
+  });
+
+  selectTipo(tipo, dados);
+}
+
+function selectTipo(tipo, dados=null) {
+  document.querySelectorAll('.ttab').forEach(t=>t.classList.remove('active'));
+  const tab=document.querySelector(`.ttab.t-${tipo}`);
+  if(tab) tab.classList.add('active');
+  window._currentTipo=tipo;
+  const area=document.getElementById('especArea');
+  if(!area) return;
+  if(tipo==='costura'){
+    currentPecas=dados?.pecas?JSON.parse(JSON.stringify(dados.pecas)):PECAS_DEFAULT.map(n=>({nome:n,valor:'',prazo:'',qualidade:'boa'}));
+    area.innerHTML=buildCosturaForm();
+  } else if(tipo==='bordado'){
+    const tams=dados?.tamanhos||TAM_BORD.map(n=>({nome:n,valor:'',prazo:'',qualidade:'boa'}));
+    area.innerHTML=buildBordadoForm(tams);
+  } else if(tipo==='silk'){
+    area.innerHTML=buildSilkForm(dados?.silk, dados?.qualidadeSilk||'boa');
+  } else if(tipo==='dtf'){
+    area.innerHTML=buildDtfForm(dados?.dtf);
+  }
+}
+
+function buildCosturaForm(){
+  const rows=currentPecas.map((p,i)=>`
+    <tr>
+      <td><input type="text" value="${p.nome}" onchange="currentPecas[${i}].nome=this.value" style="min-width:120px"></td>
+      <td><input type="number" step="0.01" placeholder="0,00" value="${p.valor}" onchange="currentPecas[${i}].valor=this.value" style="width:86px"></td>
+      <td><input type="number" placeholder="0" value="${p.prazo}" onchange="currentPecas[${i}].prazo=this.value" style="width:66px"></td>
+      <td><select onchange="currentPecas[${i}].qualidade=this.value">
+        <option value="boa" ${p.qualidade==='boa'?'selected':''}>✅ Boa</option>
+        <option value="media" ${p.qualidade==='media'?'selected':''}>⚠️ Média</option>
+        <option value="ruim" ${p.qualidade==='ruim'?'selected':''}>❌ Ruim</option>
+      </select></td>
+      <td><button class="btn-del" onclick="delPeca(${i})">✕</button></td>
+    </tr>`).join('');
+  return `<div class="fwcard"><div class="fwcard-head"><div class="ci" style="background:#e0e7ff">✂️</div><h3>Peças e Valores</h3></div>
+    <div class="fwcard-body" style="overflow-x:auto">
+      <div class="sec-title">Configure cada tipo de peça</div>
+      <table class="ptable"><thead><tr><th>Tipo de Peça</th><th>Valor (R$)</th><th>Prazo (dias)</th><th>Qualidade</th><th></th></tr></thead>
+      <tbody id="pecasBody">${rows}</tbody></table>
+      <button class="btn-add" onclick="addPeca()">＋ Adicionar tipo de peça</button>
+    </div></div>`;
+}
+function delPeca(i){ currentPecas.splice(i,1); document.getElementById('especArea').innerHTML=buildCosturaForm(); }
+function addPeca(){ currentPecas.push({nome:'Nova Peça',valor:'',prazo:'',qualidade:'boa'}); document.getElementById('especArea').innerHTML=buildCosturaForm(); }
+
+function buildBordadoForm(tams){
+  const rows=tams.map((t,i)=>`
+    <tr>
+      <td style="font-weight:600;padding:5px 10px">${t.nome}</td>
+      <td><input type="number" id="bV${i}" step="0.01" placeholder="0,00" value="${t.valor}" style="width:86px"></td>
+      <td><input type="number" id="bP${i}" placeholder="0" value="${t.prazo}" style="width:66px"></td>
+      <td><select id="bQ${i}"><option value="boa" ${t.qualidade==='boa'?'selected':''}>✅ Boa</option><option value="media" ${t.qualidade==='media'?'selected':''}>⚠️ Média</option><option value="ruim" ${t.qualidade==='ruim'?'selected':''}>❌ Ruim</option></select></td>
+    </tr>`).join('');
+  return `<div class="fwcard"><div class="fwcard-head"><div class="ci" style="background:#fce7f3">🪡</div><h3>Bordado por Tamanho</h3></div>
+    <div class="fwcard-body"><table class="ptable"><thead><tr><th>Tamanho</th><th>Valor (R$)</th><th>Prazo (dias)</th><th>Qualidade</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+
+function buildSilkForm(silkData, qual){
+  const rows=TAM_SILK.map(tam=>{
+    const cells=CORES_SILK.map(cor=>{
+      const id=`sk_${tam.replace(/\s|\//g,'_')}_${cor.replace(/\s/g,'_')}`;
+      return `<td><input type="number" id="${id}" step="0.01" placeholder="0,00" value="${silkData?.[tam]?.[cor]||''}"></td>`;
+    }).join('');
+    return `<tr><td><strong>${tam}</strong></td>${cells}</tr>`;
+  }).join('');
+  return `<div class="fwcard"><div class="fwcard-head"><div class="ci" style="background:#dcfce7">🖨️</div><h3>Silk — Valores por Tamanho e Cores</h3></div>
+    <div class="fwcard-body" style="overflow-x:auto">
+      <div class="sec-title">Valores em R$ para cada combinação</div>
+      <table class="silk-tbl"><thead><tr><th>Tamanho \ Cores</th>${CORES_SILK.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>
+      <div style="margin-top:18px"><div class="sec-title">Qualidade geral</div>
+      <div class="qual-row">
+        <label class="qopt q-boa"><input type="radio" name="squal" value="boa" ${qual==='boa'?'checked':''}><span>✅ Boa</span></label>
+        <label class="qopt q-media"><input type="radio" name="squal" value="media" ${qual==='media'?'checked':''}><span>⚠️ Média</span></label>
+        <label class="qopt q-ruim"><input type="radio" name="squal" value="ruim" ${qual==='ruim'?'checked':''}><span>❌ Ruim</span></label>
+      </div></div>
+    </div></div>`;
+}
+
+function buildDtfForm(d){
+  return `<div class="fwcard"><div class="fwcard-head"><div class="ci" style="background:#fef3c7">🎨</div><h3>DTF — Detalhes</h3></div>
+    <div class="fwcard-body">
+      <div class="form-row">
+        <div class="fg"><label>Valor do Metro (R$)</label><input type="number" id="dtfV" step="0.01" placeholder="0,00" value="${d?.valorMetro||''}"></div>
+        <div class="fg"><label>Tipo de Cabeça de Impressão</label><input type="text" id="dtfC" placeholder="Ex: Epson i3200, DX5…" value="${d?.cabeca||''}"></div>
+      </div>
+      <div class="fg"><label>Qualidade</label>
+        <div class="qual-row" style="margin-top:6px">
+          <label class="qopt q-boa"><input type="radio" name="dqual" value="boa" ${(d?.qualidade||'boa')==='boa'?'checked':''}><span>✅ Boa</span></label>
+          <label class="qopt q-media"><input type="radio" name="dqual" value="media" ${d?.qualidade==='media'?'checked':''}><span>⚠️ Média</span></label>
+          <label class="qopt q-ruim"><input type="radio" name="dqual" value="ruim" ${d?.qualidade==='ruim'?'checked':''}><span>❌ Ruim</span></label>
+        </div>
+      </div>
+    </div></div>`;
+}
+
+/* ════════ SALVAR ════════ */
+function salvar(editId){
+  const nome=document.getElementById('fNome')?.value?.trim();
+  if(!nome){alert('Informe o nome do fornecedor.');return;}
+  const tipo=window._currentTipo||'costura';
+  const f={
+    id: editId||Date.now().toString(),
+    nome,
+    telefone: document.getElementById('fTel')?.value||'',
+    endereco: document.getElementById('fEnd')?.value||'',
+    tipo
+  };
+  if(tipo==='costura'){
+    document.querySelectorAll('#pecasBody tr').forEach((row,i)=>{
+      if(currentPecas[i]){
+        const inp=row.querySelectorAll('input,select');
+        currentPecas[i].nome=inp[0]?.value||currentPecas[i].nome;
+        currentPecas[i].valor=inp[1]?.value||'';
+        currentPecas[i].prazo=inp[2]?.value||'';
+        currentPecas[i].qualidade=inp[3]?.value||'boa';
+      }
+    });
+    f.pecas=JSON.parse(JSON.stringify(currentPecas));
+  } else if(tipo==='bordado'){
+    f.tamanhos=TAM_BORD.map((t,i)=>({nome:t,valor:document.getElementById(`bV${i}`)?.value||'',prazo:document.getElementById(`bP${i}`)?.value||'',qualidade:document.getElementById(`bQ${i}`)?.value||'boa'}));
+  } else if(tipo==='silk'){
+    f.silk={};
+    TAM_SILK.forEach(tam=>{
+      f.silk[tam]={};
+      CORES_SILK.forEach(cor=>{
+        const id=`sk_${tam.replace(/\s|\//g,'_')}_${cor.replace(/\s/g,'_')}`;
+        f.silk[tam][cor]=document.getElementById(id)?.value||'';
+      });
+    });
+    f.qualidadeSilk=document.querySelector('input[name="squal"]:checked')?.value||'boa';
+  } else if(tipo==='dtf'){
+    f.dtf={valorMetro:document.getElementById('dtfV')?.value||'',cabeca:document.getElementById('dtfC')?.value||'',qualidade:document.querySelector('input[name="dqual"]:checked')?.value||'boa'};
+  }
+  if(editId){ const i=db.findIndex(x=>x.id===editId); if(i>=0) db[i]=f; }
+  else db.push(f);
+  save();
+  selectedId=f.id;
+  renderSide();
+  renderHome();
+  showDetail(f);
+}
+
+/* ════════ INIT ════════ */
+renderHome();
+</script>
+</body>
+</html>
