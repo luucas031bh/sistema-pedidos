@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Adonay IA</title>
+  <title>ADNY — Assistente Adonay</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -15,32 +15,18 @@
       </div>
       <div class="status-box" id="status-box">Verificando…</div>
       <nav class="sidebar-nav">
-        <button type="button" class="nav-item" id="btn-indexar">Indexar OneDrive</button>
-        <button type="button" class="nav-item" id="btn-indexar-sistema">Indexar sistema-pedidos</button>
-        <a href="../../home.html" class="nav-item link">← Fila RP</a>
+        <a
+          id="link-fila-rp"
+          href="/fila-rp"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="nav-item link"
+        >← Fila RP</a>
       </nav>
-      <div class="index-status" id="index-status"></div>
       <div class="sidebar-models">
-        <label for="sel-modelo">Modelo Ollama (motor)</label>
+        <label for="sel-modelo">Motor local (Ollama)</label>
         <select id="sel-modelo"></select>
-        <p id="model-hint" class="ias-help muted">Só modelos do ollama pull. Claude/Claw não entram aqui.</p>
-      </div>
-      <div class="sidebar-provedor">
-        <label for="sel-provedor">Quem responde no chat</label>
-        <select id="sel-provedor">
-          <option value="adonay">OLLAMA — Adonay (RP, arquivos, PC)</option>
-          <option value="claude">CLAUDE — código</option>
-          <option value="openclaw">CLAW — OpenClaw</option>
-        </select>
-      </div>
-      <label class="toggle-net">
-        <input type="checkbox" id="chk-internet" />
-        <span>Internet</span>
-      </label>
-      <div class="panel-ias" id="panel-ias">
-        <h3>Outras IAs (terminal)</h3>
-        <p class="ias-help muted">Opcional: janela no PC. No chat use o menu acima ou as pílulas embaixo.</p>
-        <div id="lista-terminais" class="lista-terminais"></div>
+        <p id="model-hint" class="ias-help muted">Um unico assistente — o roteador decide a habilidade.</p>
       </div>
       <div class="panel-api" id="panel-api-remoto" hidden>
         <label for="inp-api-base">Servidor no PC</label>
@@ -53,14 +39,14 @@
         <button type="button" class="nav-item wpp-btn" id="btn-whatsapp-qr">Conectar WhatsApp (QR)</button>
         <div id="snapshot-resumo" class="snapshot-resumo muted">Carregando…</div>
         <div id="lista-atendimentos" class="lista-atendimentos">—</div>
-        <p class="ias-help muted">Fase 1: captura silenciosa de DMs. Respostas só neste chatbox.</p>
+        <p class="ias-help muted">Observador captura DMs. Respostas so neste chat.</p>
       </div>
     </aside>
 
     <main class="main">
       <header class="topbar">
-        <h1>Adonay IA</h1>
-        <span class="topbar-sub" id="ctx-label">Contexto compartilhado</span>
+        <h1>ADNY</h1>
+        <span class="topbar-sub" id="ctx-label">Assistente unico · WhatsApp + RP</span>
       </header>
       <div class="observador-bar" id="observador-bar" hidden>
         <span class="obs-dot" id="obs-dot"></span>
@@ -70,42 +56,29 @@
       <div class="messages" id="messages">
         <div class="welcome" id="welcome">
           <div class="welcome-icon">◇</div>
-          <h2>Como posso ajudar?</h2>
-          <p>Fase 1: a IA responde aqui no chatbox. O WhatsApp só captura DMs (sem responder).</p>
+          <h2>O que precisa?</h2>
+          <p>Pergunte em linguagem natural. O ADNY roteia para WhatsApp, fila RP ou conversa.</p>
           <div class="chips">
-            <button type="button" class="chip" data-msg="tem algum cliente pedindo orçamento?">Orçamentos WhatsApp</button>
+            <button type="button" class="chip" data-msg="ultimas mensagens recebidas no whatsapp nas ultimas 24 horas">Últimas DMs (24h)</button>
+            <button type="button" class="chip" data-msg="algum cliente solicitou orcamento ou perguntou preco no whatsapp nas ultimas 48 horas?">Orçamentos/preços WPP</button>
+            <button type="button" class="chip" data-msg="quantas mensagens sem resposta no whatsapp?">Sem resposta WPP</button>
+            <button type="button" class="chip" data-msg="pedidos em insumos na fila RP">Pedidos em insumos</button>
             <button type="button" class="chip" data-msg="resumo financeiro dos pedidos em aberto">Resumo financeiro RP</button>
-            <button type="button" class="chip" data-msg="abrir corel">Abrir Corel</button>
-            <button type="button" class="chip" data-msg="pedidos em insumos">Pedidos em insumos</button>
           </div>
         </div>
       </div>
 
       <footer class="composer-panel">
-        <div class="mode-row">
-          <button type="button" class="mode-btn active" data-mode="auto" id="mode-auto">Auto</button>
-          <button type="button" class="mode-btn" data-mode="pergunta" id="mode-pergunta">Pergunta</button>
-          <button type="button" class="mode-btn" data-mode="acao" id="mode-acao">Ação</button>
-        </div>
         <form class="composer" id="form-chat">
-          <input type="file" id="file-pdf" accept=".pdf" hidden />
-          <button type="button" class="btn-icon" id="btn-pdf" title="PDF">📎</button>
-          <textarea id="input" rows="1" placeholder="Mensagem para a IA…"></textarea>
+          <textarea id="input" rows="1" placeholder="Mensagem para o ADNY…"></textarea>
           <button type="submit" class="btn-send" id="btn-send" aria-label="Enviar">
             <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
           </button>
         </form>
-        <div class="llm-bar" id="llm-bar">
-          <span class="llm-label">IA:</span>
-          <button type="button" class="llm-pill active" data-provedor="adonay" data-label="OLLAMA">OLLAMA</button>
-          <button type="button" class="llm-pill" data-provedor="claude" data-label="CLAUDE">CLAUDE</button>
-          <button type="button" class="llm-pill" data-provedor="openclaw" data-label="CLAW">CLAW</button>
-        </div>
-        <p class="llm-hint" id="provedor-hint">OLLAMA: pedidos RP e ações no PC · mesma conversa para todas as IAs</p>
-        <p class="llm-hint llm-hint-sub" id="llm-aviso"></p>
+        <p class="llm-hint" id="provedor-hint">Fase 1: 100% local · sem escolher IA no menu</p>
       </footer>
     </main>
   </div>
-  <script src="app.js?v=7"></script>
+  <script src="app.js?v=12"></script>
 </body>
 </html>

@@ -27,6 +27,10 @@ const listaTerminais = document.getElementById("lista-terminais");
 const panelApiRemoto = document.getElementById("panel-api-remoto");
 const inpApiBase = document.getElementById("inp-api-base");
 const llmAviso = document.getElementById("llm-aviso");
+const linkFilaRp = document.getElementById("link-fila-rp");
+
+const RP_HOME_FALLBACK =
+  "https://luucas031bh.github.io/sistema-pedidos/home.html";
 
 const SESSAO_KEY = "adonay_sessao_id";
 const PROVEDOR_KEY = "adonay_provedor";
@@ -34,24 +38,10 @@ const MODO_KEY = "adonay_modo";
 const API_BASE_KEY = "adonay_api_base";
 const DEFAULT_API_BASE = "http://127.0.0.1:8765";
 
+const PROVEDOR_FIXO = "adonay";
+
 const PROVEDOR_LABELS = {
-  adonay: "OLLAMA",
-  claude: "CLAUDE",
-  openclaw: "CLAW",
-  ollama: "OLLAMA",
-};
-
-const HINTS = {
-  adonay: "OLLAMA: pedidos RP, OneDrive e acoes no PC (contexto compartilhado)",
-  claude:
-    "CLAUDE: responde no chat (codigo). Terminal opcional — botao na barra lateral.",
-  openclaw:
-    "CLAW: responde no chat. Pode demorar 1–3 min. Terminal opcional na lateral.",
-};
-
-const AVISOS_PROVEDOR = {
-  claude: "Dica: para codigo longo, use tambem o terminal Claude (barra lateral).",
-  openclaw: "Dica: CLAW no chat pode demorar; mensagens curtas funcionam melhor.",
+  adonay: "ADNY",
 };
 
 let modoAtual = localStorage.getItem(MODO_KEY) || "auto";
@@ -103,29 +93,20 @@ function novaSessaoId() {
 }
 
 function obterProvedorId() {
-  if (selProvedor?.value) return selProvedor.value;
-  const ativo = llmBar?.querySelector(".llm-pill.active");
-  return ativo?.dataset.provedor || localStorage.getItem(PROVEDOR_KEY) || "adonay";
+  return PROVEDOR_FIXO;
 }
 
-function definirProvedor(id) {
-  localStorage.setItem(PROVEDOR_KEY, id);
-  if (selProvedor) selProvedor.value = id;
-  llmBar?.querySelectorAll(".llm-pill").forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.provedor === id);
-  });
+function definirProvedor(_id) {
+  localStorage.setItem(PROVEDOR_KEY, PROVEDOR_FIXO);
   atualizarHintProvedor();
 }
 
 function atualizarHintProvedor() {
-  if (!provedorHint) return;
-  const id = obterProvedorId();
-  provedorHint.textContent = HINTS[id] || HINTS.adonay;
-  if (llmAviso) llmAviso.textContent = AVISOS_PROVEDOR[id] || "";
-  if (ctxLabel) {
-    const label = PROVEDOR_LABELS[id] || id.toUpperCase();
-    ctxLabel.textContent = `Contexto compartilhado · ${label}`;
+  if (provedorHint) {
+    provedorHint.textContent =
+      "Fase 1: assistente unico (Ollama + roteador JSON). WhatsApp e RP integrados.";
   }
+  if (ctxLabel) ctxLabel.textContent = "Assistente unico · WhatsApp + RP";
 }
 
 async function abrirTerminalIntegracao(id) {
@@ -144,9 +125,8 @@ async function abrirTerminalIntegracao(id) {
   } catch (err) {
     const msg =
       err.message +
-      "\n\n• Servidor local ligado? (AdonayPainel → Servidor web)\n" +
-      "• URL correta: http://127.0.0.1:8765\n" +
-      "• Ou use AdonayPainel.exe → Ligar em Claude / OpenClaw";
+      "\n\n• Servidor local ligado? (INICIAR_TUDO.bat ou AdonayPainel)\n" +
+      "• URL correta: http://127.0.0.1:8765";
     alert(msg);
   }
 }
@@ -168,6 +148,33 @@ function renderTerminais(integracoes) {
   listaTerminais.querySelectorAll(".btn-terminal").forEach((btn) => {
     btn.addEventListener("click", () => abrirTerminalIntegracao(btn.dataset.id));
   });
+}
+
+function initLinkFilaRp() {
+  if (!linkFilaRp) return;
+  if (isLocalUi()) {
+    linkFilaRp.href = apiUrl("/fila-rp");
+    return;
+  }
+  try {
+    linkFilaRp.href = new URL("../../home.html", location.href).href;
+  } catch {
+    linkFilaRp.href = RP_HOME_FALLBACK;
+  }
+}
+
+async function atualizarLinkFilaRp() {
+  if (!linkFilaRp) return;
+  try {
+    const r = await fetch(apiUrl("/api/config"));
+    if (!r.ok) return;
+    const cfg = await r.json();
+    const rp = cfg.rp || {};
+    const url = rp.url_home || cfg.rp_url_home;
+    if (url) linkFilaRp.href = isLocalUi() ? apiUrl("/fila-rp") : url;
+  } catch {
+    /* mantem fallback */
+  }
 }
 
 function initApiRemoto() {
@@ -193,50 +200,15 @@ function initApiRemoto() {
 }
 
 function initLlmPills() {
-  const salvo = localStorage.getItem(PROVEDOR_KEY) || "adonay";
-  definirProvedor(salvo);
-  llmBar?.querySelectorAll(".llm-pill").forEach((btn) => {
-    btn.addEventListener("click", () => definirProvedor(btn.dataset.provedor));
-  });
-  selProvedor?.addEventListener("change", () => definirProvedor(selProvedor.value));
+  definirProvedor(PROVEDOR_FIXO);
 }
 
-function renderProvedoresChat(lista) {
-  if (!selProvedor || !lista?.length) return;
-  const salvo = localStorage.getItem(PROVEDOR_KEY) || "adonay";
-  const ordem = ["adonay", "claude", "openclaw", "ollama"];
-  selProvedor.innerHTML = "";
-  lista
-    .slice()
-    .sort((a, b) => ordem.indexOf(a.id) - ordem.indexOf(b.id))
-    .forEach((p) => {
-      if (p.id === "ollama") return;
-      const o = document.createElement("option");
-      o.value = p.id;
-      o.textContent = p.nome || p.id;
-      if (p.id === salvo) o.selected = true;
-      selProvedor.appendChild(o);
-    });
-  definirProvedor(selProvedor.value || salvo);
+function renderProvedoresChat(_lista) {
+  definirProvedor(PROVEDOR_FIXO);
 }
 
 function initModoButtons() {
-  document.querySelectorAll(".mode-btn").forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.mode === modoAtual);
-    btn.addEventListener("click", () => {
-      modoAtual = btn.dataset.mode;
-      localStorage.setItem(MODO_KEY, modoAtual);
-      document.querySelectorAll(".mode-btn").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      const ph = {
-        auto: "Pergunta ou acao — a IA decide…",
-        pergunta: "Faca uma pergunta…",
-        acao: "Descreva a acao (abrir, listar, consultar RP)…",
-      };
-      input.placeholder = ph[modoAtual] || ph.auto;
-    });
-  });
-  input.placeholder = "Pergunta ou acao — a IA decide…";
+  input.placeholder = "Mensagem para o ADNY…";
 }
 
 document.getElementById("btn-toggle-side")?.addEventListener("click", () => {
@@ -261,6 +233,9 @@ function esconderWelcome() {
 }
 
 function formatPasso(p) {
+  if (p.agente === "consultor_whatsapp") {
+    return `📋 Consultor WhatsApp: ${p.mensagens ?? 0} mensagem(ns) (${p.periodo_horas ?? "?"}h)`;
+  }
   if (p.agente === "sintetizador") {
     return `📋 Sintetizador: ${p.conversas ?? 0} conversa(s) no snapshot`;
   }
@@ -348,11 +323,16 @@ function renderObservadorBar(st) {
 
   if (st.whatsapp_conectado) {
     observadorBar.className = "observador-bar ok";
+    const enc = stats.dms_encaminhadas || 0;
+    const logTotal = st.mensagens_no_log ?? 0;
+    const falhas = stats.dms_falha_envio || 0;
+    let extra = `${enc} encaminhada(s) · ${logTotal} no log`;
+    if (falhas > 0) extra += ` · ${falhas} falha(s) API`;
+    if (enc === 0 && (stats.dms_recebidas || 0) > 0) {
+      extra += " — reinicie o bot se acabou de atualizar";
+    }
     observadorTexto.textContent =
-      `Observador ativo · lendo WhatsApp${conta ? ` (${conta})` : ""} · ` +
-      `${stats.dms_recebidas || 0} DM(s) lidas · ` +
-      `${st.conversas_ativas || 0} relevante(s) · ` +
-      `${stats.dms_ignoradas || 0} filtrada(s)`;
+      `Observador ativo${conta ? ` (${conta})` : ""} · ${extra}`;
   } else if (st.whatsapp_aguardando_qr) {
     observadorBar.className = "observador-bar warn";
     observadorTexto.textContent = "Observador aguardando QR — escaneie no celular";
@@ -381,9 +361,11 @@ async function carregarSnapshot() {
     if (whatsappStatus) {
       if (st.whatsapp_conectado) {
         const stats = st.observador_stats || {};
+        const totalLog = st.mensagens_no_log ?? 0;
+        const enc = stats.dms_encaminhadas || 0;
         whatsappStatus.textContent =
-          `Conectado · ${stats.dms_recebidas || 0} DMs lidas · ${st.conversas_ativas || 0} no painel`;
-        whatsappStatus.className = "wpp-status ok";
+          `Conectado · ${totalLog} msg no log · ${enc} encaminhada(s) ao Python`;
+        whatsappStatus.className = enc > 0 || totalLog > 0 ? "wpp-status ok" : "wpp-status warn";
       } else if (st.whatsapp_aguardando_qr) {
         whatsappStatus.textContent = "Escaneie o QR (janela Adonay WhatsApp ou whatsapp-qr.png)";
         whatsappStatus.className = "wpp-status warn";
@@ -472,33 +454,18 @@ async function carregarStatus() {
       if (modelHint) {
         const sug = (d.modelos_sugeridos || []).filter((m) => !modelos.includes(m));
         modelHint.textContent = modelos.length
-          ? `${modelos.length} modelo(s) Ollama. Claude/CLAW: menu "Quem responde no chat".`
+          ? `${modelos.length} modelo(s) local(is). Roteamento automatico.`
           : `Nenhum modelo. Rode: ollama pull ${sug[0] || "qwen2.5:7b"}`;
       }
     }
     renderProvedoresChat(d.provedores || []);
-    const diag = d.diagnostico_ias || {};
-    if (diag.claude && !diag.claude.instalado && provedorHint) {
-      provedorHint.textContent =
-        "CLAUDE nao instalado. Rode INSTALAR_CLAUDE_E_CLAW.bat";
-    }
-    if (llmAviso && diag.openclaw) {
-      llmAviso.textContent = diag.openclaw.instalado
-        ? "CLAW no chat pode demorar 1–3 min; prefira CLAUDE se der erro."
-        : "CLAW nao instalado. Rode INSTALAR_CLAUDE_E_CLAW.bat";
-    }
     if (d.ollama) {
-      const idx = d.indexador?.arquivos_indexados ?? 0;
-      statusBox.textContent = `Ollama OK · ${d.modelo_padrao || ""} · ${idx} arq`;
+      statusBox.textContent = `ADNY online · ${d.modelo_padrao || ""}`;
       statusBox.className = "status-box ok";
     } else {
-      statusBox.textContent = d.mensagem || "Ollama offline — use ABRIR_PAINEL.bat";
+      statusBox.textContent = d.mensagem || "Ollama offline — use INICIAR_TUDO.bat";
       statusBox.className = "status-box err";
     }
-    if (d.indexando) indexStatus.textContent = "Indexando…";
-    else if (d.indexador)
-      indexStatus.textContent = `${d.indexador.arquivos_indexados || 0} arquivos`;
-    renderTerminais(d.integracoes_ollama || []);
   } catch (err) {
     statusBox.textContent = isLocalUi()
       ? "Offline — AdonayPainel.exe ou INICIAR_TUDO.bat"
@@ -573,29 +540,27 @@ form.addEventListener("submit", async (e) => {
       body: JSON.stringify({
         mensagem: texto,
         sessao: obterSessaoId(),
-        provedor: obterProvedorId(),
-        modo: modoAtual,
+        provedor: PROVEDOR_FIXO,
+        modo: "auto",
         modelo: selModelo?.value || null,
-        permitir_internet: chkInternet?.checked,
+        permitir_internet: false,
       }),
     });
     const d = await r.json();
     removeTyping();
     if (!r.ok) throw new Error(d.detail || "Erro na API");
-    addMessage("bot", d.resposta, d.passos || [], d.meta || null);
+    const texto = (d.resposta || "").trim();
+    addMessage(
+      "bot",
+      texto || "Sem resposta do servidor. Tente de novo.",
+      d.passos || [],
+      d.meta || null
+    );
   } catch (err) {
     removeTyping();
     let msg = err.message;
-    const pid = obterProvedorId();
-    if (pid === "claude" || pid === "openclaw") {
-      msg +=
-        "\n\nNo chat: so envie mensagem com a pílula " +
-        (PROVEDOR_LABELS[pid] || pid) +
-        " ativa.\n" +
-        "Terminal (opcional): botao na barra lateral ou AdonayPainel.exe.";
-    }
     if (!isLocalUi() && /fetch|network|failed/i.test(msg)) {
-      msg += "\n\nConfira o campo Servidor no PC (porta 8765) na barra lateral.";
+      msg += "\n\nConfira se o servidor local esta ligado (porta 8765).";
     }
     addMessage("bot", "Erro: " + msg);
   }
@@ -629,19 +594,9 @@ btnNovo?.addEventListener("click", async () => {
   await fetch(apiUrl("/api/limpar?sessao=" + encodeURIComponent(antiga)), { method: "POST" });
   novaSessaoId();
   messagesEl.innerHTML = "";
-  const w = document.createElement("div");
-  w.className = "welcome";
-  w.id = "welcome";
-  w.innerHTML = `
-    <div class="welcome-icon">◇</div>
-    <h2>Como posso ajudar?</h2>
-    <p>Pergunte ou peca uma acao. Troque a IA embaixo (OLLAMA, CLAUDE, CLAW).</p>
-    <div class="chips">
-      <button type="button" class="chip" data-msg="tem algum cliente pedindo orçamento?">Orçamentos WhatsApp</button>
-      <button type="button" class="chip" data-msg="abrir corel">Abrir Corel</button>
-    </div>
-  `;
-  messagesEl.appendChild(w);
+  if (WELCOME_HTML) {
+    messagesEl.insertAdjacentHTML("beforeend", WELCOME_HTML);
+  }
   bindChips();
 });
 
@@ -656,6 +611,8 @@ function bindChips() {
 }
 
 initApiRemoto();
+initLinkFilaRp();
+atualizarLinkFilaRp();
 initLlmPills();
 initModoButtons();
 bindChips();

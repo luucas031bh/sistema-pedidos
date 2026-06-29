@@ -73,8 +73,6 @@ async function processarLegacy(sock, msg, textoBruto, jid) {
 }
 
 async function processarMensagem(sock, msg) {
-  if (mensagemDeveIgnorar(msg)) return;
-
   const jid = msg.key.remoteJid;
   if (ehGrupo(jid)) return;
 
@@ -87,11 +85,12 @@ async function processarMensagem(sock, msg) {
   const textoBruto = extrairTextoMensagem(msg);
 
   if (modoObservadorAtivo()) {
-    const pushName = msg.pushName || "";
-    await processarObservador(msg, pushName);
+    await processarObservador(msg, msg.pushName || "");
   }
 
-  await processarLegacy(sock, msg, textoBruto, jid);
+  if (modoLegacyAtivo() && !mensagemDeveIgnorar(msg)) {
+    await processarLegacy(sock, msg, textoBruto, jid);
+  }
 }
 
 async function main() {

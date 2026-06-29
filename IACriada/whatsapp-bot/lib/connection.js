@@ -12,6 +12,7 @@ import { log } from "./logger.js";
 import { setBotIdentity } from "./bot-identity.js";
 import { limparQrPng, salvarQrPng } from "./qr-png.js";
 import { gravarStatus } from "./connection-status.js";
+import { registrarVarreduraNaoLidos } from "./sync-unread.js";
 
 let sockGlobal = null;
 let botJidGlobal = null;
@@ -53,6 +54,7 @@ export async function conectarWhatsApp(onMensagem) {
   });
 
   sockGlobal = sock;
+  registrarVarreduraNaoLidos(sock, onMensagem);
 
   sock.ev.on("creds.update", () => {
     saveCreds();
@@ -134,7 +136,7 @@ export async function conectarWhatsApp(onMensagem) {
   });
 
   sock.ev.on("messages.upsert", async ({ messages, type }) => {
-    if (type !== "notify") return;
+    if (type !== "notify" && type !== "append") return;
     for (const msg of messages) {
       try {
         if (msg.key.fromMe) continue;

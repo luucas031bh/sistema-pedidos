@@ -1,8 +1,12 @@
 {
   "routing_rules": {
+    "consultar_mensagens_whatsapp": {
+      "agente": "consultor_whatsapp",
+      "descricao": "Busca mensagens WhatsApp capturadas: periodo, orcamento, preco, telefone"
+    },
     "verificar_atendimentos": {
       "agente": "sintetizador",
-      "descricao": "Atendimentos WhatsApp, orcamentos pendentes, snapshot local"
+      "descricao": "Resumo snapshot pedidos.json e status conexao"
     },
     "consultar_fila_rp": {
       "agente": "rp_direto",
@@ -14,13 +18,13 @@
     },
     "acao_adonay": {
       "agente": "adonay_legado",
-      "descricao": "Ferramentas PC, OneDrive, acoes completas"
+      "descricao": "Desativado na Fase 1 (acoes PC/OneDrive)"
     }
   },
   "rotas_validas": [
+    "consultar_mensagens_whatsapp",
     "verificar_atendimentos",
     "consultar_fila_rp",
-    "conversa_geral",
-    "acao_adonay"
+    "conversa_geral"
   ]
 }

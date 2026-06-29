@@ -27,6 +27,22 @@ export function tipoMensagem(msg) {
   return Object.keys(msg.message)[0] || "unknown";
 }
 
+const ROTULOS_MIDIA = {
+  audioMessage: "[audio]",
+  pttMessage: "[audio]",
+  stickerMessage: "[figurinha]",
+  imageMessage: "[imagem]",
+  videoMessage: "[video]",
+  documentMessage: "[documento]",
+};
+
+/** Texto ou rotulo de midia — usado pelo observador (captura tudo, sem filtro comercial). */
+export function descricaoMensagemObservador(msg) {
+  const texto = extrairTextoMensagem(msg).trim();
+  if (texto) return texto;
+  return ROTULOS_MIDIA[tipoMensagem(msg)] || "";
+}
+
 export function mensagemDeveIgnorar(msg) {
   const tipo = tipoMensagem(msg);
   if (TIPOS_IGNORADOS.has(tipo)) return true;

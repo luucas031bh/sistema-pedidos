@@ -9,6 +9,7 @@ import urllib.error
 from config import cfg_observador
 from observador_store import (
     append_evento,
+    append_mensagem_global,
     atualizar_conversa_snapshot,
     carregar_todas_metas_clientes,
     escrever_snapshot,
@@ -40,18 +41,38 @@ _TERMOS_ORCAMENTO = (
 )
 
 
-def _classificar_heuristica(texto: str) -> dict:
+_TERMOS_PRECO = (
+    "preco",
+    "preço",
+    "valor",
+    "quanto custa",
+    "quanto fica",
+    "quanto sai",
+    "tabela",
+    "custa",
+)
+
+
+def classificar_intencao_mensagem(texto: str) -> str:
+    """Classificacao rapida para indexacao (sem inventar dados)."""
     n = (texto or "").lower()
     n = re.sub(r"[^\w\s]", " ", n)
     if any(t in n for t in _TERMOS_ORCAMENTO):
-        return {"intencao": "orcamento", "resumo": texto[:200], "entidades": {}}
-    if "?" in texto or any(
+        return "orcamento"
+    if any(t in n for t in _TERMOS_PRECO):
+        return "preco"
+    if "?" in (texto or "") or any(
         k in n for k in ("duvida", "dúvida", "como", "quando", "onde", "qual")
     ):
-        return {"intencao": "duvida", "resumo": texto[:200], "entidades": {}}
+        return "duvida"
     if any(k in n for k in ("pedido", "status", "entrega", "prazo")):
-        return {"intencao": "status_pedido", "resumo": texto[:200], "entidades": {}}
-    return {"intencao": "outro", "resumo": texto[:200], "entidades": {}}
+        return "status_pedido"
+    return "outro"
+
+
+def _classificar_heuristica(texto: str) -> dict:
+    intent = classificar_intencao_mensagem(texto)
+    return {"intencao": intent, "resumo": texto[:200], "entidades": {}}
 
 
 def classificar_texto_llm(texto: str, modelo: str | None = None) -> dict:
@@ -106,12 +127,20 @@ def registrar_whatsapp_evento(
         return {"ok": False, "erro": "texto_vazio"}
 
     salvar_mensagem_cliente(telefone, texto, timestamp=timestamp, nome=nome)
+    clf = classificar_texto_llm(texto) if classificar else _classificar_heuristica(texto)
+    intencao = clf.get("intencao") or classificar_intencao_mensagem(texto)
+    append_mensagem_global(
+        telefone,
+        texto,
+        timestamp=timestamp,
+        nome=nome,
+        intencao=intencao,
+    )
     append_evento(
         "whatsapp_in",
-        {"telefone": telefone, "texto": texto[:300], "nome": nome or ""},
+        {"telefone": telefone, "texto": texto[:300], "nome": nome or "", "intencao": intencao},
     )
 
-    clf = classificar_texto_llm(texto) if classificar else _classificar_heuristica(texto)
     ts = timestamp or ""
     horas = horas_desde(ts)
     resumo_real = (texto or "").strip()[:200]
@@ -122,7 +151,7 @@ def registrar_whatsapp_evento(
         "ultima_msg": texto[:500],
         "ultima_msg_em": ts,
         "sem_resposta_horas": round(horas, 1),
-        "intencao": clf.get("intencao", "outro"),
+        "intencao": intencao,
         "resumo": resumo_real,
         "relevante": True,
     }
@@ -194,6 +223,7 @@ def rebuild_snapshot_completo() -> dict:
 def status_observador() -> dict:
     from config import PASTA, cfg_whatsapp_modo
     from datetime import datetime, timezone
+    from observador_store import contar_mensagens_whatsapp
 
     snap = ler_snapshot()
     conversas = snap.get("whatsapp", {}).get("conversas_ativas") or []
@@ -261,10 +291,13 @@ def status_observador() -> dict:
         "whatsapp_bot": bot_status.get("bot") or None,
         "whatsapp_nome": bot_status.get("nome") or "",
         "whatsapp_connection": conexao,
+        "mensagens_no_log": contar_mensagens_whatsapp(),
         "observador_stats": {
             "dms_recebidas": stats.get("dms_recebidas", 0),
             "dms_ignoradas": stats.get("dms_ignoradas", 0),
             "dms_encaminhadas": stats.get("dms_encaminhadas", 0),
+            "dms_falha_envio": stats.get("dms_falha_envio", 0),
             "ultima_dm_em": stats.get("ultima_dm_em"),
+            "ultima_encaminhada_em": stats.get("ultima_encaminhada_em"),
         },
     }

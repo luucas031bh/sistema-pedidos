@@ -86,6 +86,13 @@ def _servir_arquivo(handler, caminho: Path, content_type: str):
     handler.wfile.write(data)
 
 
+def _redirect(handler, url: str, code: int = 302):
+    handler.send_response(code)
+    handler.send_header("Location", url)
+    _set_cors(handler)
+    handler.end_headers()
+
+
 def _rodar_indexacao():
     global _indexar_status
     _indexar_status = {"rodando": True, "resultado": None}
@@ -127,6 +134,18 @@ class Handler(BaseHTTPRequestHandler):
 
         if path in ("/", "/index.html"):
             return _servir_arquivo(self, STATIC / "index.html", "text/html; charset=utf-8")
+
+        if path in ("/fila-rp", "/home.html"):
+            from config import carregar_config
+
+            cfg = carregar_config()
+            rp = cfg.get("rp") or {}
+            destino = (
+                rp.get("url_home")
+                or cfg.get("rp_url_home")
+                or "https://luucas031bh.github.io/sistema-pedidos/home.html"
+            )
+            return _redirect(self, destino)
 
         if path == "/style.css":
             return _servir_arquivo(self, STATIC / "style.css", "text/css; charset=utf-8")

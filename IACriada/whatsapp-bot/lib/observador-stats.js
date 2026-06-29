@@ -16,6 +16,7 @@ function lerStats() {
     dms_recebidas: 0,
     dms_ignoradas: 0,
     dms_encaminhadas: 0,
+    dms_falha_envio: 0,
     ultima_dm_em: null,
     ultima_encaminhada_em: null,
   };
@@ -29,6 +30,7 @@ export function registrarAtividade(tipo) {
     stats.dms_encaminhadas = (stats.dms_encaminhadas || 0) + 1;
     stats.ultima_encaminhada_em = new Date().toISOString();
   }
+  if (tipo === "falha") stats.dms_falha_envio = (stats.dms_falha_envio || 0) + 1;
   stats.ultima_dm_em = new Date().toISOString();
   stats.atualizado_em = new Date().toISOString();
   fs.writeFileSync(STATS_PATH, JSON.stringify(stats, null, 2), "utf8");

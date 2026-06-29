@@ -203,6 +203,105 @@ def telefone_valido(telefone: str) -> bool:
     return True
 
 
+def _parse_ts(iso_ts: str | None) -> datetime | None:
+    if not iso_ts:
+        return None
+    try:
+        dt = datetime.fromisoformat(iso_ts.replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc)
+    except (ValueError, TypeError):
+        return None
+
+
+def append_mensagem_global(
+    telefone: str,
+    texto: str,
+    *,
+    timestamp: str | None = None,
+    nome: str | None = None,
+    intencao: str = "outro",
+) -> dict:
+    """Log central de TODAS as DMs capturadas (consulta pelo chatbox)."""
+    ts = timestamp or _iso_now()
+    registro = {
+        "ts": ts,
+        "telefone": _norm_tel(telefone),
+        "nome": (nome or "").strip(),
+        "texto": texto,
+        "intencao": intencao or "outro",
+    }
+    with open(path_mensagens_whatsapp_global(), "a", encoding="utf-8") as f:
+        f.write(json.dumps(registro, ensure_ascii=False) + "\n")
+    return registro
+
+
+def carregar_mensagens_whatsapp(
+    *,
+    desde: datetime | None = None,
+    telefone_sufixo: str | None = None,
+    intencoes: list[str] | None = None,
+    limite: int = 200,
+) -> list[dict]:
+    p = path_mensagens_whatsapp_global()
+    if not p.is_file():
+        return []
+    sufixo = re.sub(r"\D", "", telefone_sufixo or "")
+    ints = set(intencoes or [])
+    out: list[dict] = []
+    try:
+        linhas = p.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
+    for ln in reversed(linhas):
+        if not ln.strip():
+            continue
+        try:
+            m = json.loads(ln)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(m, dict):
+            continue
+        ts = _parse_ts(m.get("ts"))
+        if desde and ts and ts < desde:
+            continue
+        tel = _norm_tel(m.get("telefone", ""))
+        if sufixo and not tel.endswith(sufixo):
+            continue
+        if ints and m.get("intencao") not in ints:
+            continue
+        out.append(m)
+        if len(out) >= limite:
+            break
+    out.reverse()
+    return out
+
+
+def contar_mensagens_whatsapp(desde: datetime | None = None) -> int:
+    p = path_mensagens_whatsapp_global()
+    if not p.is_file():
+        return 0
+    n = 0
+    for ln in p.read_text(encoding="utf-8").splitlines():
+        if not ln.strip():
+            continue
+        try:
+            m = json.loads(ln)
+        except json.JSONDecodeError:
+            continue
+        ts = _parse_ts(m.get("ts"))
+        if desde and ts and ts < desde:
+            continue
+        n += 1
+    return n
+
+
+def path_mensagens_whatsapp_global() -> Path:
+    path_contexto_pasta()
+    return path_contexto_pasta() / "whatsapp_mensagens.jsonl"
+
+
 def limpar_conversas_whatsapp_snapshot() -> dict:
     """Remove conversas WhatsApp do snapshot; mantem fila RP."""
     snap = ler_snapshot()

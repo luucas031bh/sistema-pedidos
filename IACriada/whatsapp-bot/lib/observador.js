@@ -1,9 +1,11 @@
 import { config } from "./config.js";
 import { log } from "./logger.js";
-import { deveProcessarObservador } from "./heuristica.js";
+import { ehDm } from "./heuristica.js";
 import { enviarEventoWhatsapp, tickSnapshotRp } from "./observador-client.js";
-import { extrairTextoMensagem } from "./filters.js";
+import { descricaoMensagemObservador, tipoMensagem } from "./filters.js";
 import { registrarAtividade } from "./observador-stats.js";
+
+const TIPOS_SEM_LOG = new Set(["callLog", "protocolMessage", "reactionMessage"]);
 
 let tickTimer = null;
 
@@ -16,17 +18,23 @@ function isoTimestamp(msg) {
 }
 
 export async function processarObservador(msg, pushName) {
-  registrarAtividade("recebida");
-  const texto = extrairTextoMensagem(msg).trim();
-  if (!deveProcessarObservador(msg, texto)) {
-    registrarAtividade("ignorada");
-    log.debug("Observador: ignorada (heuristica)", {
-      preview: texto.slice(0, 40),
-    });
-    return { ok: false, motivo: "heuristica" };
+  const jid = msg?.key?.remoteJid;
+  if (!ehDm(jid) || msg?.key?.fromMe) {
+    return { ok: false, motivo: "nao_dm" };
   }
 
-  const jid = msg.key.remoteJid;
+  const tipo = tipoMensagem(msg);
+  if (TIPOS_SEM_LOG.has(tipo)) {
+    return { ok: false, motivo: "tipo_ignorado" };
+  }
+
+  registrarAtividade("recebida");
+  const texto = descricaoMensagemObservador(msg);
+  if (!texto) {
+    registrarAtividade("ignorada");
+    return { ok: false, motivo: "vazio" };
+  }
+
   const numero = jid.replace(/@.+$/, "").replace(/\D/g, "");
 
   const payload = {
@@ -38,13 +46,21 @@ export async function processarObservador(msg, pushName) {
     classificar: true,
   };
 
-  log.info("Observador: encaminhando ao Python", {
+  log.info("Observador: gravando DM no Python", {
     numero,
     preview: texto.slice(0, 60),
   });
 
   const r = await enviarEventoWhatsapp(payload);
-  if (r.ok) registrarAtividade("encaminhada");
+  if (r.ok) {
+    registrarAtividade("encaminhada");
+  } else {
+    registrarAtividade("falha");
+    log.warn("Observador: falha ao gravar no Python", {
+      numero,
+      status: r.data?.detail || r.err || r.data,
+    });
+  }
   return r;
 }
 
