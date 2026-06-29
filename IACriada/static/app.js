@@ -261,13 +261,20 @@ function esconderWelcome() {
 }
 
 function formatPasso(p) {
+  if (p.agente === "sintetizador") {
+    return `📋 Sintetizador: ${p.conversas ?? 0} conversa(s) no snapshot`;
+  }
   if (p.bloqueado || p.resultado?.bloqueado) {
     return `🚫 ${p.ferramenta}: BLOQUEADO — ${p.motivo || p.resultado?.motivo || ""}`;
+  }
+  if (!p.ferramenta) {
+    if (p.agente) return `📋 ${p.agente}`;
+    return "";
   }
   const r =
     typeof p.resultado === "object"
       ? JSON.stringify(p.resultado)
-      : String(p.resultado);
+      : String(p.resultado ?? "");
   return `⚙ ${p.ferramenta}: ${r.slice(0, 160)}`;
 }
 

@@ -36,11 +36,22 @@ def _detectar_rota_heuristica(mensagem: str) -> dict:
             "atendimento",
             "cliente pedindo",
             "whatsapp",
+            "wpp",
             "sem resposta",
             "conversas",
+            "conectad",
+            "conectado",
+            "lendo o w",
+            "esta lendo",
+            "está lendo",
+            "observador",
         )
     ):
-        filtro = "orcamento" if "orcamento" in n or "orçamento" in n else ""
+        filtro = ""
+        if "orcamento" in n or "orçamento" in n:
+            filtro = "orcamento"
+        elif "sem resposta" in n:
+            filtro = "sem_resposta"
         return {"route": "verificar_atendimentos", "params": {"filtro": filtro}}
     if any(
         k in n
