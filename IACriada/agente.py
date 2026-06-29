@@ -12,11 +12,12 @@ from seguranca import resultado_bloqueado, validar_execucao
 
 OLLAMA_URL = "http://localhost:11434"
 MODELOS_PREFERIDOS = (
+    "llama3.1:8b",
+    "llama3.1",
+    "llama3.2",
     "qwen2.5:7b",
     "qwen2.5",
     "qwen2.5:14b",
-    "llama3.1",
-    "llama3.2",
     "mistral",
     "llama3",
 )

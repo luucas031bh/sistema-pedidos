@@ -1,4 +1,4 @@
-"""Orquestrador hub — LLM escolhe rota JSON, Python executa agente fixo."""
+"""Orquestrador hub ADNY — LLM central roteia JSON, Python executa agente fixo."""
 
 from __future__ import annotations
 
@@ -10,24 +10,134 @@ from pathlib import Path
 from config import PASTA, cfg_observador
 
 _RULES_PATH = PASTA / "routing_rules.json"
+_ROTA_PADRAO = "verificar_atendimentos_ou_orcamentos"
+
+_SAUDACOES = frozenset(
+    {
+        "oi",
+        "ola",
+        "olá",
+        "oie",
+        "eai",
+        "e ai",
+        "bom dia",
+        "boa tarde",
+        "boa noite",
+        "hey",
+        "hello",
+        "hi",
+        "salve",
+        "fala",
+        "opa",
+        "tudo bem",
+        "td bem",
+        "como vai",
+        "help",
+        "ajuda",
+        "menu",
+    }
+)
 
 
 def _carregar_rules() -> dict:
     if not _RULES_PATH.is_file():
-        return {"rotas_validas": ["conversa_geral"]}
+        return {"rotas_validas": [_ROTA_PADRAO], "aliases": {}}
     try:
         return json.loads(_RULES_PATH.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
-        return {"rotas_validas": ["conversa_geral"]}
+        return {"rotas_validas": [_ROTA_PADRAO], "aliases": {}}
 
 
 def _rotas_validas() -> set[str]:
     rules = _carregar_rules()
-    return set(rules.get("rotas_validas") or ["conversa_geral"])
+    return set(rules.get("rotas_validas") or [_ROTA_PADRAO])
+
+
+def _normalizar_rota(route: str) -> str:
+    r = (route or "").strip()
+    if not r:
+        return _ROTA_PADRAO
+    aliases = _carregar_rules().get("aliases") or {}
+    return aliases.get(r, r)
+
+
+def _eh_saudacao(mensagem: str) -> bool:
+    n = re.sub(r"\s+", " ", (mensagem or "").strip().lower())
+    n = n.rstrip("!.?")
+    if n in _SAUDACOES:
+        return True
+    if len(n.split()) <= 3 and any(n.startswith(s) for s in ("oi", "ola", "olá", "bom ", "boa ")):
+        return True
+    return False
 
 
 def _detectar_rota_heuristica(mensagem: str) -> dict:
     n = (mensagem or "").lower()
+
+    if _eh_saudacao(mensagem):
+        return {"route": _ROTA_PADRAO, "params": {"tipo": "saudacao"}}
+
+    if any(k in n for k in ("malha", "consumo de tecido", "gasto de malha", "metros de malha")) and any(
+        k in n for k in ("calcular", "calculo", "cálculo", "quanto", "gasto", "consumo", "pedido")
+    ):
+        return {"route": "calcular_gasto_de_malha_por_pedido", "params": {"consulta": mensagem}}
+
+    if any(
+        k in n
+        for k in (
+            "codigo",
+            "código",
+            "github",
+            "repositorio",
+            "repositório",
+            "apps script",
+            "funcionalidade",
+            "implementar",
+            "criar funcao",
+            "criar função",
+            "developer",
+            "sistema-pedidos",
+        )
+    ) and any(k in n for k in ("criar", "nova", "implement", "codigo", "código", "funcao", "função", "como funciona")):
+        return {"route": "criar_nova_funcionalidade_no_codigo", "params": {"consulta": mensagem}}
+
+    if any(
+        k in n
+        for k in (
+            "atualizar fila",
+            "atualiza fila",
+            "refresh",
+            "atualizar status",
+            "status de producao",
+            "status de produção",
+            "atualizar rp",
+            "sync rp",
+        )
+    ):
+        return {"route": "atualizar_status_de_producao_na_tela", "params": {}}
+
+    if any(
+        k in n
+        for k in (
+            "atendimento",
+            "sem resposta",
+            "conversas",
+            "orcamento",
+            "orçamento",
+            "cliente pedindo",
+            "algum cliente",
+            "tem algum",
+            "solicitou orcamento",
+            "solicitou orçamento",
+            "pediu orcamento",
+            "pediu orçamento",
+        )
+    ) and not any(k in n for k in ("whatsapp", "wpp", "fila rp", "insumos na fila", "pedidos em")):
+        filtro = ""
+        if any(k in n for k in ("orcamento", "orçamento", "cotacao", "cotação")):
+            filtro = "orcamento"
+        return {"route": _ROTA_PADRAO, "params": {"filtro": filtro} if filtro else {}}
+
     if any(
         k in n
         for k in (
@@ -48,68 +158,50 @@ def _detectar_rota_heuristica(mensagem: str) -> dict:
             "orçamento",
             "preco",
             "preço",
-            "cotacao",
-            "cotação",
-            "quanto custa",
-            "solicitou",
-            "cliente pediu",
-            "cliente pedindo",
-            "alguem pediu",
-            "algum cliente",
         )
-    ) and any(
-        k in n
-        for k in (
-            "whatsapp",
-            "wpp",
-            "mensagem",
-            "mensagens",
-            "orcamento",
-            "orçamento",
-            "preco",
-            "preço",
-            "telefone",
-            "recebida",
-            "ultim",
-        )
-    ):
+    ) and any(k in n for k in ("whatsapp", "wpp")):
         filtro = ""
-        if any(k in n for k in ("orcamento", "orçamento", "preco", "preço", "cotacao", "cotação", "solicitou", "pediu")):
+        if any(
+            k in n
+            for k in ("orcamento", "orçamento", "preco", "preço", "cotacao", "cotação", "solicitou", "pediu")
+        ):
             filtro = "comercial"
         return {
             "route": "consultar_mensagens_whatsapp",
             "params": {"consulta": mensagem, "filtro": filtro},
         }
+
     if any(
         k in n
         for k in (
             "atendimento",
-            "sem resposta",
-            "conversas",
             "conectad",
             "conectado",
-            "lendo o w",
-            "esta lendo",
-            "está lendo",
             "observador",
         )
     ) and any(k in n for k in ("whatsapp", "wpp")):
-        return {"route": "verificar_atendimentos", "params": {}}
+        return {"route": _ROTA_PADRAO, "params": {}}
+
     if any(
         k in n
         for k in (
             "pedido",
             "pedidos",
             "fila",
-            "rp",
+            " rp",
+            "rp ",
             "insumos",
             "arte",
             "financeiro",
             "status",
+            "etapa",
+            "producao",
+            "produção",
         )
     ) and not any(k in n for k in ("abrir", "abre", "corel", "photoshop", "pasta", "cdr", "psd")):
         return {"route": "consultar_fila_rp", "params": {"consulta": mensagem}}
-    return {"route": "conversa_geral", "params": {}}
+
+    return {"route": _ROTA_PADRAO, "params": {}}
 
 
 def _parse_rota_llm(bruto: str) -> dict | None:
@@ -121,7 +213,7 @@ def _parse_rota_llm(bruto: str) -> dict | None:
         obj = json.loads(m.group(0))
     except json.JSONDecodeError:
         return None
-    route = (obj.get("route") or "").strip()
+    route = _normalizar_rota((obj.get("route") or "").strip())
     if not route:
         return None
     return {"route": route, "params": obj.get("params") or {}}
@@ -130,26 +222,33 @@ def _parse_rota_llm(bruto: str) -> dict | None:
 def decidir_rota(mensagem: str, historico: list | None = None, modelo: str | None = None) -> dict:
     validas = _rotas_validas()
     heur = _detectar_rota_heuristica(mensagem)
-    if heur["route"] != "conversa_geral" and heur["route"] in validas:
+    heur["route"] = _normalizar_rota(heur["route"])
+    if heur["route"] in validas and heur["route"] != _ROTA_PADRAO:
+        return heur
+    if heur.get("params", {}).get("tipo") == "saudacao":
         return heur
 
     from agente import _request_ollama, resolver_modelo
 
     nome = resolver_modelo(modelo)
-
     if nome:
         rules = _carregar_rules()
-        rotas_txt = json.dumps(list(validas), ensure_ascii=False)
+        rotas_txt = json.dumps(sorted(validas), ensure_ascii=False)
         regras_txt = json.dumps(rules.get("routing_rules") or {}, ensure_ascii=False, indent=0)
         prompt = (
-            "Voce e o roteador ADNY. Analise a mensagem do operador e responda "
-            "SOMENTE um JSON valido: {\"route\": \"...\", \"params\": {}}\n"
+            "Voce e o Orquestrador ADNY (Hub-and-Spoke). "
+            "Analise a mensagem do operador e responda SOMENTE JSON valido: "
+            '{"route": "...", "params": {}}\n'
             f"Rotas validas: {rotas_txt}\n"
-            f"Descricoes: {regras_txt}\n"
-            "Use consultar_mensagens_whatsapp para buscar mensagens whatsapp por periodo, orcamento, preco ou telefone.\n"
-            "Use verificar_atendimentos para status conexao/resumo snapshot.\n"
-            "Use consultar_fila_rp para pedidos/fila/status RP.\n"
-            "Use conversa_geral para o resto.\n\n"
+            f"Regras: {regras_txt}\n"
+            "Mapeamento:\n"
+            "- verificar_atendimentos_ou_orcamentos: oi, status geral, orcamentos no snapshot\n"
+            "- consultar_mensagens_whatsapp: buscar mensagens no log whatsapp\n"
+            "- consultar_fila_rp: pedidos, etapas, financeiro RP\n"
+            "- atualizar_status_de_producao_na_tela: refresh da fila visual\n"
+            "- calcular_gasto_de_malha_por_pedido: calculo de malha\n"
+            "- criar_nova_funcionalidade_no_codigo: perguntas sobre codigo\n"
+            "NUNCA invente rota fora da lista.\n\n"
             f"Mensagem: {mensagem}"
         )
         try:
@@ -168,10 +267,9 @@ def decidir_rota(mensagem: str, historico: list | None = None, modelo: str | Non
         except (urllib.error.URLError, ConnectionError):
             pass
 
-    rota = _detectar_rota_heuristica(mensagem)
-    if rota["route"] not in validas:
-        rota["route"] = "conversa_geral"
-    return rota
+    if heur["route"] in validas:
+        return heur
+    return {"route": _ROTA_PADRAO, "params": {}}
 
 
 def executar_rota(
@@ -184,7 +282,7 @@ def executar_rota(
     permitir_internet: bool = False,
     ctx: dict | None = None,
 ) -> dict:
-    route = rota.get("route", "conversa_geral")
+    route = _normalizar_rota(rota.get("route", _ROTA_PADRAO))
     params = rota.get("params") or {}
     ctx = ctx or {}
 
@@ -195,16 +293,18 @@ def executar_rota(
         meta = out.get("meta") or {}
         meta["route"] = route
         meta["provedor"] = "adonay"
+        meta["agente"] = "consultor_whatsapp"
         out["meta"] = meta
         return out
 
-    if route == "verificar_atendimentos":
+    if route == _ROTA_PADRAO:
         from agentes.sintetizador import executar
 
         out = executar(mensagem, params, modelo)
         meta = out.get("meta") or {}
         meta["route"] = route
         meta["provedor"] = "adonay"
+        meta["agente"] = "sintetizador"
         out["meta"] = meta
         return out
 
@@ -223,31 +323,53 @@ def executar_rota(
             out = {
                 "resposta": resposta,
                 "modelo": nome,
-                "passos": [{"rp_direto": True}],
+                "passos": [{"agente": "rp_direto", "rp_direto": True}],
                 "meta": {"route": route, "rp_direto": True},
             }
+        meta = out.get("meta") or {}
+        meta["route"] = route
+        meta["provedor"] = "adonay"
+        meta["agente"] = "rp_direto"
+        out["meta"] = meta
+        return out
+
+    if route == "atualizar_status_de_producao_na_tela":
+        from agentes.gerente_fila import executar as gerente_executar
+
+        out = gerente_executar(mensagem, params, modelo)
         meta = out.get("meta") or {}
         meta["route"] = route
         meta["provedor"] = "adonay"
         out["meta"] = meta
         return out
 
-    if route == "acao_adonay":
-        return {
-            "resposta": (
-                "Acoes no PC (abrir Corel, pastas, programas) ficam fora da Fase 1. "
-                "Por aqui posso consultar WhatsApp capturado, fila RP e conversar sobre pedidos."
-            ),
-            "passos": [{"agente": "orquestrador", "bloqueado": True, "motivo": "fase_1"}],
-            "meta": {"route": route, "provedor": "adonay", "bloqueado": True},
-        }
+    if route == "calcular_gasto_de_malha_por_pedido":
+        from agentes.calculadora_malha import executar as calc_executar
 
-    from provedores_llm import chat_ollama_simples
+        out = calc_executar(mensagem, params, modelo)
+        meta = out.get("meta") or {}
+        meta["route"] = route
+        meta["provedor"] = "adonay"
+        out["meta"] = meta
+        return out
 
-    out = chat_ollama_simples(mensagem, modelo, historico)
+    if route == "criar_nova_funcionalidade_no_codigo":
+        from agentes.developer_local import executar as dev_executar
+
+        out = dev_executar(mensagem, params, modelo, historico=historico)
+        meta = out.get("meta") or {}
+        meta["route"] = route
+        meta["provedor"] = "adonay"
+        out["meta"] = meta
+        return out
+
+    from agentes.sintetizador import executar
+
+    out = executar(mensagem, params, modelo)
     meta = out.get("meta") or {}
-    meta["route"] = "conversa_geral"
+    meta["route"] = _ROTA_PADRAO
     meta["provedor"] = "adonay"
+    meta["agente"] = "sintetizador"
     out["meta"] = meta
     return out
 

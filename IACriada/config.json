@@ -1,10 +1,10 @@
 {
   "ollama": {
-    "modelo_padrao": "qwen2.5:7b",
-    "modelo_integracoes": "qwen2.5:7b",
+    "modelo_padrao": "llama3.1:8b",
+    "modelo_integracoes": "llama3.1:8b",
     "anthropic_base_url": "http://localhost:11434",
     "anthropic_auth_token": "ollama",
-    "modelos_sugeridos": ["qwen2.5:7b", "qwen2.5:14b", "qwen3.5"],
+    "modelos_sugeridos": ["llama3.1:8b", "llama3.1", "qwen2.5:7b", "qwen2.5:14b"],
     "integracoes": {
       "claude": {
         "nome": "Claude Code",

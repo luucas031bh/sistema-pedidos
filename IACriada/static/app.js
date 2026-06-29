@@ -104,7 +104,7 @@ function definirProvedor(_id) {
 function atualizarHintProvedor() {
   if (provedorHint) {
     provedorHint.textContent =
-      "Fase 1: assistente unico (Ollama + roteador JSON). WhatsApp e RP integrados.";
+      "ADNY Hub-and-Spoke · dados reais (pedidos.json + WhatsApp + RP).";
   }
   if (ctxLabel) ctxLabel.textContent = "Assistente unico · WhatsApp + RP";
 }
@@ -237,7 +237,17 @@ function formatPasso(p) {
     return `📋 Consultor WhatsApp: ${p.mensagens ?? 0} mensagem(ns) (${p.periodo_horas ?? "?"}h)`;
   }
   if (p.agente === "sintetizador") {
+    if (p.modo === "briefing") return "📋 Sintetizador: briefing ADNY (snapshot factual)";
     return `📋 Sintetizador: ${p.conversas ?? 0} conversa(s) no snapshot`;
+  }
+  if (p.agente === "gerente_fila") {
+    return `📋 Gerente Fila: ${p.total_abertos ?? "?"} pedido(s) abertos`;
+  }
+  if (p.agente === "calculadora_malha") {
+    return `📋 Calculadora Malha${p.codigo ? ` · pedido ${p.codigo}` : ""}`;
+  }
+  if (p.agente === "developer_local") {
+    return `📋 Developer Local${p.arquivos != null ? ` · ${p.arquivos} arquivo(s)` : ""}`;
   }
   if (p.bloqueado || p.resultado?.bloqueado) {
     return `🚫 ${p.ferramenta}: BLOQUEADO — ${p.motivo || p.resultado?.motivo || ""}`;
@@ -549,10 +559,10 @@ form.addEventListener("submit", async (e) => {
     const d = await r.json();
     removeTyping();
     if (!r.ok) throw new Error(d.detail || "Erro na API");
-    const texto = (d.resposta || "").trim();
+    const respostaBot = (d.resposta || "").trim();
     addMessage(
       "bot",
-      texto || "Sem resposta do servidor. Tente de novo.",
+      respostaBot || "Sem resposta do servidor. Tente de novo.",
       d.passos || [],
       d.meta || null
     );

@@ -1,30 +1,40 @@
 {
   "routing_rules": {
+    "verificar_atendimentos_ou_orcamentos": {
+      "agente": "sintetizador",
+      "descricao": "Snapshot pedidos.json, atendimentos WhatsApp, orcamentos pendentes, saudacao"
+    },
     "consultar_mensagens_whatsapp": {
       "agente": "consultor_whatsapp",
-      "descricao": "Busca mensagens WhatsApp capturadas: periodo, orcamento, preco, telefone"
-    },
-    "verificar_atendimentos": {
-      "agente": "sintetizador",
-      "descricao": "Resumo snapshot pedidos.json e status conexao"
+      "descricao": "Busca mensagens capturadas: periodo, orcamento, preco, telefone"
     },
     "consultar_fila_rp": {
       "agente": "rp_direto",
-      "descricao": "Consultas ao sistema de pedidos RP via API"
+      "descricao": "Consultas factuais a planilha RP (pedidos, etapas, financeiro)"
     },
-    "conversa_geral": {
-      "agente": "ollama_simples",
-      "descricao": "Conversa sem ferramentas"
+    "atualizar_status_de_producao_na_tela": {
+      "agente": "gerente_fila",
+      "descricao": "Atualiza snapshot da fila RP e resume status de producao"
     },
-    "acao_adonay": {
-      "agente": "adonay_legado",
-      "descricao": "Desativado na Fase 1 (acoes PC/OneDrive)"
+    "calcular_gasto_de_malha_por_pedido": {
+      "agente": "calculadora_malha",
+      "descricao": "Calculo mecanico de malha por pedido (Fase 2 parcial)"
+    },
+    "criar_nova_funcionalidade_no_codigo": {
+      "agente": "developer_local",
+      "descricao": "Consulta codigo do repositorio sistema-pedidos indexado"
     }
   },
   "rotas_validas": [
+    "verificar_atendimentos_ou_orcamentos",
     "consultar_mensagens_whatsapp",
-    "verificar_atendimentos",
     "consultar_fila_rp",
-    "conversa_geral"
-  ]
+    "atualizar_status_de_producao_na_tela",
+    "calcular_gasto_de_malha_por_pedido",
+    "criar_nova_funcionalidade_no_codigo"
+  ],
+  "aliases": {
+    "verificar_atendimentos": "verificar_atendimentos_ou_orcamentos",
+    "conversa_geral": "verificar_atendimentos_ou_orcamentos"
+  }
 }
