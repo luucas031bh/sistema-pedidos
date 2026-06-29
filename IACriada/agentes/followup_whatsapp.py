@@ -34,23 +34,12 @@ _REFERENCIAL = (
     "quantas dessas",
 )
 
-_WPP_TEMA = (
-    "cliente",
-    "clientes",
-    "mensagem",
-    "mensagens",
-    "whats",
-    "wpp",
-    "telefone",
-    "orcamento",
-    "orçamento",
-    "preco",
-    "preço",
-    "quer",
-    "desses",
-    "dessas",
-    "deles",
-    "delas",
+_OBJETO_PROPRIO = (
+    r"\d+\s+(cliente|mensagem|pedido)",
+    r"ultim[oa]s?\s+\d+",
+    r"(hoje|ontem|semana|mes)\b",
+    r"(antes|anterior)\s+(da?|de)\b",
+    r"\b(de|da|do)\s+[A-Z][a-z]+",
 )
 
 
@@ -74,23 +63,26 @@ def _tem_referencia(n: str) -> bool:
     return bool(re.search(r"\b(deles|delas|desses|dessas|esses|essas)\b", n))
 
 
-def _tema_whatsapp(n: str) -> bool:
-    return any(k in n for k in _WPP_TEMA)
-
-
 def detectar_followup_whatsapp(pergunta: str, sessao: str) -> bool:
     """True se a pergunta parece continuar a ultima consulta WhatsApp guardada."""
     n = _normalizar(pergunta)
-    if len(n.split()) > 14:
+
+    if len(n.split()) >= 9:
         return False
-    ultimo = carregar_ultimo_resultado(sessao)
-    if not _resultado_valido(ultimo):
+
+    if not _tem_referencia(n):
         return False
-    if not _tem_referencia(n) and not _tema_whatsapp(n):
-        return False
+
+    for pat in _OBJETO_PROPRIO:
+        flags = re.I if pat != r"\b(de|da|do)\s+[A-Z][a-z]+" else 0
+        if re.search(pat, pergunta, flags):
+            return False
+
     if any(k in n for k in ("pedido", "pedidos", "fila rp", " insumos", "financeiro rp")):
         return False
-    return True
+
+    ultimo = carregar_ultimo_resultado(sessao)
+    return _resultado_valido(ultimo)
 
 
 def _rotulo_cliente(m: dict) -> str:
@@ -109,7 +101,7 @@ def _intencao_humana(m: dict) -> str:
     return intent
 
 
-def responder_followup_whatsapp(pergunta: str, sessao: str) -> dict:
+def responder_followup_whatsapp(pergunta: str, sessao: str) -> dict | None:
     ultimo = carregar_ultimo_resultado(sessao) or {}
     dados = ultimo.get("dados") or {}
     mensagens: list[dict] = list(dados.get("mensagens") or [])
@@ -163,12 +155,7 @@ def responder_followup_whatsapp(pergunta: str, sessao: str) -> dict:
         modo = "clientes"
 
     else:
-        resposta = (
-            f"Continuando a consulta anterior ({len(mensagens)} mensagem(ns)). "
-            "Pergunte: 'de quais clientes?', 'o que cada um quer?' ou "
-            "'quantos eram orcamento?'."
-        )
-        modo = "generico"
+        return None
 
     return {
         "resposta": resposta,

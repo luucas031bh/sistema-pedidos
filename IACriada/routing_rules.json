@@ -23,6 +23,10 @@
     "criar_nova_funcionalidade_no_codigo": {
       "agente": "developer_local",
       "descricao": "Consulta codigo do repositorio sistema-pedidos indexado"
+    },
+    "investigar_sistema": {
+      "agente": "investigador",
+      "descricao": "Coleta dados reais de todas as fontes (RP, WhatsApp) e usa LLM para responder perguntas genéricas"
     }
   },
   "rotas_validas": [
@@ -31,7 +35,8 @@
     "consultar_fila_rp",
     "atualizar_status_de_producao_na_tela",
     "calcular_gasto_de_malha_por_pedido",
-    "criar_nova_funcionalidade_no_codigo"
+    "criar_nova_funcionalidade_no_codigo",
+    "investigar_sistema"
   ],
   "aliases": {
     "verificar_atendimentos": "verificar_atendimentos_ou_orcamentos",

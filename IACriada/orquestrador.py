@@ -71,6 +71,18 @@ def _eh_saudacao(mensagem: str) -> bool:
     return False
 
 
+_PADROES_ANTES = (
+    r"\bantes\s+d[aeo]\b",
+    r"\banterior\s+(a[o]?|da?)\b",
+    r"\bprecedent\w*\b",
+)
+
+
+def _eh_consulta_com_referencia_temporal(mensagem: str) -> bool:
+    n = (mensagem or "").lower()
+    return any(re.search(p, n) for p in _PADROES_ANTES)
+
+
 def _detectar_rota_heuristica(mensagem: str) -> dict:
     n = (mensagem or "").lower()
 
@@ -206,6 +218,32 @@ def _detectar_rota_heuristica(mensagem: str) -> dict:
         )
     ) and not any(k in n for k in ("abrir", "abre", "corel", "photoshop", "pasta", "cdr", "psd")):
         return {"route": "consultar_fila_rp", "params": {"consulta": mensagem}}
+
+    _TERMOS_INVESTIGAR = (
+        "relatorio",
+        "relatório",
+        "resumo geral",
+        "panorama",
+        "como esta tudo",
+        "como está tudo",
+        "situacao geral",
+        "situação geral",
+        "overview",
+        "quantos clientes",
+        "quantas pedidos",
+        "quantos pedidos",
+        "valor total",
+        "total a receber",
+        "financeiro da semana",
+        "financeiro do mes",
+        "financeiro do mês",
+        "entregas de hoje",
+        "entregas desta semana",
+        "atrasados",
+        "atrasado",
+    )
+    if any(k in n for k in _TERMOS_INVESTIGAR):
+        return {"route": "investigar_sistema", "params": {"consulta": mensagem}}
 
     return {"route": _ROTA_PADRAO, "params": {}}
 
@@ -369,6 +407,16 @@ def executar_rota(
         out["meta"] = meta
         return out
 
+    if route == "investigar_sistema":
+        from agentes.investigador import executar as investigador_executar
+
+        out = investigador_executar(mensagem, params, modelo, sessao=sessao)
+        meta = out.get("meta") or {}
+        meta["route"] = route
+        meta["provedor"] = "adonay"
+        out["meta"] = meta
+        return out
+
     from agentes.sintetizador import executar
 
     out = executar(mensagem, params, modelo)
@@ -406,13 +454,31 @@ def rotear_pergunta_chatbox(
 
     from agentes.followup_whatsapp import detectar_followup_whatsapp, responder_followup_whatsapp
 
-    if detectar_followup_whatsapp(mensagem, sessao):
-        out = responder_followup_whatsapp(mensagem, sessao)
+    if _eh_consulta_com_referencia_temporal(mensagem):
+        rota = decidir_rota(mensagem, historico, modelo)
+        out = executar_rota(
+            rota,
+            mensagem,
+            historico,
+            sessao,
+            modelo,
+            permitir_internet=permitir_internet,
+            ctx=ctx,
+        )
         meta = out.get("meta") or {}
-        meta["routing"] = {"route": "followup_whatsapp", "params": {}}
+        meta["routing"] = rota
         meta["provedor"] = "adonay"
         out["meta"] = meta
         return out
+
+    if detectar_followup_whatsapp(mensagem, sessao):
+        out = responder_followup_whatsapp(mensagem, sessao)
+        if out is not None:
+            meta = out.get("meta") or {}
+            meta["routing"] = {"route": "followup_whatsapp", "params": {}}
+            meta["provedor"] = "adonay"
+            out["meta"] = meta
+            return out
 
     rota = decidir_rota(mensagem, historico, modelo)
     out = executar_rota(
