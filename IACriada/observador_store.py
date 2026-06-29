@@ -193,3 +193,20 @@ def horas_desde(iso_ts: str | None) -> float:
         return max(0.0, delta.total_seconds() / 3600.0)
     except (ValueError, TypeError):
         return 0.0
+
+
+def telefone_valido(telefone: str) -> bool:
+    """Telefone real: so digitos, minimo 10 (sem inventar placeholders)."""
+    tel = _norm_tel(telefone)
+    if tel == "desconhecido" or len(tel) < 10:
+        return False
+    return True
+
+
+def limpar_conversas_whatsapp_snapshot() -> dict:
+    """Remove conversas WhatsApp do snapshot; mantem fila RP."""
+    snap = ler_snapshot()
+    snap.setdefault("whatsapp", {})["conversas_ativas"] = []
+    _recalcular_metricas(snap)
+    escrever_snapshot(snap)
+    return snap

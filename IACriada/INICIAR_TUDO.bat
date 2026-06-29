@@ -93,7 +93,7 @@ if "%COM_WHATSAPP%"=="1" (
       copy /y "%ROOT%whatsapp-bot\.env.example" "%ROOT%whatsapp-bot\.env" >nul
     )
   )
-  start "Adonay - WhatsApp" /D "%ROOT%whatsapp-bot" cmd /k "title Adonay WhatsApp & node bot.js"
+  start "" /D "%ROOT%" python -c "import servicos_launcher as s; s.iniciar_whatsapp()"
   echo       WhatsApp iniciado.
 ) else (
   echo [4/4] WhatsApp ignorado. Use: INICIAR_TUDO.bat whatsapp

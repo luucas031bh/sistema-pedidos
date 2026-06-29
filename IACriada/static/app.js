@@ -13,9 +13,12 @@ const btnNovo = document.getElementById("btn-novo");
 const btnIndexar = document.getElementById("btn-indexar");
 const btnIndexarSistema = document.getElementById("btn-indexar-sistema");
 const indexStatus = document.getElementById("index-status");
-const listaClientes = document.getElementById("lista-clientes");
-const snapshotResumo = document.getElementById("snapshot-resumo");
 const listaAtendimentos = document.getElementById("lista-atendimentos");
+const snapshotResumo = document.getElementById("snapshot-resumo");
+const whatsappStatus = document.getElementById("whatsapp-status");
+const btnWhatsappQr = document.getElementById("btn-whatsapp-qr");
+const observadorBar = document.getElementById("observador-bar");
+const observadorTexto = document.getElementById("observador-texto");
 const filePdf = document.getElementById("file-pdf");
 const btnPdf = document.getElementById("btn-pdf");
 const llmBar = document.getElementById("llm-bar");
@@ -179,7 +182,6 @@ function initApiRemoto() {
     inpApiBase.addEventListener("change", () => {
       setApiBase(inpApiBase.value);
       carregarStatus();
-      carregarClientes();
       carregarHistorico();
     });
   }
@@ -330,11 +332,63 @@ function removeTyping() {
   document.getElementById("typing-row")?.remove();
 }
 
+function renderObservadorBar(st) {
+  if (!observadorBar || !observadorTexto) return;
+  observadorBar.hidden = false;
+  const stats = st.observador_stats || {};
+  const nome = (st.whatsapp_nome || "").trim();
+  const conta = nome || (st.whatsapp_bot || "").replace(/@.+$/, "") || "";
+
+  if (st.whatsapp_conectado) {
+    observadorBar.className = "observador-bar ok";
+    observadorTexto.textContent =
+      `Observador ativo · lendo WhatsApp${conta ? ` (${conta})` : ""} · ` +
+      `${stats.dms_recebidas || 0} DM(s) lidas · ` +
+      `${st.conversas_ativas || 0} relevante(s) · ` +
+      `${stats.dms_ignoradas || 0} filtrada(s)`;
+  } else if (st.whatsapp_aguardando_qr) {
+    observadorBar.className = "observador-bar warn";
+    observadorTexto.textContent = "Observador aguardando QR — escaneie no celular";
+  } else if (st.whatsapp_bot_rodando) {
+    observadorBar.className = "observador-bar warn";
+    observadorTexto.textContent = "Bot WhatsApp rodando — reconectando…";
+  } else {
+    observadorBar.className = "observador-bar err";
+    observadorTexto.textContent =
+      "Observador offline — use Conectar WhatsApp (QR) na barra lateral";
+  }
+}
+
 async function carregarSnapshot() {
   if (!snapshotResumo || !listaAtendimentos) return;
   try {
-    const r = await fetch(apiUrl("/api/pedidos-snapshot"));
-    const d = await r.json();
+    const [rSnap, rStatus] = await Promise.all([
+      fetch(apiUrl("/api/pedidos-snapshot")),
+      fetch(apiUrl("/api/observador/status")),
+    ]);
+    const d = await rSnap.json();
+    const st = rStatus.ok ? await rStatus.json() : {};
+
+    renderObservadorBar(st);
+
+    if (whatsappStatus) {
+      if (st.whatsapp_conectado) {
+        const stats = st.observador_stats || {};
+        whatsappStatus.textContent =
+          `Conectado · ${stats.dms_recebidas || 0} DMs lidas · ${st.conversas_ativas || 0} no painel`;
+        whatsappStatus.className = "wpp-status ok";
+      } else if (st.whatsapp_aguardando_qr) {
+        whatsappStatus.textContent = "Escaneie o QR (janela Adonay WhatsApp ou whatsapp-qr.png)";
+        whatsappStatus.className = "wpp-status warn";
+      } else if (st.whatsapp_bot_rodando) {
+        whatsappStatus.textContent = "Bot rodando — aguardando conexão…";
+        whatsappStatus.className = "wpp-status warn";
+      } else {
+        whatsappStatus.textContent = "WhatsApp offline — clique em Conectar WhatsApp (QR)";
+        whatsappStatus.className = "wpp-status err";
+      }
+    }
+
     const m = d.metricas || {};
     const fila = d.fila_rp || {};
     snapshotResumo.textContent =
@@ -342,18 +396,23 @@ async function carregarSnapshot() {
       `Sem resp. 24h: ${m.sem_resposta_24h ?? 0}`;
     const conversas = (d.whatsapp && d.whatsapp.conversas_ativas) || [];
     if (!conversas.length) {
-      listaAtendimentos.innerHTML = '<span class="muted">Nenhuma DM capturada ainda.</span>';
+      listaAtendimentos.innerHTML =
+        '<span class="muted">Nenhuma DM capturada ainda. Só aparecem mensagens reais do WhatsApp.</span>';
       return;
     }
     listaAtendimentos.innerHTML = conversas
       .slice(0, 12)
-      .map(
-        (c) =>
-          `<button type="button" class="atendimento-item" data-msg="resumo do atendimento ${c.telefone} ${c.intencao || ""}">` +
+      .map((c) => {
+        const tel = c.telefone || "";
+        const nome = (c.nome || "").trim();
+        const rotulo = nome ? `${nome} (${tel})` : tel;
+        return (
+          `<button type="button" class="atendimento-item" data-msg="resumo do atendimento ${tel} ${c.intencao || ""}">` +
           `<span class="tag">${c.intencao || "outro"}</span> ` +
-          `${c.nome || c.telefone}: ${(c.resumo || c.ultima_msg || "").slice(0, 50)}` +
+          `${rotulo}: ${(c.resumo || c.ultima_msg || "").slice(0, 50)}` +
           `</button>`
-      )
+        );
+      })
       .join("");
     listaAtendimentos.querySelectorAll(".atendimento-item").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -365,37 +424,29 @@ async function carregarSnapshot() {
   } catch {
     snapshotResumo.textContent = "Snapshot offline.";
     listaAtendimentos.textContent = "—";
+    if (whatsappStatus) {
+      whatsappStatus.textContent = "Status WhatsApp indisponível";
+      whatsappStatus.className = "wpp-status err";
+    }
   }
 }
 
-async function carregarClientes() {
-  if (!listaClientes) return;
+async function conectarWhatsapp() {
   try {
-    const r = await fetch(apiUrl("/api/clientes"));
+    const r = await fetch(apiUrl("/api/launch-whatsapp"), { method: "POST" });
     const d = await r.json();
-    const lista = d.clientes || [];
-    if (!lista.length) {
-      listaClientes.textContent = "Indexe o OneDrive.";
-      return;
+    if (!r.ok) throw new Error(d.detail || "Falha ao abrir bot");
+    if (whatsappStatus) {
+      whatsappStatus.textContent = d.mensagem || "Abrindo janela do WhatsApp…";
+      whatsappStatus.className = "wpp-status warn";
     }
-    listaClientes.innerHTML = lista
-      .slice(0, 40)
-      .map(
-        (c) =>
-          `<button type="button" class="cliente-item" data-msg="abrir pasta do ${c.cliente} ${c.ultimos_4_digitos}">${c.cliente} ${c.ultimos_4_digitos}</button>`
-      )
-      .join("");
-    listaClientes.querySelectorAll(".cliente-item").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        input.value = btn.dataset.msg;
-        autoResize();
-        form.requestSubmit();
-      });
-    });
-  } catch {
-    listaClientes.textContent = "Servidor offline.";
+    setTimeout(carregarSnapshot, 4000);
+  } catch (err) {
+    alert(String(err.message || err));
   }
 }
+
+btnWhatsappQr?.addEventListener("click", conectarWhatsapp);
 
 async function carregarStatus() {
   try {
@@ -473,7 +524,6 @@ btnIndexar?.addEventListener("click", async () => {
     clearInterval(poll);
     indexStatus.textContent = s.resultado?.total ? `OK: ${s.resultado.total}` : "OK";
     carregarStatus();
-    carregarClientes();
   }, 2000);
 });
 
@@ -604,7 +654,6 @@ initModoButtons();
 bindChips();
 carregarStatus();
 carregarSnapshot();
-carregarClientes();
 carregarHistorico();
 setInterval(carregarStatus, 15000);
-setInterval(carregarSnapshot, 30000);
+setInterval(carregarSnapshot, 10000);

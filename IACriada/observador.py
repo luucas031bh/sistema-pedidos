@@ -17,6 +17,7 @@ from observador_store import (
     merge_fila_rp,
     salvar_mensagem_cliente,
     snapshot_vazio,
+    telefone_valido,
 )
 
 _TERMOS_ORCAMENTO = (
@@ -99,6 +100,11 @@ def registrar_whatsapp_evento(
     *,
     classificar: bool = True,
 ) -> dict:
+    if not telefone_valido(telefone):
+        return {"ok": False, "erro": "telefone_invalido"}
+    if not (texto or "").strip():
+        return {"ok": False, "erro": "texto_vazio"}
+
     salvar_mensagem_cliente(telefone, texto, timestamp=timestamp, nome=nome)
     append_evento(
         "whatsapp_in",
@@ -108,15 +114,16 @@ def registrar_whatsapp_evento(
     clf = classificar_texto_llm(texto) if classificar else _classificar_heuristica(texto)
     ts = timestamp or ""
     horas = horas_desde(ts)
+    resumo_real = (texto or "").strip()[:200]
 
     conversa = {
         "telefone": re.sub(r"\D", "", telefone or ""),
-        "nome": nome or "",
+        "nome": (nome or "").strip(),
         "ultima_msg": texto[:500],
         "ultima_msg_em": ts,
         "sem_resposta_horas": round(horas, 1),
         "intencao": clf.get("intencao", "outro"),
-        "resumo": clf.get("resumo", texto[:200]),
+        "resumo": resumo_real,
         "relevante": True,
     }
     atualizar_conversa_snapshot(conversa)
@@ -171,7 +178,7 @@ def rebuild_snapshot_completo() -> dict:
                 "ultima_msg_em": meta.get("ultima_msg_em") or "",
                 "sem_resposta_horas": round(horas, 1),
                 "intencao": meta.get("intencao") or "outro",
-                "resumo": meta.get("resumo") or meta.get("ultima_msg") or "",
+                "resumo": (meta.get("ultima_msg") or "")[:200],
                 "relevante": True,
             }
         )
@@ -185,11 +192,79 @@ def rebuild_snapshot_completo() -> dict:
 
 
 def status_observador() -> dict:
+    from config import PASTA, cfg_whatsapp_modo
+    from datetime import datetime, timezone
+
     snap = ler_snapshot()
     conversas = snap.get("whatsapp", {}).get("conversas_ativas") or []
+
+    bot_status: dict = {}
+    status_path = PASTA / "whatsapp-bot" / "connection_status.json"
+    if status_path.is_file():
+        try:
+            bot_status = json.loads(status_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            bot_status = {}
+
+    stats: dict = {}
+    stats_path = PASTA / "whatsapp-bot" / "observador_stats.json"
+    if stats_path.is_file():
+        try:
+            stats = json.loads(stats_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            stats = {}
+
+    qr_path = PASTA / "whatsapp-qr.png"
+    conexao = bot_status.get("connection") or "desconhecido"
+
+    def _recente(iso_ts: str | None, segundos: float = 90) -> bool:
+        if not iso_ts:
+            return False
+        try:
+            dt = datetime.fromisoformat(iso_ts.replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            delta = datetime.now(timezone.utc) - dt.astimezone(timezone.utc)
+            return delta.total_seconds() <= segundos
+        except (ValueError, TypeError):
+            return False
+
+    try:
+        import servicos_launcher as svc
+
+        bot_rodando = svc.whatsapp_rodando()
+    except Exception:
+        bot_rodando = False
+
+    tem_bot = bool(bot_status.get("bot"))
+    whatsapp_conectado = conexao == "open" or (
+        bot_rodando
+        and tem_bot
+        and not bot_status.get("logged_out")
+        and conexao in ("open", "reconnecting")
+        and _recente(
+            bot_status.get("ultima_conexao_em")
+            or bot_status.get("atualizado_em"),
+            120,
+        )
+    )
+
     return {
         "atualizado_em": snap.get("atualizado_em"),
         "conversas_ativas": len(conversas),
         "metricas": snap.get("metricas") or {},
         "fila_rp": snap.get("fila_rp") or {},
+        "whatsapp_modo": cfg_whatsapp_modo(),
+        "whatsapp_bot_rodando": bot_rodando,
+        "whatsapp_conectado": whatsapp_conectado,
+        "whatsapp_aguardando_qr": qr_path.is_file() or conexao == "qr",
+        "whatsapp_bot": bot_status.get("bot") or None,
+        "whatsapp_nome": bot_status.get("nome") or "",
+        "whatsapp_connection": conexao,
+        "observador_stats": {
+            "dms_recebidas": stats.get("dms_recebidas", 0),
+            "dms_ignoradas": stats.get("dms_ignoradas", 0),
+            "dms_encaminhadas": stats.get("dms_encaminhadas", 0),
+            "ultima_dm_em": stats.get("ultima_dm_em"),
+        },
     }

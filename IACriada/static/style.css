@@ -163,6 +163,34 @@ html, body {
   color: var(--text-muted);
 }
 
+.wpp-status {
+  font-size: 11px;
+  line-height: 1.35;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.wpp-status.ok {
+  color: #6ee7a0;
+  border-color: rgba(110, 231, 160, 0.35);
+}
+
+.wpp-status.warn {
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.35);
+}
+
+.wpp-status.err {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.35);
+}
+
+.wpp-btn {
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
 .snapshot-resumo {
   font-size: 11px;
   line-height: 1.4;
@@ -243,6 +271,30 @@ html, body {
 
 .topbar h1 { font-size: 16px; font-weight: 600; }
 .topbar-sub { font-size: 12px; color: var(--text-muted); }
+
+.observador-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elevated);
+}
+
+.observador-bar.ok { color: #6ee7a0; }
+.observador-bar.warn { color: #fbbf24; }
+.observador-bar.err { color: #f87171; }
+
+.obs-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.observador-bar.ok .obs-dot { box-shadow: 0 0 6px #6ee7a0; }
 
 .messages {
   flex: 1;

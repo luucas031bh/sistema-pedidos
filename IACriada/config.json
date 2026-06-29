@@ -56,12 +56,13 @@
   "rp_apps_script_url": "https://script.google.com/macros/s/AKfycby9LFyzYkXW_Zo9i_u3jdGfRweu5UaDvf4PsGWyTh8UB0hXGEls2l_oELjJSDkpZwDoAQ/exec",
   "whatsapp": {
     "admins": ["5531999999999"],
-    "modo": "both"
+    "modo": "observador"
   },
   "observador": {
     "tick_rp_seg": 60,
     "classificar_llm": true,
-    "usar_orquestrador_hub": true
+    "usar_orquestrador_hub": true,
+    "token": "adonay-bot-local"
   },
   "rp": {
     "base_url": "https://luucas031bh.github.io/sistema-pedidos/",

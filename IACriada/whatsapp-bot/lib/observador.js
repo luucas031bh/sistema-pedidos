@@ -3,6 +3,7 @@ import { log } from "./logger.js";
 import { deveProcessarObservador } from "./heuristica.js";
 import { enviarEventoWhatsapp, tickSnapshotRp } from "./observador-client.js";
 import { extrairTextoMensagem } from "./filters.js";
+import { registrarAtividade } from "./observador-stats.js";
 
 let tickTimer = null;
 
@@ -15,8 +16,10 @@ function isoTimestamp(msg) {
 }
 
 export async function processarObservador(msg, pushName) {
+  registrarAtividade("recebida");
   const texto = extrairTextoMensagem(msg).trim();
   if (!deveProcessarObservador(msg, texto)) {
+    registrarAtividade("ignorada");
     log.debug("Observador: ignorada (heuristica)", {
       preview: texto.slice(0, 40),
     });
@@ -40,7 +43,9 @@ export async function processarObservador(msg, pushName) {
     preview: texto.slice(0, 60),
   });
 
-  return enviarEventoWhatsapp(payload);
+  const r = await enviarEventoWhatsapp(payload);
+  if (r.ok) registrarAtividade("encaminhada");
+  return r;
 }
 
 export function iniciarTickRp() {

@@ -49,12 +49,11 @@
       </div>
       <div class="panel-atendimentos" id="panel-atendimentos">
         <h3>Atendimentos WhatsApp</h3>
+        <div id="whatsapp-status" class="wpp-status muted">Verificando WhatsApp…</div>
+        <button type="button" class="nav-item wpp-btn" id="btn-whatsapp-qr">Conectar WhatsApp (QR)</button>
         <div id="snapshot-resumo" class="snapshot-resumo muted">Carregando…</div>
         <div id="lista-atendimentos" class="lista-atendimentos">—</div>
-      </div>
-      <div class="panel-clientes">
-        <h3>Clientes</h3>
-        <div id="lista-clientes" class="lista-clientes">—</div>
+        <p class="ias-help muted">Fase 1: captura silenciosa de DMs. Respostas só neste chatbox.</p>
       </div>
     </aside>
 
@@ -63,12 +62,16 @@
         <h1>Adonay IA</h1>
         <span class="topbar-sub" id="ctx-label">Contexto compartilhado</span>
       </header>
+      <div class="observador-bar" id="observador-bar" hidden>
+        <span class="obs-dot" id="obs-dot"></span>
+        <span id="observador-texto">Observador WhatsApp</span>
+      </div>
 
       <div class="messages" id="messages">
         <div class="welcome" id="welcome">
           <div class="welcome-icon">◇</div>
           <h2>Como posso ajudar?</h2>
-          <p>Pergunte algo ou peça uma ação (abrir programa, pedidos RP, pasta do cliente).</p>
+          <p>Fase 1: a IA responde aqui no chatbox. O WhatsApp só captura DMs (sem responder).</p>
           <div class="chips">
             <button type="button" class="chip" data-msg="tem algum cliente pedindo orçamento?">Orçamentos WhatsApp</button>
             <button type="button" class="chip" data-msg="resumo financeiro dos pedidos em aberto">Resumo financeiro RP</button>
@@ -103,6 +106,6 @@
       </footer>
     </main>
   </div>
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>

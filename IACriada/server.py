@@ -383,6 +383,9 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/launch-integracao":
             return self._launch_integracao()
 
+        if path == "/api/launch-whatsapp":
+            return self._launch_whatsapp()
+
         if path == "/api/observador/whatsapp":
             return self._observador_whatsapp()
 
@@ -467,7 +470,36 @@ class Handler(BaseHTTPRequestHandler):
             )
         return _json_response(self, 400, {"detail": "PDF nao encontrado no upload"})
 
+    def _launch_whatsapp(self):
+        try:
+            import servicos_launcher as svc
+
+            svc.iniciar_whatsapp()
+        except (OSError, FileNotFoundError) as exc:
+            return _json_response(self, 500, {"detail": str(exc)})
+        return _json_response(
+            self,
+            200,
+            {
+                "ok": True,
+                "mensagem": "Abrindo bot WhatsApp — escaneie o QR na janela Adonay WhatsApp.",
+            },
+        )
+
+    def _observador_token_ok(self) -> bool:
+        from config import cfg_observador_token
+
+        esperado = cfg_observador_token()
+        recebido = (self.headers.get("X-Adonay-Observador") or "").strip()
+        return bool(esperado) and recebido == esperado
+
     def _observador_whatsapp(self):
+        if not self._observador_token_ok():
+            return _json_response(
+                self,
+                403,
+                {"detail": "Token observador invalido (somente bot WhatsApp local)"},
+            )
         try:
             req = _ler_body(self)
         except json.JSONDecodeError:
@@ -492,9 +524,17 @@ class Handler(BaseHTTPRequestHandler):
             )
         except Exception as exc:
             return _json_response(self, 500, {"detail": str(exc)})
+        if not out.get("ok"):
+            return _json_response(self, 400, out)
         return _json_response(self, 200, out)
 
     def _observador_tick(self):
+        if not self._observador_token_ok():
+            return _json_response(
+                self,
+                403,
+                {"detail": "Token observador invalido (somente bot WhatsApp local)"},
+            )
         from observador import refresh_snapshot_rp
 
         try:

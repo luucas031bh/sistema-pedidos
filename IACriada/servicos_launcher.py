@@ -249,6 +249,8 @@ def iniciar_openclaw() -> None:
 
 
 def iniciar_whatsapp() -> None:
+    from config import cfg_observador, cfg_whatsapp_modo
+
     bot = ROOT / "whatsapp-bot"
     if not (bot / "node_modules").is_dir():
         subprocess.run(
@@ -265,7 +267,15 @@ def iniciar_whatsapp() -> None:
     bot_js = bot / "bot.js"
     if not bot_js.is_file():
         raise FileNotFoundError(f"bot.js nao encontrado em {bot}")
-    _abrir_em_nova_janela([node, str(bot_js)], bot)
+    obs = cfg_observador()
+    tick_ms = int(obs.get("tick_rp_seg", 60)) * 1000
+    env_extra = {
+        "WHATSAPP_MODO": cfg_whatsapp_modo(),
+        "OBSERVADOR_API_BASE": URL_CHAT,
+        "OBSERVADOR_TICK_MS": str(tick_ms),
+        "OBSERVADOR_TOKEN": str(obs.get("token") or "adonay-bot-local"),
+    }
+    _abrir_em_nova_janela([node, str(bot_js)], bot, env_extra)
 
 
 def abrir_chat() -> None:

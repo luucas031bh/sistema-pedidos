@@ -3,13 +3,20 @@ import { log } from "./logger.js";
 
 const BASE = config.observadorApiBase.replace(/\/$/, "");
 
+function headersJson() {
+  return {
+    "Content-Type": "application/json",
+    "X-Adonay-Observador": config.observadorToken,
+  };
+}
+
 async function postJson(path, body, timeoutMs = 30000) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     const res = await fetch(`${BASE}${path}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: headersJson(),
       body: JSON.stringify(body),
       signal: ctrl.signal,
     });

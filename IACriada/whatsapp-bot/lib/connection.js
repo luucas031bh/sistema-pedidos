@@ -5,13 +5,28 @@ import makeWASocket, {
 } from "@whiskeysockets/baileys";
 import pino from "pino";
 import qrcode from "qrcode-terminal";
+import fs from "fs";
+import path from "path";
 import { config } from "./config.js";
 import { log } from "./logger.js";
 import { setBotIdentity } from "./bot-identity.js";
 import { limparQrPng, salvarQrPng } from "./qr-png.js";
+import { gravarStatus } from "./connection-status.js";
 
 let sockGlobal = null;
 let botJidGlobal = null;
+
+function limparAuthState() {
+  const dir = config.authDir;
+  if (!fs.existsSync(dir)) return;
+  for (const nome of fs.readdirSync(dir)) {
+    try {
+      fs.unlinkSync(path.join(dir, nome));
+    } catch {
+      /* ignore */
+    }
+  }
+}
 
 export function getSocket() {
   return sockGlobal;
@@ -48,6 +63,7 @@ export async function conectarWhatsApp(onMensagem) {
     const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
+      gravarStatus({ connection: "qr", qr_pendente: true });
       salvarQrPng(qr).catch((e) =>
         log.error("Falha ao gerar PNG do QR", { err: String(e) })
       );
@@ -62,6 +78,14 @@ export async function conectarWhatsApp(onMensagem) {
       botJidGlobal = sock.user?.id || null;
       setBotIdentity(sock);
       const id = getBotIdentityLog(sock);
+      gravarStatus({
+        connection: "open",
+        qr_pendente: false,
+        reconnecting: false,
+        bot: sock.user?.id || null,
+        nome: id.nome || null,
+        ultima_conexao_em: new Date().toISOString(),
+      });
       log.info("WhatsApp conectado", id);
     }
 
@@ -70,13 +94,28 @@ export async function conectarWhatsApp(onMensagem) {
         lastDisconnect?.error?.output?.statusCode ??
         lastDisconnect?.error?.data?.reason;
       const loggedOut = code === DisconnectReason.loggedOut;
+      const transiente =
+        code === DisconnectReason.restartRequired ||
+        code === 515 ||
+        code === 440;
+      gravarStatus({
+        connection: transiente ? "reconnecting" : "close",
+        qr_pendente: false,
+        code,
+        logged_out: loggedOut,
+        reconnecting: transiente && !loggedOut,
+      });
       log.warn("Conexao fechada", { code, loggedOut });
 
       if (loggedOut) {
         limparQrPng();
-        log.error(
-          "Sessao encerrada. Apague auth_info/ e escaneie o QR novamente."
-        );
+        limparAuthState();
+        log.error("Sessao encerrada. Gerando novo QR…");
+        setTimeout(() => {
+          conectarWhatsApp(onMensagem).catch((e) =>
+            log.error("Erro ao reconectar apos logout", { e: String(e) })
+          );
+        }, config.reconnectDelayMs);
         return;
       }
 

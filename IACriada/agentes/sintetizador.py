@@ -26,12 +26,17 @@ def _filtrar_conversas(conversas: list, params: dict, pergunta: str) -> list:
 
 def _formatar_lista(conversas: list) -> str:
     if not conversas:
-        return "Nenhuma conversa relevante no snapshot atual."
+        return (
+            "Nenhuma conversa capturada ainda. "
+            "Conecte o WhatsApp (QR) e aguarde DMs reais de clientes."
+        )
     linhas = []
     for i, c in enumerate(conversas[:20], 1):
-        nome = c.get("nome") or c.get("telefone") or "?"
+        tel = c.get("telefone") or ""
+        nome = (c.get("nome") or "").strip()
+        rotulo = f"{nome} ({tel})" if nome else tel
         linhas.append(
-            f"{i}. {nome} ({c.get('telefone', '?')}) — "
+            f"{i}. {rotulo} — "
             f"{c.get('intencao', 'outro')}: {c.get('resumo') or c.get('ultima_msg', '')[:80]}"
         )
         if c.get("sem_resposta_horas"):
@@ -62,12 +67,29 @@ def executar(pergunta: str, params: dict | None = None, modelo: str | None = Non
 
     nome = resolver_modelo(modelo)
     factual = _formatar_lista(filtradas)
+    if not filtradas:
+        return {
+            "resposta": factual,
+            "modelo": "heuristica",
+            "passos": [{"agente": "sintetizador", "conversas": 0}],
+            "meta": {
+                "route": "verificar_atendimentos",
+                "agente": "sintetizador",
+                "conversas": 0,
+                "metricas": metricas,
+            },
+        }
     if not nome:
         return {
-            "resposta": factual or "Snapshot vazio. Aguardando mensagens do Observador.",
+            "resposta": factual,
             "modelo": "heuristica",
-            "passos": [{"agente": "sintetizador", "fallback": True}],
-            "meta": {"route": "verificar_atendimentos", "agente": "sintetizador"},
+            "passos": [{"agente": "sintetizador", "conversas": len(filtradas)}],
+            "meta": {
+                "route": "verificar_atendimentos",
+                "agente": "sintetizador",
+                "conversas": len(filtradas),
+                "metricas": metricas,
+            },
         }
 
     try:

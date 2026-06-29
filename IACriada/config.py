@@ -19,6 +19,7 @@ __all__ = [
     "path_sistema_pedidos_db",
     "cfg_observador",
     "cfg_whatsapp_modo",
+    "cfg_observador_token",
 ]
 
 _DEFAULT = {
@@ -36,12 +37,13 @@ _DEFAULT = {
     "rp_url_base": "https://luucas031bh.github.io/sistema-pedidos/",
     "whatsapp": {
         "admins": [],
-        "modo": "both",
+        "modo": "observador",
     },
     "observador": {
         "tick_rp_seg": 60,
         "classificar_llm": True,
         "usar_orquestrador_hub": True,
+        "token": "adonay-bot-local",
     },
     "rp": {
         "base_url": "https://luucas031bh.github.io/sistema-pedidos/",
@@ -167,7 +169,11 @@ def cfg_observador() -> dict:
 
 def cfg_whatsapp_modo() -> str:
     cfg = carregar_config()
-    modo = (cfg.get("whatsapp") or {}).get("modo", "both")
+    modo = (cfg.get("whatsapp") or {}).get("modo", "observador")
     if modo not in ("observador", "legacy", "both"):
-        return "both"
+        return "observador"
     return modo
+
+
+def cfg_observador_token() -> str:
+    return str(cfg_observador().get("token") or "adonay-bot-local")
