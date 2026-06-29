@@ -143,6 +143,7 @@ def _detectar_rota_heuristica(mensagem: str) -> dict:
         for k in (
             "mensagem",
             "mensagens",
+            "receb",
             "ultima",
             "última",
             "ultimos",
@@ -154,12 +155,17 @@ def _detectar_rota_heuristica(mensagem: str) -> dict:
             "minut",
             " hora",
             " dias",
+            "hoje",
             "orcamento",
             "orçamento",
             "preco",
             "preço",
         )
-    ) and any(k in n for k in ("whatsapp", "wpp")):
+    ) and (
+        any(k in n for k in ("whatsapp", "wpp"))
+        or re.search(r"quant[ao]s?\s+mensag", n)
+        or ("mensagem" in n and "receb" in n)
+    ):
         filtro = ""
         if any(
             k in n
@@ -289,7 +295,7 @@ def executar_rota(
     if route == "consultar_mensagens_whatsapp":
         from agentes.consultor_whatsapp import executar as consultor_executar
 
-        out = consultor_executar(mensagem, params, modelo)
+        out = consultor_executar(mensagem, params, modelo, sessao=sessao)
         meta = out.get("meta") or {}
         meta["route"] = route
         meta["provedor"] = "adonay"
@@ -394,6 +400,16 @@ def rotear_pergunta_chatbox(
             msgs, modelo, permitir_internet=permitir_internet, sessao=sessao, ctx=ctx
         )
         meta = out.get("meta") or {}
+        meta["provedor"] = "adonay"
+        out["meta"] = meta
+        return out
+
+    from agentes.followup_whatsapp import detectar_followup_whatsapp, responder_followup_whatsapp
+
+    if detectar_followup_whatsapp(mensagem, sessao):
+        out = responder_followup_whatsapp(mensagem, sessao)
+        meta = out.get("meta") or {}
+        meta["routing"] = {"route": "followup_whatsapp", "params": {}}
         meta["provedor"] = "adonay"
         out["meta"] = meta
         return out

@@ -236,6 +236,9 @@ function formatPasso(p) {
   if (p.agente === "consultor_whatsapp") {
     return `📋 Consultor WhatsApp: ${p.mensagens ?? 0} mensagem(ns) (${p.periodo_horas ?? "?"}h)`;
   }
+  if (p.agente === "followup_whatsapp") {
+    return `↩ Follow-up WhatsApp: ${p.modo || "continuacao"} (${p.mensagens ?? 0} msg)`;
+  }
   if (p.agente === "sintetizador") {
     if (p.modo === "briefing") return "📋 Sintetizador: briefing ADNY (snapshot factual)";
     return `📋 Sintetizador: ${p.conversas ?? 0} conversa(s) no snapshot`;

@@ -117,12 +117,24 @@ def contar_mensagens(sessao: str) -> int:
     return int(n)
 
 
-def salvar_contexto_rp(sessao: str, intencao: str, params: dict):
-    """Ultimo filtro/consulta RP da sessao (para 'faz o mesmo' apos reinicio)."""
-    payload = json.dumps(
-        {"intencao": intencao, "params": params},
-        ensure_ascii=False,
-    )
+def _ler_contexto_sessao(sessao: str) -> dict:
+    conn = _conn()
+    row = conn.execute(
+        "SELECT contexto_json FROM contexto_sessao WHERE sessao = ?",
+        (sessao,),
+    ).fetchone()
+    conn.close()
+    if not row:
+        return {}
+    try:
+        data = json.loads(row[0])
+        return data if isinstance(data, dict) else {}
+    except json.JSONDecodeError:
+        return {}
+
+
+def _gravar_contexto_sessao(sessao: str, ctx: dict):
+    payload = json.dumps(ctx, ensure_ascii=False)
     conn = _conn()
     conn.execute(
         """
@@ -138,19 +150,45 @@ def salvar_contexto_rp(sessao: str, intencao: str, params: dict):
     conn.close()
 
 
+def salvar_contexto_rp(sessao: str, intencao: str, params: dict):
+    """Ultimo filtro/consulta RP da sessao (para 'faz o mesmo' apos reinicio)."""
+    ctx = _ler_contexto_sessao(sessao)
+    ctx["rp"] = {"intencao": intencao, "params": params}
+    _gravar_contexto_sessao(sessao, ctx)
+
+
 def carregar_contexto_rp(sessao: str) -> dict | None:
-    conn = _conn()
-    row = conn.execute(
-        "SELECT contexto_json FROM contexto_sessao WHERE sessao = ?",
-        (sessao,),
-    ).fetchone()
-    conn.close()
-    if not row:
+    ctx = _ler_contexto_sessao(sessao)
+    if not ctx:
         return None
-    try:
-        return json.loads(row[0])
-    except json.JSONDecodeError:
+    if "rp" in ctx:
+        return ctx["rp"]
+    if "intencao" in ctx:
+        return ctx
+    return None
+
+
+def salvar_ultimo_resultado(sessao: str, tipo: str, dados: dict):
+    """Guarda resultado bruto da ultima consulta para follow-up conversacional."""
+    ctx = _ler_contexto_sessao(sessao)
+    ctx["ultimo_resultado"] = {
+        "tipo": tipo,
+        "dados": dados,
+        "atualizado_em": time.time(),
+    }
+    _gravar_contexto_sessao(sessao, ctx)
+
+
+def carregar_ultimo_resultado(sessao: str) -> dict | None:
+    ctx = _ler_contexto_sessao(sessao)
+    ur = ctx.get("ultimo_resultado")
+    if not ur or not isinstance(ur, dict):
         return None
+    return {
+        "tipo": ur.get("tipo"),
+        "dados": ur.get("dados") or {},
+        "atualizado_em": ur.get("atualizado_em"),
+    }
 
 
 def limpar_conversa(sessao: str):
