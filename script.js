@@ -586,7 +586,7 @@ function adicionarProduto() {
         <div class="form-row">
           <div class="form-group">
             <label class="form-label required">Tipo de Malha</label>
-            <select class="form-select" id="tipoMalha-${produtoId}" onchange="calcularCustosProduto(${produtoId})">
+            <select class="form-select" id="tipoMalha-${produtoId}" onchange="aoMudarEspecificacoesProduto(${produtoId})">
               <option value="">Selecione...</option>${malhas}
             </select>
           </div>
@@ -599,7 +599,7 @@ function adicionarProduto() {
         <div class="tabela-dinamica"><table><tbody id="tamanhosBody-${produtoId}">
           <tr>
             <td><select class="form-select" onchange="calcularTotalPecas()"><option value="">Selecione...</option>${tamanhos}</select></td>
-            <td><input type="number" class="form-input" min="0" value="0" onchange="calcularTotalPecas();calcularCustosProduto(${produtoId})"></td>
+            <td><input type="number" class="form-input" min="0" value="0" onchange="aoMudarQuantidadeProduto(${produtoId})"></td>
             <td><button type="button" class="btn btn-small btn-danger" onclick="removerLinhaTamanho(this)">❌</button></td>
           </tr>
         </tbody></table></div>
@@ -608,9 +608,9 @@ function adicionarProduto() {
         <div class="card-subtitle">🎨 Tipos de Estampa</div>
         <div class="tabela-dinamica"><table><tbody id="estampasBody-${produtoId}">
           <tr>
-            <td><select class="form-select" onchange="atualizarLocalidadesEstampa(this);calcularCustosProduto(${produtoId})"><option value="">Selecione...</option>${estampas}</select></td>
-            <td><select class="form-select" disabled onchange="calcularCustosProduto(${produtoId})"><option value="">Selecione o tipo primeiro...</option></select></td>
-            <td><select class="form-select quantidade-cores" disabled style="display:none;" onchange="calcularCustosProduto(${produtoId})"><option value="">Selecione...</option>${cores}</select></td>
+            <td><select class="form-select" onchange="atualizarLocalidadesEstampa(this);aoMudarEspecificacoesProduto(${produtoId})"><option value="">Selecione...</option>${estampas}</select></td>
+            <td><select class="form-select" disabled onchange="aoMudarEspecificacoesProduto(${produtoId})"><option value="">Selecione o tipo primeiro...</option></select></td>
+            <td><select class="form-select quantidade-cores" disabled style="display:none;" onchange="aoMudarEspecificacoesProduto(${produtoId})"><option value="">Selecione...</option>${cores}</select></td>
             <td><button type="button" class="btn btn-small btn-danger" onclick="removerLinhaEstampa(this,${produtoId})">❌</button></td>
           </tr>
         </tbody></table></div>
@@ -629,24 +629,27 @@ function adicionarProduto() {
           </div>
         </div>
 
-        <div class="card-subtitle">💰 Cálculo de Custos</div>
-        <div class="custos-container">
+        <div class="card-subtitle">💰 Cálculo de Custos <span class="campo-referencia-badge">referência</span></div>
+        <div class="custos-container custos-container--referencia">
           <div class="custo-item"><span class="custo-label">Malha:</span><span class="custo-valor" id="custoMalha-${produtoId}">R$ 0,00</span></div>
           <div class="custo-item"><span class="custo-label">Mão de obra:</span><span class="custo-valor" id="custoMaoObra-${produtoId}">R$ 0,00</span></div>
           <div class="custo-item"><span class="custo-label">Estampas:</span><span class="custo-valor" id="custoEstampas-${produtoId}">R$ 0,00</span></div>
           <div class="custo-item"><span class="custo-label">Fixo:</span><span class="custo-valor" id="custoFixo-${produtoId}">R$ 10,00</span></div>
-          <div class="custo-item"><span class="custo-label">Total unitário:</span><span class="custo-valor" id="custoTotal-${produtoId}">R$ 0,00</span></div>
+          <div class="custo-item"><span class="custo-label">Total unitário (custo):</span><span class="custo-valor" id="custoTotal-${produtoId}">R$ 0,00</span></div>
         </div>
         <div class="form-row mt-2">
-          <div class="form-group"><label class="form-label required">Margem (%)</label><input type="number" class="form-input" id="margemLucro-${produtoId}" min="0" step="0.01" value="${obterMargemPadraoCalc()}" onchange="calcularCustosProduto(${produtoId}, 'margem')"></div>
-          <div class="form-group"><label class="form-label">Preço unitário</label><input type="number" class="form-input" id="precoUnitario-${produtoId}" min="0" step="0.01" onchange="calcularCustosProduto(${produtoId}, 'precoUnitario')"></div>
-          <div class="form-group"><label class="form-label">Valor total</label><input type="text" class="form-input" id="valorTotalProduto-${produtoId}" disabled></div>
+          <div class="form-group"><label class="form-label" for="margemLucro-${produtoId}">Margem % <span class="campo-referencia-badge">referência</span></label><input type="number" class="form-input campo-referencia" id="margemLucro-${produtoId}" min="0" step="0.01" value="${obterMargemPadraoCalc()}" onchange="atualizarCustosIlustrativos(${produtoId})"></div>
+          <div class="form-group"><label class="form-label" for="precoSugerido-${produtoId}">Preço sugerido <span class="campo-referencia-badge">referência</span></label><input type="text" class="form-input campo-referencia campo-somente-leitura" id="precoSugerido-${produtoId}" readonly tabindex="-1" value="R$ 0,00" aria-readonly="true"></div>
+          <div class="form-group"><label class="form-label required" for="precoUnitario-${produtoId}">Preço unitário</label><input type="number" class="form-input" id="precoUnitario-${produtoId}" min="0.01" step="0.01" required oninput="atualizarTotalProduto(${produtoId})" onchange="atualizarTotalProduto(${produtoId})"></div>
+          <div class="form-group"><label class="form-label" for="valorTotalProduto-${produtoId}">Valor total</label><input type="text" class="form-input" id="valorTotalProduto-${produtoId}" disabled value="R$ 0,00"></div>
         </div>
       </div>
     `);
 
     estadoApp.produtos.push({ id: produtoId, valorTotal: 0, custoTotal: 0, mockupRevokeUrl: null });
     configurarMockupProdutoListeners(produtoId);
+    atualizarCustosIlustrativos(produtoId);
+    atualizarTotalProduto(produtoId);
 }
 
 function removerProduto(produtoId) {
@@ -657,8 +660,7 @@ function removerProduto(produtoId) {
     }
     document.getElementById(`produto-${produtoId}`)?.remove();
     estadoApp.produtos = estadoApp.produtos.filter((p) => p.id !== produtoId);
-    calcularTotalPecas();
-    calcularResumoFinanceiro();
+    sincronizarTotaisPedido();
 }
 
 function atualizarDetalhesPeca(produtoId) {
@@ -674,7 +676,7 @@ function adicionarLinhaTamanho(produtoId) {
     const tbody = document.getElementById(`tamanhosBody-${produtoId}`);
     if (!tbody) return;
     const opcoes = CONFIG.TAMANHOS.map((tam) => `<option value="${tam}">${tam}</option>`).join('');
-    tbody.insertAdjacentHTML('beforeend', `<tr><td><select class="form-select" onchange="calcularTotalPecas()"><option value="">Selecione...</option>${opcoes}</select></td><td><input type="number" class="form-input" min="0" value="0" onchange="calcularTotalPecas();calcularCustosProduto(${produtoId})"></td><td><button type="button" class="btn btn-small btn-danger" onclick="removerLinhaTamanho(this)">❌</button></td></tr>`);
+    tbody.insertAdjacentHTML('beforeend', `<tr><td><select class="form-select" onchange="calcularTotalPecas()"><option value="">Selecione...</option>${opcoes}</select></td><td><input type="number" class="form-input" min="0" value="0" onchange="aoMudarQuantidadeProduto(${produtoId})"></td><td><button type="button" class="btn btn-small btn-danger" onclick="removerLinhaTamanho(this)">❌</button></td></tr>`);
 }
 
 function removerLinhaTamanho(btn) {
@@ -682,7 +684,7 @@ function removerLinhaTamanho(btn) {
     const tbody = tr?.parentElement;
     if (!tbody || tbody.children.length <= 1) return Utils.mostrarNotificacao('Deve haver pelo menos uma linha de tamanho.', 'error');
     tr.remove();
-    calcularTotalPecas();
+    sincronizarTotaisPedido();
 }
 
 function calcularTotalPecas() {
@@ -691,6 +693,20 @@ function calcularTotalPecas() {
     const el = document.getElementById('totalPecas');
     if (el) el.value = total;
     atualizarBadgesPecasPorProduto();
+    estadoApp.produtos.forEach((p) => atualizarTotalProduto(p.id, false));
+}
+
+function sincronizarTotaisPedido() {
+    calcularTotalPecas();
+    calcularResumoFinanceiro();
+}
+
+function aoMudarEspecificacoesProduto(produtoId) {
+    atualizarCustosIlustrativos(produtoId);
+}
+
+function aoMudarQuantidadeProduto(produtoId) {
+    sincronizarTotaisPedido();
 }
 
 /** Atualiza "N-peças" em cada produto e o resumo global entre Status e financeiro. */
@@ -715,12 +731,12 @@ function adicionarLinhaEstampa(produtoId) {
     if (!tbody) return;
     const tipos = CONFIG.TIPOS_ESTAMPAS.map((tipo) => `<option value="${tipo}">${tipo}</option>`).join('');
     const cores = CONFIG.QUANTIDADES_CORES_SILK.map((cor) => `<option value="${cor}">${cor}</option>`).join('');
-    tbody.insertAdjacentHTML('beforeend', `<tr><td><select class="form-select" onchange="atualizarLocalidadesEstampa(this);calcularCustosProduto(${produtoId})"><option value="">Selecione...</option>${tipos}</select></td><td><select class="form-select" disabled onchange="calcularCustosProduto(${produtoId})"><option value="">Selecione o tipo primeiro...</option></select></td><td><select class="form-select quantidade-cores" disabled style="display:none;" onchange="calcularCustosProduto(${produtoId})"><option value="">Selecione...</option>${cores}</select></td><td><button type="button" class="btn btn-small btn-danger" onclick="removerLinhaEstampa(this,${produtoId})">❌</button></td></tr>`);
+    tbody.insertAdjacentHTML('beforeend', `<tr><td><select class="form-select" onchange="atualizarLocalidadesEstampa(this);aoMudarEspecificacoesProduto(${produtoId})"><option value="">Selecione...</option>${tipos}</select></td><td><select class="form-select" disabled onchange="aoMudarEspecificacoesProduto(${produtoId})"><option value="">Selecione o tipo primeiro...</option></select></td><td><select class="form-select quantidade-cores" disabled style="display:none;" onchange="aoMudarEspecificacoesProduto(${produtoId})"><option value="">Selecione...</option>${cores}</select></td><td><button type="button" class="btn btn-small btn-danger" onclick="removerLinhaEstampa(this,${produtoId})">❌</button></td></tr>`);
 }
 
 function removerLinhaEstampa(btn, produtoId) {
     btn.closest('tr')?.remove();
-    calcularCustosProduto(produtoId);
+    aoMudarEspecificacoesProduto(produtoId);
 }
 
 function atualizarLocalidadesEstampa(selectTipo) {
@@ -797,7 +813,8 @@ function obterValorNumericoInput(input) {
     return parseFloat(normalizado);
 }
 
-function calcularCustosProduto(produtoId, origem = 'margem') {
+/** Custos e preço sugerido — apenas referência; não altera o preço unitário comercial. */
+function atualizarCustosIlustrativos(produtoId) {
     const cfg = window.CONFIG_CALCULO || { malhas: {}, maoObra: {} };
     const custoMalhaMap = cfg.malhas;
     const custoMaoObraMap = cfg.maoObra;
@@ -805,9 +822,7 @@ function calcularCustosProduto(produtoId, origem = 'margem') {
     const tipoMalha = normalizarTipoMalhaParaCalculo(document.getElementById(`tipoMalha-${produtoId}`)?.value || '');
     const tipoPeca = document.getElementById(`tipoPeca-${produtoId}`)?.value || '';
     const margemInput = document.getElementById(`margemLucro-${produtoId}`);
-    const precoUnitarioInput = document.getElementById(`precoUnitario-${produtoId}`);
-    const margem = parseFloat(margemInput?.value || '100');
-    const quantidade = obterQuantidadeProduto(produtoId);
+    const margem = parseFloat(margemInput?.value || String(obterMargemPadraoCalc()));
     const fatorTamanho = calcularFatorTamanhoProduto(produtoId);
 
     const custoMalha = (custoMalhaMap[tipoMalha] || 0) * fatorTamanho;
@@ -815,35 +830,45 @@ function calcularCustosProduto(produtoId, origem = 'margem') {
     const custoEstampas = calcularCustoEstampas(produtoId);
     const custoFixo = obterCustoFixoCalc();
     const custoTotal = custoMalha + custoMaoObra + custoEstampas + custoFixo;
-    let precoUnitario = custoTotal * (1 + margem / 100);
+    const precoSugerido = custoTotal * (1 + (Number.isNaN(margem) ? 0 : margem) / 100);
 
-    if (origem === 'precoUnitario') {
-        const precoDigitado = obterValorNumericoInput(precoUnitarioInput);
-        if (!Number.isNaN(precoDigitado) && precoDigitado >= 0) {
-            precoUnitario = precoDigitado;
-            if (custoTotal > 0 && margemInput) {
-                const margemCalculada = ((precoUnitario / custoTotal) - 1) * 100;
-                margemInput.value = Utils.arredondar(margemCalculada).toFixed(2);
-            }
-        }
-    }
-
-    const valorTotal = precoUnitario * quantidade;
-
-    document.getElementById(`custoMalha-${produtoId}`).textContent = Utils.formatarMoeda(custoMalha);
-    document.getElementById(`custoMaoObra-${produtoId}`).textContent = Utils.formatarMoeda(custoMaoObra);
-    document.getElementById(`custoEstampas-${produtoId}`).textContent = Utils.formatarMoeda(custoEstampas);
-    document.getElementById(`custoFixo-${produtoId}`).textContent = Utils.formatarMoeda(custoFixo);
-    document.getElementById(`custoTotal-${produtoId}`).textContent = Utils.formatarMoeda(custoTotal);
-    if (precoUnitarioInput) precoUnitarioInput.value = Utils.arredondar(precoUnitario).toFixed(2);
-    document.getElementById(`valorTotalProduto-${produtoId}`).value = Utils.formatarMoeda(valorTotal);
+    const elMalha = document.getElementById(`custoMalha-${produtoId}`);
+    const elMao = document.getElementById(`custoMaoObra-${produtoId}`);
+    const elEst = document.getElementById(`custoEstampas-${produtoId}`);
+    const elFixo = document.getElementById(`custoFixo-${produtoId}`);
+    const elTotal = document.getElementById(`custoTotal-${produtoId}`);
+    const elSugerido = document.getElementById(`precoSugerido-${produtoId}`);
+    if (elMalha) elMalha.textContent = Utils.formatarMoeda(custoMalha);
+    if (elMao) elMao.textContent = Utils.formatarMoeda(custoMaoObra);
+    if (elEst) elEst.textContent = Utils.formatarMoeda(custoEstampas);
+    if (elFixo) elFixo.textContent = Utils.formatarMoeda(custoFixo);
+    if (elTotal) elTotal.textContent = Utils.formatarMoeda(custoTotal);
+    if (elSugerido) elSugerido.value = Utils.formatarMoeda(precoSugerido);
 
     const item = estadoApp.produtos.find((p) => p.id === produtoId);
-    if (item) {
-        item.custoTotal = custoTotal;
-        item.valorTotal = valorTotal;
-    }
-    calcularResumoFinanceiro();
+    if (item) item.custoTotal = custoTotal;
+}
+
+/** Valor comercial: quantidade × preço unitário informado pelo usuário. */
+function atualizarTotalProduto(produtoId, propagarResumo = true) {
+    const precoUnitarioInput = document.getElementById(`precoUnitario-${produtoId}`);
+    const precoUnitario = obterValorNumericoInput(precoUnitarioInput);
+    const quantidade = obterQuantidadeProduto(produtoId);
+    const pu = Number.isNaN(precoUnitario) || precoUnitario < 0 ? 0 : precoUnitario;
+    const valorTotal = pu * quantidade;
+
+    const elTotal = document.getElementById(`valorTotalProduto-${produtoId}`);
+    if (elTotal) elTotal.value = Utils.formatarMoeda(valorTotal);
+
+    const item = estadoApp.produtos.find((p) => p.id === produtoId);
+    if (item) item.valorTotal = valorTotal;
+
+    if (propagarResumo) calcularResumoFinanceiro();
+}
+
+/** @deprecated Use atualizarCustosIlustrativos */
+function calcularCustosProduto(produtoId) {
+    atualizarCustosIlustrativos(produtoId);
 }
 
 function obterQuantidadeProduto(produtoId) {
@@ -882,7 +907,6 @@ function calcularCustoEstampas(produtoId) {
 }
 
 function calcularResumoFinanceiro() {
-    calcularTotalPecas();
     let totalPedido = 0;
     estadoApp.produtos.forEach((produto) => {
         totalPedido += Utils.limparMoeda(document.getElementById(`valorTotalProduto-${produto.id}`)?.value || '0');
@@ -1080,7 +1104,7 @@ function reconstruirLinhasTamanhos(produtoId, linhas) {
     dados.forEach((linha) => {
         tbody.insertAdjacentHTML(
             'beforeend',
-            `<tr><td><select class="form-select" onchange="calcularTotalPecas()"><option value="">Selecione...</option>${opcoes}</select></td><td><input type="number" class="form-input" min="0" value="0" onchange="calcularTotalPecas();calcularCustosProduto(${produtoId})"></td><td><button type="button" class="btn btn-small btn-danger" onclick="removerLinhaTamanho(this)">❌</button></td></tr>`
+            `<tr><td><select class="form-select" onchange="calcularTotalPecas()"><option value="">Selecione...</option>${opcoes}</select></td><td><input type="number" class="form-input" min="0" value="0" onchange="aoMudarQuantidadeProduto(${produtoId})"></td><td><button type="button" class="btn btn-small btn-danger" onclick="removerLinhaTamanho(this)">❌</button></td></tr>`
         );
         const tr = tbody.lastElementChild;
         const sel = tr.querySelector('select');
@@ -1100,7 +1124,7 @@ function reconstruirLinhasEstampas(produtoId, linhas) {
     dados.forEach((linha) => {
         tbody.insertAdjacentHTML(
             'beforeend',
-            `<tr><td><select class="form-select" onchange="atualizarLocalidadesEstampa(this);calcularCustosProduto(${produtoId})"><option value="">Selecione...</option>${tipos}</select></td><td><select class="form-select" disabled onchange="calcularCustosProduto(${produtoId})"><option value="">Selecione o tipo primeiro...</option></select></td><td><select class="form-select quantidade-cores" disabled style="display:none;" onchange="calcularCustosProduto(${produtoId})"><option value="">Selecione...</option>${cores}</select></td><td><button type="button" class="btn btn-small btn-danger" onclick="removerLinhaEstampa(this,${produtoId})">❌</button></td></tr>`
+            `<tr><td><select class="form-select" onchange="atualizarLocalidadesEstampa(this);aoMudarEspecificacoesProduto(${produtoId})"><option value="">Selecione...</option>${tipos}</select></td><td><select class="form-select" disabled onchange="aoMudarEspecificacoesProduto(${produtoId})"><option value="">Selecione o tipo primeiro...</option></select></td><td><select class="form-select quantidade-cores" disabled style="display:none;" onchange="aoMudarEspecificacoesProduto(${produtoId})"><option value="">Selecione...</option>${cores}</select></td><td><button type="button" class="btn btn-small btn-danger" onclick="removerLinhaEstampa(this,${produtoId})">❌</button></td></tr>`
         );
         const tr = tbody.lastElementChild;
         const selectTipo = tr.querySelectorAll('select')[0];
@@ -1182,7 +1206,12 @@ function preencherFormularioCompleto(pedido) {
             const m = p.margemLucro;
             margem.value = m != null && m !== '' ? String(m) : String(obterMargemPadraoCalc());
         }
-        calcularCustosProduto(pid);
+        const precoEl = document.getElementById(`precoUnitario-${pid}`);
+        if (precoEl && p.precoUnitario != null && p.precoUnitario !== '') {
+            precoEl.value = Utils.arredondar(Number(p.precoUnitario)).toFixed(2);
+        }
+        atualizarCustosIlustrativos(pid);
+        atualizarTotalProduto(pid);
 
         let mockUrl = String(p.urlMockup || '').trim();
         if (!mockUrl && legacyMockupGlobal && !legacyMockupUsado) {
@@ -1197,8 +1226,7 @@ function preencherFormularioCompleto(pedido) {
     });
 
     sincronizarBotoesRemocaoProdutosIndex();
-    calcularTotalPecas();
-    calcularResumoFinanceiro();
+    sincronizarTotaisPedido();
     preencherListaPersonalizacao(pedido.listaPersonalizacao || null);
     carregarImagensSalvas(pedido);
 }
@@ -1240,7 +1268,7 @@ async function salvarPedido() {
         Utils.mostrarNotificacao('Este pedido não pode ser alterado.', 'error');
         return;
     }
-    if (!validarFormulario()) return Utils.mostrarNotificacao('Preencha corretamente os campos obrigatórios.', 'error');
+    if (!validarFormulario()) return Utils.mostrarNotificacao(mensagemValidacaoFormulario(), 'error');
     if (!CONFIG.APPS_SCRIPT_URL) return Utils.mostrarNotificacao('Configure a URL do Apps Script em config.js.', 'error');
     if (window.location.protocol === 'file:') {
         Utils.mostrarNotificacao('Abra o sistema via localhost para evitar bloqueio CORS.', 'error');
@@ -1345,7 +1373,39 @@ function validarFormulario() {
     if (!Utils.validarCampoObrigatorio(document.getElementById('nomeCliente').value)) return false;
     if (!Utils.validarTelefone(document.getElementById('telefone').value)) return false;
     if (!Utils.validarCampoObrigatorio(document.getElementById('dataEntrega').value)) return false;
-    return estadoApp.produtos.length > 0;
+    if (estadoApp.produtos.length === 0) return false;
+    for (const p of estadoApp.produtos) {
+        const precoUnitarioInput = document.getElementById(`precoUnitario-${p.id}`);
+        const pu = obterValorNumericoInput(precoUnitarioInput);
+        if (Number.isNaN(pu) || pu <= 0) return false;
+        if (obterQuantidadeProduto(p.id) <= 0) return false;
+    }
+    return true;
+}
+
+function mensagemValidacaoFormulario() {
+    if (!Utils.validarCampoObrigatorio(document.getElementById('nomeCliente')?.value)) {
+        return 'Preencha o nome do cliente.';
+    }
+    if (!Utils.validarTelefone(document.getElementById('telefone')?.value)) {
+        return 'Informe um telefone válido.';
+    }
+    if (!Utils.validarCampoObrigatorio(document.getElementById('dataEntrega')?.value)) {
+        return 'Informe a data de entrega.';
+    }
+    if (estadoApp.produtos.length === 0) {
+        return 'Adicione pelo menos um produto ao pedido.';
+    }
+    for (const p of estadoApp.produtos) {
+        const pu = obterValorNumericoInput(document.getElementById(`precoUnitario-${p.id}`));
+        if (Number.isNaN(pu) || pu <= 0) {
+            return 'Informe o preço unitário de todos os produtos.';
+        }
+        if (obterQuantidadeProduto(p.id) <= 0) {
+            return 'Informe a quantidade de peças em todos os produtos.';
+        }
+    }
+    return 'Preencha corretamente os campos obrigatórios.';
 }
 
 
@@ -1495,7 +1555,7 @@ function limparFormulario() {
     configurarValoresPadraoFormulario();
     adicionarProduto();
     atualizarBotoesImpressaoTopo();
-    calcularTotalPecas();
+    sincronizarTotaisPedido();
 }
 
 async function carregarPedidoViaURL() {
