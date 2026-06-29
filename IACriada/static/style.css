@@ -147,6 +147,51 @@ html, body {
   padding: 4px;
 }
 
+.panel-atendimentos {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 200px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-atendimentos h3 {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.snapshot-resumo {
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.lista-atendimentos {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 120px;
+}
+
+.atendimento-item {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 11px;
+  text-align: left;
+}
+
+.atendimento-item .tag {
+  color: var(--accent);
+  font-size: 10px;
+}
+
 .panel-clientes {
   flex: 1;
   min-height: 0;

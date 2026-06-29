@@ -47,6 +47,11 @@
         <input type="url" id="inp-api-base" placeholder="http://127.0.0.1:8765" />
         <p class="ias-help muted">GitHub: porta <strong>8765</strong>. <a href="http://127.0.0.1:8765" target="_blank" rel="noopener">Abrir local ↗</a></p>
       </div>
+      <div class="panel-atendimentos" id="panel-atendimentos">
+        <h3>Atendimentos WhatsApp</h3>
+        <div id="snapshot-resumo" class="snapshot-resumo muted">Carregando…</div>
+        <div id="lista-atendimentos" class="lista-atendimentos">—</div>
+      </div>
       <div class="panel-clientes">
         <h3>Clientes</h3>
         <div id="lista-clientes" class="lista-clientes">—</div>
@@ -65,6 +70,7 @@
           <h2>Como posso ajudar?</h2>
           <p>Pergunte algo ou peça uma ação (abrir programa, pedidos RP, pasta do cliente).</p>
           <div class="chips">
+            <button type="button" class="chip" data-msg="tem algum cliente pedindo orçamento?">Orçamentos WhatsApp</button>
             <button type="button" class="chip" data-msg="resumo financeiro dos pedidos em aberto">Resumo financeiro RP</button>
             <button type="button" class="chip" data-msg="abrir corel">Abrir Corel</button>
             <button type="button" class="chip" data-msg="pedidos em insumos">Pedidos em insumos</button>

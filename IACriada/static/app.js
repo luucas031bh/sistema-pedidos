@@ -14,6 +14,8 @@ const btnIndexar = document.getElementById("btn-indexar");
 const btnIndexarSistema = document.getElementById("btn-indexar-sistema");
 const indexStatus = document.getElementById("index-status");
 const listaClientes = document.getElementById("lista-clientes");
+const snapshotResumo = document.getElementById("snapshot-resumo");
+const listaAtendimentos = document.getElementById("lista-atendimentos");
 const filePdf = document.getElementById("file-pdf");
 const btnPdf = document.getElementById("btn-pdf");
 const llmBar = document.getElementById("llm-bar");
@@ -290,6 +292,7 @@ function addMessage(role, text, passos = [], meta = null) {
 
   const logs = [];
   if (meta?.provedor) logs.push(`IA: ${labelProvedor(meta)}`);
+  if (meta?.route) logs.push(`Rota: ${meta.route}`);
   if (meta?.rp_direto) logs.push("✓ Dados reais do RP");
   if (meta?.sistema_codigo) logs.push("✓ Codigo sistema-pedidos");
   if (meta?.intencao) logs.push(`Intencao: ${meta.intencao}`);
@@ -325,6 +328,44 @@ function addTyping() {
 
 function removeTyping() {
   document.getElementById("typing-row")?.remove();
+}
+
+async function carregarSnapshot() {
+  if (!snapshotResumo || !listaAtendimentos) return;
+  try {
+    const r = await fetch(apiUrl("/api/pedidos-snapshot"));
+    const d = await r.json();
+    const m = d.metricas || {};
+    const fila = d.fila_rp || {};
+    snapshotResumo.textContent =
+      `RP abertos: ${fila.total_abertos ?? "?"} · Orçamentos: ${m.orcamentos_pendentes ?? 0} · ` +
+      `Sem resp. 24h: ${m.sem_resposta_24h ?? 0}`;
+    const conversas = (d.whatsapp && d.whatsapp.conversas_ativas) || [];
+    if (!conversas.length) {
+      listaAtendimentos.innerHTML = '<span class="muted">Nenhuma DM capturada ainda.</span>';
+      return;
+    }
+    listaAtendimentos.innerHTML = conversas
+      .slice(0, 12)
+      .map(
+        (c) =>
+          `<button type="button" class="atendimento-item" data-msg="resumo do atendimento ${c.telefone} ${c.intencao || ""}">` +
+          `<span class="tag">${c.intencao || "outro"}</span> ` +
+          `${c.nome || c.telefone}: ${(c.resumo || c.ultima_msg || "").slice(0, 50)}` +
+          `</button>`
+      )
+      .join("");
+    listaAtendimentos.querySelectorAll(".atendimento-item").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        input.value = btn.dataset.msg;
+        autoResize();
+        form.requestSubmit();
+      });
+    });
+  } catch {
+    snapshotResumo.textContent = "Snapshot offline.";
+    listaAtendimentos.textContent = "—";
+  }
 }
 
 async function carregarClientes() {
@@ -539,7 +580,7 @@ btnNovo?.addEventListener("click", async () => {
     <h2>Como posso ajudar?</h2>
     <p>Pergunte ou peca uma acao. Troque a IA embaixo (OLLAMA, CLAUDE, CLAW).</p>
     <div class="chips">
-      <button type="button" class="chip" data-msg="resumo financeiro dos pedidos em aberto">Resumo RP</button>
+      <button type="button" class="chip" data-msg="tem algum cliente pedindo orçamento?">Orçamentos WhatsApp</button>
       <button type="button" class="chip" data-msg="abrir corel">Abrir Corel</button>
     </div>
   `;
@@ -562,6 +603,8 @@ initLlmPills();
 initModoButtons();
 bindChips();
 carregarStatus();
+carregarSnapshot();
 carregarClientes();
 carregarHistorico();
 setInterval(carregarStatus, 15000);
+setInterval(carregarSnapshot, 30000);

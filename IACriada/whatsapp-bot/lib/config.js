@@ -31,6 +31,10 @@ export const config = {
   qrPngPath: resolveQrPngPath(),
   qrAutoOpen: String(process.env.QR_AUTO_OPEN || "true").toLowerCase() === "true",
   localAiUrl: process.env.LOCAL_AI_URL || "http://127.0.0.1:8765/api/chat",
+  observadorApiBase:
+    process.env.OBSERVADOR_API_BASE || "http://127.0.0.1:8765",
+  whatsappModo: (process.env.WHATSAPP_MODO || "both").toLowerCase(),
+  observadorTickMs: Number(process.env.OBSERVADOR_TICK_MS || 60000),
   triggers: parseList(process.env.BOT_TRIGGERS || "ADNY,@IA,Agente,IA"),
   adminNumbers: parseList(process.env.ALLOWED_ADMIN_NUMBERS || "").map((n) =>
     n.replace(/\D/g, "")

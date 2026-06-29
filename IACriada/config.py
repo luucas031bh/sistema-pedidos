@@ -11,9 +11,14 @@ __all__ = [
     "path_index_db",
     "path_historico_db",
     "path_contexto_pasta",
+    "path_pedidos_json",
+    "path_historico_interacoes",
+    "path_clientes_memoria",
     "path_onedrive_trabalho",
     "path_sistema_pedidos",
     "path_sistema_pedidos_db",
+    "cfg_observador",
+    "cfg_whatsapp_modo",
 ]
 
 _DEFAULT = {
@@ -31,6 +36,12 @@ _DEFAULT = {
     "rp_url_base": "https://luucas031bh.github.io/sistema-pedidos/",
     "whatsapp": {
         "admins": [],
+        "modo": "both",
+    },
+    "observador": {
+        "tick_rp_seg": 60,
+        "classificar_llm": True,
+        "usar_orquestrador_hub": True,
     },
     "rp": {
         "base_url": "https://luucas031bh.github.io/sistema-pedidos/",
@@ -68,6 +79,10 @@ def carregar_config() -> dict:
             cfg["rp"]["base_url"] = dados["rp_url_base"].rstrip("/") + "/"
         if "ollama" in dados:
             cfg["ollama"] = {**_DEFAULT.get("ollama", {}), **dados["ollama"]}
+        if "whatsapp" in dados:
+            cfg["whatsapp"] = {**_DEFAULT.get("whatsapp", {}), **dados["whatsapp"]}
+        if "observador" in dados:
+            cfg["observador"] = {**_DEFAULT.get("observador", {}), **dados["observador"]}
         return cfg
     return dict(_DEFAULT)
 
@@ -127,3 +142,32 @@ def path_sistema_pedidos_db() -> Path:
     p = PASTA / cfg["sqlite_sistema_pedidos"]
     p.parent.mkdir(parents=True, exist_ok=True)
     return p
+
+
+def path_pedidos_json() -> Path:
+    return path_contexto_pasta() / "pedidos.json"
+
+
+def path_historico_interacoes() -> Path:
+    return path_contexto_pasta() / "historico_interacoes.jsonl"
+
+
+def path_clientes_memoria() -> Path:
+    p = path_contexto_pasta() / "clientes"
+    p.mkdir(parents=True, exist_ok=True)
+    return p
+
+
+def cfg_observador() -> dict:
+    cfg = carregar_config()
+    base = _DEFAULT.get("observador", {})
+    extra = cfg.get("observador") or {}
+    return {**base, **extra}
+
+
+def cfg_whatsapp_modo() -> str:
+    cfg = carregar_config()
+    modo = (cfg.get("whatsapp") or {}).get("modo", "both")
+    if modo not in ("observador", "legacy", "both"):
+        return "both"
+    return modo

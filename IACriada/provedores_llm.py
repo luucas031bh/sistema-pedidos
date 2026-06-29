@@ -326,7 +326,21 @@ def chat_por_provedor(
     if pid == "openclaw":
         return chat_openclaw(mensagem, modelo, sessao, historico)
 
-    # adonay (padrao) — fluxo completo existente
+    # adonay (padrao) — hub orquestrador (web) ou fluxo legado (whatsapp)
+    from config import cfg_observador
+
+    if cfg_observador().get("usar_orquestrador_hub", True) and ctx.get("origem", "web") == "web":
+        from orquestrador import rotear_pergunta_chatbox
+
+        return rotear_pergunta_chatbox(
+            mensagem,
+            historico,
+            sessao,
+            modelo,
+            permitir_internet=permitir_internet,
+            ctx=ctx,
+        )
+
     from agente import (
         _tentar_resposta_rp_direta,
         _tentar_resposta_sistema_codigo,

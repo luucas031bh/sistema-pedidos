@@ -257,6 +257,16 @@ class Handler(BaseHTTPRequestHandler):
             cfg["integracoes_ollama"] = integracoes
             return _json_response(self, 200, cfg)
 
+        if path == "/api/pedidos-snapshot":
+            from observador_store import ler_snapshot
+
+            return _json_response(self, 200, ler_snapshot())
+
+        if path == "/api/observador/status":
+            from observador import status_observador
+
+            return _json_response(self, 200, status_observador())
+
         if path.startswith("/static/"):
             rel = path[len("/static/") :]
             arquivo = STATIC / rel
@@ -373,6 +383,12 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/launch-integracao":
             return self._launch_integracao()
 
+        if path == "/api/observador/whatsapp":
+            return self._observador_whatsapp()
+
+        if path == "/api/observador/tick":
+            return self._observador_tick()
+
         self.send_error(404)
 
     def _launch_integracao(self):
@@ -450,6 +466,42 @@ class Handler(BaseHTTPRequestHandler):
                 {"ok": True, "caminho": str(dest.resolve())},
             )
         return _json_response(self, 400, {"detail": "PDF nao encontrado no upload"})
+
+    def _observador_whatsapp(self):
+        try:
+            req = _ler_body(self)
+        except json.JSONDecodeError:
+            return _json_response(self, 400, {"detail": "JSON invalido"})
+
+        telefone = (req.get("telefone") or req.get("numero") or "").strip()
+        texto = (req.get("texto") or req.get("mensagem") or "").strip()
+        if not telefone or not texto:
+            return _json_response(
+                self, 400, {"detail": "Campos telefone e texto/mensagem obrigatorios"}
+            )
+
+        from observador import registrar_whatsapp_evento
+
+        try:
+            out = registrar_whatsapp_evento(
+                telefone,
+                texto,
+                timestamp=req.get("timestamp"),
+                nome=req.get("nome"),
+                classificar=bool(req.get("classificar", True)),
+            )
+        except Exception as exc:
+            return _json_response(self, 500, {"detail": str(exc)})
+        return _json_response(self, 200, out)
+
+    def _observador_tick(self):
+        from observador import refresh_snapshot_rp
+
+        try:
+            out = refresh_snapshot_rp()
+        except Exception as exc:
+            return _json_response(self, 500, {"detail": str(exc)})
+        return _json_response(self, 200, out)
 
 
 def main():

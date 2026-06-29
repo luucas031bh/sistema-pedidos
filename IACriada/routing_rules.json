@@ -1,0 +1,26 @@
+{
+  "routing_rules": {
+    "verificar_atendimentos": {
+      "agente": "sintetizador",
+      "descricao": "Atendimentos WhatsApp, orcamentos pendentes, snapshot local"
+    },
+    "consultar_fila_rp": {
+      "agente": "rp_direto",
+      "descricao": "Consultas ao sistema de pedidos RP via API"
+    },
+    "conversa_geral": {
+      "agente": "ollama_simples",
+      "descricao": "Conversa sem ferramentas"
+    },
+    "acao_adonay": {
+      "agente": "adonay_legado",
+      "descricao": "Ferramentas PC, OneDrive, acoes completas"
+    }
+  },
+  "rotas_validas": [
+    "verificar_atendimentos",
+    "consultar_fila_rp",
+    "conversa_geral",
+    "acao_adonay"
+  ]
+}
