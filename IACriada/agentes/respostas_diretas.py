@@ -138,9 +138,18 @@ def _tentar_rp_numerico(pergunta: str) -> dict | None:
     return None
 
 
+def _tentar_leitor(pergunta: str) -> dict | None:
+    from leitor_sistema import resposta_direta_roantone
+
+    direta = resposta_direta_roantone(pergunta)
+    if direta:
+        return _ok(direta, "leitor_roantone", {"route": "pesquisar_sistema"})
+    return None
+
+
 def tentar_resposta_direta(pergunta: str) -> dict | None:
     """Retorna resposta factual ou None para continuar roteamento normal."""
-    for fn in (_tentar_rp_numerico, _tentar_manifesto, _tentar_memoria_verificada):
+    for fn in (_tentar_leitor, _tentar_rp_numerico, _tentar_manifesto, _tentar_memoria_verificada):
         out = fn(pergunta)
         if out:
             return out

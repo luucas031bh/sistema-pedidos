@@ -48,9 +48,12 @@ def _validar_item(item: dict, manifesto: dict) -> tuple[bool, str, str]:
 
     if tipo == "manifesto_mapa_gas":
         funcao = item.get("funcao_python") or ""
-        gas = item.get("gas") or ""
+        gas = item.get("gas")
         mapa = manifesto.get("mapa_python_gas") or []
-        ok = any(m.get("funcao") == funcao and m.get("gas") == gas for m in mapa)
+        if "gas" in item:
+            ok = any(m.get("funcao") == funcao and m.get("gas") == gas for m in mapa)
+        else:
+            ok = any(m.get("funcao") == funcao for m in mapa)
         return ok, f"{funcao} -> {gas}", str([m for m in mapa if m.get("funcao") == funcao])
 
     if tipo == "manifesto_rota_agente":
@@ -75,6 +78,23 @@ def _validar_item(item: dict, manifesto: dict) -> tuple[bool, str, str]:
         esperada = item.get("rota_esperada") or ""
         obtida = _detectar_rota_heuristica(pergunta).get("route") or ""
         return obtida == esperada, esperada, obtida
+
+    if tipo == "rota_decidir":
+        from orquestrador import decidir_rota
+
+        pergunta = item.get("pergunta") or ""
+        esperada = item.get("rota_esperada") or ""
+        obtida = decidir_rota(pergunta).get("route") or ""
+        return obtida == esperada, esperada, obtida
+
+    if tipo == "termos_contem":
+        mod = importlib.import_module(item.get("modulo") or "termos_manifesto")
+        fn = getattr(mod, item.get("funcao") or "termos_fila_rp")
+        manifesto_arg = manifesto if item.get("passar_manifesto") else None
+        termos = fn(manifesto_arg) if manifesto_arg is not None else fn()
+        valor = (item.get("valor") or "").lower()
+        ok = valor in termos
+        return ok, valor, str(len(termos))
 
     if tipo == "indice_min":
         stats = estatisticas_sistema_index()
@@ -143,6 +163,31 @@ def _validar_item(item: dict, manifesto: dict) -> tuple[bool, str, str]:
         esperadas = item.get("fontes_contem") or []
         ok = all(f in fontes for f in esperadas)
         return ok, str(esperadas), str(fontes)
+
+    if tipo == "leitor_contem":
+        from leitor_sistema import resposta_direta_roantone
+
+        pergunta = item.get("pergunta") or ""
+        contem = item.get("contem") or ""
+        obtida = resposta_direta_roantone(pergunta) or ""
+        ok = contem.lower() in obtida.lower()
+        return ok, contem, obtida[:120]
+
+    if tipo == "wpp_parece":
+        from wpp_leitor import parece_pergunta_whatsapp
+
+        pergunta = item.get("pergunta") or ""
+        esperado = bool(item.get("valor", True))
+        obtido = parece_pergunta_whatsapp(pergunta)
+        return obtido == esperado, str(esperado), str(obtido)
+
+    if tipo == "wpp_sequencia_periodos":
+        from wpp_leitor import PERIODO_24H, PERIODO_7D
+
+        esperados = item.get("periodos") or ["24 horas", "7 dias"]
+        obtidos = [PERIODO_24H[1], PERIODO_7D[1]]
+        ok = obtidos[: len(esperados)] == esperados
+        return ok, str(esperados), str(obtidos)
 
     return False, "?", f"tipo desconhecido: {tipo}"
 

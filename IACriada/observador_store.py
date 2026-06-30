@@ -272,7 +272,7 @@ def carregar_mensagens_whatsapp(
         if ints and m.get("intencao") not in ints:
             continue
         out.append(m)
-        if len(out) >= limite:
+        if limite > 0 and len(out) >= limite:
             break
     out.reverse()
     return out

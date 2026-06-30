@@ -148,6 +148,26 @@ def buscar(
     return [dict(r) for r in rows]
 
 
+def buscar_por_termo(termo: str, limite: int = 15) -> list[dict]:
+    """Busca por substring no nome ou caminho (Ctrl+F no indice OneDrive)."""
+    t = (termo or "").strip()
+    if len(t) < 2:
+        return []
+    conn = _conectar()
+    pat = f"%{t}%"
+    rows = conn.execute(
+        """
+        SELECT * FROM arquivos
+        WHERE nome_arquivo LIKE ? OR caminho_completo LIKE ? OR cliente LIKE ?
+        ORDER BY data_modificacao DESC
+        LIMIT ?
+        """,
+        (pat, pat, pat, limite),
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
 def buscar_pasta_cliente(cliente: str, codigo: str) -> str | None:
     """Retorna caminho da pasta do cliente (pai do arquivo ou pasta nomeada)."""
     raiz = path_onedrive_trabalho()

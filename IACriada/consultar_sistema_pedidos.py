@@ -342,6 +342,74 @@ def buscar_contexto(pergunta: str) -> dict:
     }
 
 
+def pesquisar_repositorio(pergunta: str, *, limite: int = MAX_TRECHOS) -> dict:
+    """Busca no repo indexado — sem gate tema_sistema_pedidos (agente LEITOR)."""
+    stats = estatisticas_sistema_index()
+    if not stats.get("indexado"):
+        idx = indexar_sistema_pedidos()
+        if idx.get("erro"):
+            return {"ok": False, "erro": idx["erro"], "trechos_detalhe": []}
+
+    termos = _tokens_busca(pergunta)
+    trechos = _buscar_fts(termos, limite=limite) if termos else []
+    if len(trechos) < 2:
+        trechos = _buscar_like(termos, limite=limite) or trechos
+
+    for m in re.finditer(
+        r"([\w./-]+\.(?:gs|js|html|css|json|md))\b", pergunta, re.I
+    ):
+        rel = m.group(1).replace("\\", "/")
+        conteudo = ler_arquivo_relativo(rel, 8000)
+        if conteudo:
+            trechos.insert(
+                0,
+                {
+                    "caminho": rel,
+                    "nome": Path(rel).name,
+                    "indice": 0,
+                    "conteudo": conteudo,
+                    "rank": -1,
+                },
+            )
+
+    for tok in termos:
+        if re.fullmatch(r"[a-z]{2}\d{3}", tok, re.I):
+            rel = "ROANTONE/data/colors.json"
+            bloco = ler_arquivo_relativo(rel, 500_000)
+            if bloco and tok.upper() in bloco.upper():
+                idx = bloco.upper().find(f'"{tok.upper()}"')
+                if idx >= 0:
+                    fatia = bloco[max(0, idx - 20) : idx + 400]
+                    trechos.insert(
+                        0,
+                        {
+                            "caminho": rel,
+                            "nome": "colors.json",
+                            "indice": 0,
+                            "conteudo": fatia,
+                            "rank": -2,
+                        },
+                    )
+
+    vistos: set[str] = set()
+    detalhe: list[dict] = []
+    for t in trechos:
+        chave = f"{t.get('caminho')}:{t.get('indice')}"
+        if chave in vistos:
+            continue
+        vistos.add(chave)
+        detalhe.append(t)
+        if len(detalhe) >= limite:
+            break
+
+    return {
+        "ok": True,
+        "trechos_detalhe": detalhe,
+        "termos": termos,
+        "total": len(detalhe),
+    }
+
+
 def responder_com_contexto(pergunta: str) -> dict:
     """Retorna contexto para injetar no agente (Ollama sintetiza com base no codigo)."""
     if not tema_sistema_pedidos(pergunta):

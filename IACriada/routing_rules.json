@@ -5,8 +5,8 @@
       "descricao": "Snapshot pedidos.json, atendimentos WhatsApp, orcamentos pendentes, saudacao"
     },
     "consultar_mensagens_whatsapp": {
-      "agente": "consultor_whatsapp",
-      "descricao": "Busca mensagens capturadas: periodo, orcamento, preco, telefone"
+      "agente": "agente_wpp",
+      "descricao": "Le log WhatsApp com expansao 24h → 7d → oferta 1 mes; lista clientes e mensagens"
     },
     "consultar_fila_rp": {
       "agente": "rp_direto",
@@ -27,6 +27,10 @@
     "investigar_sistema": {
       "agente": "investigador",
       "descricao": "Coleta dados reais de todas as fontes (RP, WhatsApp) e usa LLM para responder perguntas genéricas"
+    },
+    "pesquisar_sistema": {
+      "agente": "leitor",
+      "descricao": "Busca tipo Ctrl+F: ROANTONE, repo, manifesto, WhatsApp log, OneDrive"
     }
   },
   "rotas_validas": [
@@ -36,7 +40,8 @@
     "atualizar_status_de_producao_na_tela",
     "calcular_gasto_de_malha_por_pedido",
     "criar_nova_funcionalidade_no_codigo",
-    "investigar_sistema"
+    "investigar_sistema",
+    "pesquisar_sistema"
   ],
   "aliases": {
     "verificar_atendimentos": "verificar_atendimentos_ou_orcamentos",

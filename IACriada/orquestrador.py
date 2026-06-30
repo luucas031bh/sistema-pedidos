@@ -8,6 +8,9 @@ import urllib.error
 from pathlib import Path
 
 from config import PASTA, cfg_observador
+from leitor_sistema import parece_consulta_leitor
+from termos_manifesto import excluir_fila_rp, termos_fila_rp, termos_investigar, termos_investigar_prioritario
+from wpp_leitor import parece_pergunta_whatsapp
 
 _RULES_PATH = PASTA / "routing_rules.json"
 _ROTA_PADRAO = "verificar_atendimentos_ou_orcamentos"
@@ -150,35 +153,9 @@ def _detectar_rota_heuristica(mensagem: str) -> dict:
             filtro = "orcamento"
         return {"route": _ROTA_PADRAO, "params": {"filtro": filtro} if filtro else {}}
 
-    if any(
-        k in n
-        for k in (
-            "mensagem",
-            "mensagens",
-            "receb",
-            "ultima",
-            "última",
-            "ultimos",
-            "últimos",
-            "recebida",
-            "recebidas",
-            "telefone",
-            "final ",
-            "minut",
-            " hora",
-            " dias",
-            "hoje",
-            "orcamento",
-            "orçamento",
-            "preco",
-            "preço",
-        )
-    ) and (
-        any(k in n for k in ("whatsapp", "wpp"))
-        or re.search(r"quant[ao]s?\s+mensag", n)
-        or ("mensagem" in n and "receb" in n)
-    ):
+    if parece_pergunta_whatsapp(mensagem):
         filtro = ""
+        n = (mensagem or "").lower()
         if any(
             k in n
             for k in ("orcamento", "orçamento", "preco", "preço", "cotacao", "cotação", "solicitou", "pediu")
@@ -200,50 +177,20 @@ def _detectar_rota_heuristica(mensagem: str) -> dict:
     ) and any(k in n for k in ("whatsapp", "wpp")):
         return {"route": _ROTA_PADRAO, "params": {}}
 
-    _TERMOS_INVESTIGAR = (
-        "relatorio",
-        "relatório",
-        "resumo geral",
-        "panorama",
-        "como esta tudo",
-        "como está tudo",
-        "situacao geral",
-        "situação geral",
-        "overview",
-        "quantos clientes",
-        "quantas pedidos",
-        "quantos pedidos",
-        "valor total",
-        "total a receber",
-        "financeiro da semana",
-        "financeiro do mes",
-        "financeiro do mês",
-        "entregas de hoje",
-        "entregas desta semana",
-        "atrasados",
-        "atrasado",
-    )
-    if any(k in n for k in _TERMOS_INVESTIGAR):
+    if any(k in n for k in termos_investigar_prioritario()):
         return {"route": "investigar_sistema", "params": {"consulta": mensagem}}
 
-    if any(
-        k in n
-        for k in (
-            "pedido",
-            "pedidos",
-            "fila",
-            " rp",
-            "rp ",
-            "insumos",
-            "arte",
-            "financeiro",
-            "status",
-            "etapa",
-            "producao",
-            "produção",
-        )
-    ) and not any(k in n for k in ("abrir", "abre", "corel", "photoshop", "pasta", "cdr", "psd")):
+    if any(k in n for k in termos_fila_rp()) and not any(k in n for k in excluir_fila_rp()):
         return {"route": "consultar_fila_rp", "params": {"consulta": mensagem}}
+
+    if any(k in n for k in termos_investigar()):
+        return {"route": "investigar_sistema", "params": {"consulta": mensagem}}
+
+    if parece_consulta_leitor(mensagem):
+        return {"route": "pesquisar_sistema", "params": {"consulta": mensagem}}
+
+    if not _eh_saudacao(mensagem) and len(n.strip()) >= 4:
+        return {"route": "pesquisar_sistema", "params": {"consulta": mensagem}}
 
     return {"route": _ROTA_PADRAO, "params": {}}
 
@@ -292,6 +239,8 @@ def decidir_rota(mensagem: str, historico: list | None = None, modelo: str | Non
             "- atualizar_status_de_producao_na_tela: refresh da fila visual\n"
             "- calcular_gasto_de_malha_por_pedido: calculo de malha\n"
             "- criar_nova_funcionalidade_no_codigo: perguntas sobre codigo\n"
+            "- investigar_sistema: relatorios, resumos, perguntas amplas sobre o negocio\n"
+            "- pesquisar_sistema: busca no repo, ROANTONE, manifesto, arquivos (Ctrl+F)\n"
             "NUNCA invente rota fora da lista.\n\n"
             f"Mensagem: {mensagem}"
         )
@@ -313,6 +262,8 @@ def decidir_rota(mensagem: str, historico: list | None = None, modelo: str | Non
 
     if heur["route"] in validas:
         return heur
+    if not _eh_saudacao(mensagem) and len((mensagem or "").strip()) >= 4:
+        return {"route": "pesquisar_sistema", "params": {"consulta": mensagem}}
     return {"route": _ROTA_PADRAO, "params": {}}
 
 
@@ -331,13 +282,13 @@ def executar_rota(
     ctx = ctx or {}
 
     if route == "consultar_mensagens_whatsapp":
-        from agentes.consultor_whatsapp import executar as consultor_executar
+        from agentes.agente_wpp import executar as agente_wpp_executar
 
-        out = consultor_executar(mensagem, params, modelo, sessao=sessao)
+        out = agente_wpp_executar(mensagem, params, modelo, sessao=sessao)
         meta = out.get("meta") or {}
         meta["route"] = route
         meta["provedor"] = "adonay"
-        meta["agente"] = "consultor_whatsapp"
+        meta["agente"] = "agente_wpp"
         out["meta"] = meta
         return out
 
@@ -417,6 +368,16 @@ def executar_rota(
         out["meta"] = meta
         return out
 
+    if route == "pesquisar_sistema":
+        from agentes.leitor import executar as leitor_executar
+
+        out = leitor_executar(mensagem, params, modelo)
+        meta = out.get("meta") or {}
+        meta["route"] = route
+        meta["provedor"] = "adonay"
+        out["meta"] = meta
+        return out
+
     from agentes.sintetizador import executar
 
     out = executar(mensagem, params, modelo)
@@ -452,6 +413,7 @@ def rotear_pergunta_chatbox(
         out["meta"] = meta
         return out
 
+    from agentes.agente_wpp import detectar_confirmacao_mes, executar as agente_wpp_executar
     from agentes.followup_whatsapp import detectar_followup_whatsapp, responder_followup_whatsapp
 
     from agentes.respostas_diretas import tentar_resposta_direta
@@ -463,6 +425,19 @@ def rotear_pergunta_chatbox(
         meta["provedor"] = "adonay"
         direta["meta"] = meta
         return direta
+
+    if detectar_confirmacao_mes(mensagem, sessao):
+        out = agente_wpp_executar(
+            mensagem,
+            {"forcar_dias": 30, "consulta": mensagem},
+            modelo,
+            sessao=sessao,
+        )
+        meta = out.get("meta") or {}
+        meta["routing"] = {"route": "consultar_mensagens_whatsapp", "params": {"forcar_dias": 30}}
+        meta["provedor"] = "adonay"
+        out["meta"] = meta
+        return out
 
     if _eh_consulta_com_referencia_temporal(mensagem):
         rota = decidir_rota(mensagem, historico, modelo)

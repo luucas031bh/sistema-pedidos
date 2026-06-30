@@ -116,8 +116,7 @@ def _planejar_coleta(pergunta: str) -> list[str]:
         fontes.append("whatsapp")
 
     if not fontes:
-        fontes.append("stats")
-        fontes.append("etapas")
+        fontes = ["stats", "etapas", "pedidos_abertos", "financeiro", "whatsapp"]
 
     vistas: set[str] = set()
     resultado: list[str] = []
@@ -264,6 +263,16 @@ def _resposta_direta_dados(pergunta: str, dados: dict) -> str | None:
     return None
 
 
+def _rag_sistema(pergunta: str) -> str:
+    from leitor_sistema import formatar_achados, pesquisar_sistema
+
+    resultado = pesquisar_sistema(pergunta, fontes=["roantone", "repositorio", "manifesto"])
+    achados = resultado.get("achados") or []
+    if achados:
+        return formatar_achados(achados, max_itens=6)
+    return ""
+
+
 def _montar_contexto_llm(dados: dict, pergunta: str) -> str:
     linhas = ["=== DADOS DO SISTEMA ADONAY (coletados agora) ===\n"]
 
@@ -313,6 +322,12 @@ def _montar_contexto_llm(dados: dict, pergunta: str) -> str:
             linhas.append(f"  - {rotulo} [{m.get('intencao')}]: {m.get('texto', '')[:80]}")
 
     linhas.append("\n=== FIM DOS DADOS ===")
+
+    rag = _rag_sistema(pergunta)
+    if rag.strip():
+        linhas.append("")
+        linhas.append(rag)
+
     return "\n".join(linhas)
 
 

@@ -73,7 +73,7 @@
     "pergunta": "Qual agente ADNY consulta mensagens WhatsApp?",
     "tipo": "manifesto_rota_agente",
     "rota": "consultar_mensagens_whatsapp",
-    "agente": "consultor_whatsapp",
+    "agente": "agente_wpp",
     "obrigatorio": true
   },
   {
@@ -173,6 +173,198 @@
     "modulo": "agentes.investigador",
     "funcao": "_planejar_coleta",
     "fontes_contem": ["etapas", "pedidos_abertos"],
+    "obrigatorio": true
+  },
+  {
+    "id": "manifesto_action_buscarPedido",
+    "pergunta": "Existe action buscarPedido no Apps Script?",
+    "tipo": "manifesto_contains",
+    "lista": "gas_actions",
+    "valor": "buscarPedido",
+    "obrigatorio": true
+  },
+  {
+    "id": "manifesto_action_obterDados",
+    "pergunta": "Existe action obterDados no Apps Script?",
+    "tipo": "manifesto_contains",
+    "lista": "gas_actions",
+    "valor": "obterDados",
+    "obrigatorio": true
+  },
+  {
+    "id": "manifesto_action_relatorioPedidos",
+    "pergunta": "Existe action relatorioPedidos no Apps Script?",
+    "tipo": "manifesto_contains",
+    "lista": "gas_actions",
+    "valor": "relatorioPedidos",
+    "obrigatorio": true
+  },
+  {
+    "id": "manifesto_action_listarEntrega",
+    "pergunta": "Existe action listarPedidosEntregaPeriodo?",
+    "tipo": "manifesto_contains",
+    "lista": "gas_actions",
+    "valor": "listarPedidosEntregaPeriodo",
+    "obrigatorio": true
+  },
+  {
+    "id": "manifesto_etapa_corte",
+    "pergunta": "Corte e etapa de producao valida?",
+    "tipo": "manifesto_contains",
+    "lista": "etapas_producao",
+    "valor": "Corte",
+    "obrigatorio": true
+  },
+  {
+    "id": "manifesto_etapa_costura",
+    "pergunta": "Costura e etapa de producao valida?",
+    "tipo": "manifesto_contains",
+    "lista": "etapas_producao",
+    "valor": "Costura",
+    "obrigatorio": true
+  },
+  {
+    "id": "manifesto_etapa_estampa",
+    "pergunta": "Estampa e etapa de producao valida?",
+    "tipo": "manifesto_contains",
+    "lista": "etapas_producao",
+    "valor": "Estampa",
+    "obrigatorio": true
+  },
+  {
+    "id": "manifesto_mapa_financeiro",
+    "pergunta": "Qual funcao Python agrega resumo financeiro?",
+    "tipo": "manifesto_mapa_gas",
+    "funcao_python": "resumo_financeiro_rp",
+    "obrigatorio": true
+  },
+  {
+    "id": "rota_agente_investigador",
+    "pergunta": "Qual agente ADNY investiga o sistema?",
+    "tipo": "manifesto_rota_agente",
+    "rota": "investigar_sistema",
+    "agente": "investigador",
+    "obrigatorio": true
+  },
+  {
+    "id": "rota_fila_corte",
+    "pergunta": "quantos pedidos na etapa corte",
+    "tipo": "rota",
+    "rota_esperada": "consultar_fila_rp",
+    "obrigatorio": true
+  },
+  {
+    "id": "rota_fila_estampa",
+    "pergunta": "pedidos em estampa",
+    "tipo": "rota",
+    "rota_esperada": "consultar_fila_rp",
+    "obrigatorio": true
+  },
+  {
+    "id": "rota_fila_costura",
+    "pergunta": "fila de costura",
+    "tipo": "rota",
+    "rota_esperada": "consultar_fila_rp",
+    "obrigatorio": true
+  },
+  {
+    "id": "rota_investigador_como_funciona",
+    "pergunta": "como funciona o adny",
+    "tipo": "rota",
+    "rota_esperada": "investigar_sistema",
+    "obrigatorio": true
+  },
+  {
+    "id": "rota_investigador_atrasados",
+    "pergunta": "tem pedidos atrasados no sistema",
+    "tipo": "rota",
+    "rota_esperada": "investigar_sistema",
+    "obrigatorio": true
+  },
+  {
+    "id": "rota_decidir_fallback",
+    "pergunta": "preciso de ajuda com uma duvida operacional",
+    "tipo": "rota_decidir",
+    "rota_esperada": "pesquisar_sistema",
+    "obrigatorio": true
+  },
+  {
+    "id": "termos_fila_corte",
+    "pergunta": "Corte esta nos termos de rota RP?",
+    "tipo": "termos_contem",
+    "modulo": "termos_manifesto",
+    "funcao": "termos_fila_rp",
+    "valor": "corte",
+    "obrigatorio": true
+  },
+  {
+    "id": "termos_investigar_atrasado",
+    "pergunta": "Atrasado esta nos termos investigador?",
+    "tipo": "termos_contem",
+    "modulo": "termos_manifesto",
+    "funcao": "termos_investigar",
+    "valor": "atrasado",
+    "passar_manifesto": true,
+    "obrigatorio": true
+  },
+  {
+    "id": "investigador_coleta_padrao",
+    "pergunta": "me conta sobre o dia",
+    "tipo": "planejamento_fontes",
+    "modulo": "agentes.investigador",
+    "funcao": "_planejar_coleta",
+    "fontes_contem": ["stats", "etapas", "pedidos_abertos", "financeiro", "whatsapp"],
+    "obrigatorio": true
+  },
+  {
+    "id": "manifesto_fonte_whatsapp",
+    "pergunta": "De onde vem o log WhatsApp local?",
+    "tipo": "manifesto_campo",
+    "campo": "fontes_dados_vivos.whatsapp",
+    "contem": "whatsapp_mensagens",
+    "obrigatorio": true
+  },
+  {
+    "id": "rota_leitor_am102",
+    "pergunta": "qual cor e AM102",
+    "tipo": "rota",
+    "rota_esperada": "pesquisar_sistema",
+    "obrigatorio": true
+  },
+  {
+    "id": "leitor_am102_direto",
+    "pergunta": "qual cor e AM102",
+    "tipo": "leitor_contem",
+    "contem": "ROANTONE AM102",
+    "obrigatorio": true
+  },
+  {
+    "id": "rota_agente_leitor",
+    "pergunta": "Qual agente ADNY faz busca Ctrl+F no sistema?",
+    "tipo": "manifesto_rota_agente",
+    "rota": "pesquisar_sistema",
+    "agente": "leitor",
+    "obrigatorio": true
+  },
+  {
+    "id": "rota_wpp_clientes_24h",
+    "pergunta": "todos os clientes das ultimas 24 horas no whatsapp",
+    "tipo": "rota",
+    "rota_esperada": "consultar_mensagens_whatsapp",
+    "obrigatorio": true
+  },
+  {
+    "id": "wpp_parece_pergunta",
+    "pergunta": "todos os clientes das ultimas 24 horas",
+    "tipo": "wpp_parece",
+    "valor": true,
+    "obrigatorio": true
+  },
+  {
+    "id": "wpp_coleta_sequencia",
+    "pergunta": "teste expansao wpp",
+    "tipo": "wpp_sequencia_periodos",
+    "periodos": ["24 horas", "7 dias"],
     "obrigatorio": true
   }
 ]

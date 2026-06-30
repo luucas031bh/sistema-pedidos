@@ -142,16 +142,26 @@ def responder_followup_whatsapp(pergunta: str, sessao: str) -> dict | None:
             "mostre",
         )
     ):
-        vistos: dict[str, dict] = {}
-        for m in mensagens:
-            tel = m.get("telefone") or "?"
-            if tel not in vistos:
-                vistos[tel] = m
-        if not vistos:
-            resposta = "Nenhum cliente na consulta anterior."
+        clientes_salvos = dados.get("clientes") or []
+        if clientes_salvos:
+            linhas = []
+            for c in clientes_salvos[:80]:
+                nome = (c.get("nome") or "").strip()
+                tel = c.get("telefone") or "?"
+                rot = f"{nome} ({tel})" if nome else tel
+                linhas.append(f"· {rot} — {c.get('mensagens', 0)} msg(s)")
+            resposta = f"{len(clientes_salvos)} cliente(s) da consulta anterior:\n" + "\n".join(linhas)
         else:
-            linhas = [_rotulo_cliente(vistos[t]) for t in vistos]
-            resposta = f"{len(linhas)} cliente(s) da consulta anterior:\n" + "\n".join(linhas)
+            vistos: dict[str, dict] = {}
+            for m in mensagens:
+                tel = m.get("telefone") or "?"
+                if tel not in vistos:
+                    vistos[tel] = m
+            if not vistos:
+                resposta = "Nenhum cliente na consulta anterior."
+            else:
+                linhas = [_rotulo_cliente(vistos[t]) for t in vistos]
+                resposta = f"{len(linhas)} cliente(s) da consulta anterior:\n" + "\n".join(linhas)
         modo = "clientes"
 
     else:

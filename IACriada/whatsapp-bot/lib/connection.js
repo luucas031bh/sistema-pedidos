@@ -12,7 +12,7 @@ import { log } from "./logger.js";
 import { setBotIdentity } from "./bot-identity.js";
 import { limparQrPng, salvarQrPng } from "./qr-png.js";
 import { gravarStatus } from "./connection-status.js";
-import { registrarVarreduraNaoLidos } from "./sync-unread.js";
+import { registrarSyncHoje } from "./sync-hoje.js";
 
 let sockGlobal = null;
 let botJidGlobal = null;
@@ -54,7 +54,7 @@ export async function conectarWhatsApp(onMensagem) {
   });
 
   sockGlobal = sock;
-  registrarVarreduraNaoLidos(sock, onMensagem);
+  registrarSyncHoje(sock, onMensagem);
 
   sock.ev.on("creds.update", () => {
     saveCreds();
