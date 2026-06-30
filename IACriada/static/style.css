@@ -594,6 +594,94 @@ html, body {
   line-height: 1.4;
 }
 
+/* Popup token — mobile (GitHub Pages) */
+.token-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.token-modal[hidden] {
+  display: none !important;
+}
+
+.token-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.token-modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 22px 20px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+}
+
+.token-modal-card h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.token-modal-desc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.token-modal-card label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.token-modal-card input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #111;
+  color: var(--text);
+  font-size: 15px;
+  margin-bottom: 14px;
+}
+
+.token-modal-card input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.token-modal-btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.token-modal-btn:hover {
+  background: var(--accent-hover);
+}
+
+body.token-modal-open {
+  overflow: hidden;
+}
+
 @media (max-width: 768px) {
   .sidebar { display: none; }
   .llm-pill { padding: 8px 12px; font-size: 11px; }

@@ -30,6 +30,9 @@ const inpApiToken = document.getElementById("inp-api-token");
 const apiRemotoAjuda = document.getElementById("api-remoto-ajuda");
 const llmAviso = document.getElementById("llm-aviso");
 const linkFilaRp = document.getElementById("link-fila-rp");
+const tokenModalMobile = document.getElementById("token-modal-mobile");
+const formTokenMobile = document.getElementById("form-token-mobile");
+const inpTokenMobile = document.getElementById("inp-token-mobile");
 
 const RP_HOME_FALLBACK =
   "https://luucas031bh.github.io/sistema-pedidos/home.html";
@@ -78,6 +81,53 @@ function setApiToken(token) {
   const t = (token || "").trim();
   if (t) localStorage.setItem(API_TOKEN_KEY, t);
   else localStorage.removeItem(API_TOKEN_KEY);
+}
+
+function isMobileViewport() {
+  return window.matchMedia("(max-width: 768px)").matches;
+}
+
+function aplicarToken(token) {
+  setApiToken(token);
+  if (inpApiToken) inpApiToken.value = getApiToken();
+  if (inpTokenMobile) inpTokenMobile.value = getApiToken();
+  recarregarPainel();
+  atualizarModalTokenMobile();
+}
+
+function devePedirTokenMobile() {
+  return !isLocalUi() && isMobileViewport() && !getApiToken();
+}
+
+function atualizarModalTokenMobile() {
+  if (!tokenModalMobile) return;
+  if (devePedirTokenMobile()) {
+    tokenModalMobile.hidden = false;
+    document.body.classList.add("token-modal-open");
+    return;
+  }
+  tokenModalMobile.hidden = true;
+  document.body.classList.remove("token-modal-open");
+}
+
+function initTokenModalMobile() {
+  if (!tokenModalMobile || !formTokenMobile || !inpTokenMobile) return;
+
+  formTokenMobile.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const t = inpTokenMobile.value.trim();
+    if (!t) {
+      inpTokenMobile.focus();
+      return;
+    }
+    aplicarToken(t);
+  });
+
+  window.addEventListener("resize", atualizarModalTokenMobile);
+  atualizarModalTokenMobile();
+  if (devePedirTokenMobile()) {
+    setTimeout(() => inpTokenMobile.focus(), 150);
+  }
 }
 
 function apiHeaders(extra = {}) {
@@ -238,8 +288,7 @@ function initApiRemoto() {
   if (inpApiToken) {
     inpApiToken.value = getApiToken();
     inpApiToken.addEventListener("change", () => {
-      setApiToken(inpApiToken.value);
-      recarregarPainel();
+      aplicarToken(inpApiToken.value);
     });
   }
   if (statusBox && !getApiBase()) {
@@ -247,7 +296,9 @@ function initApiRemoto() {
       "Configure api_url em static/adny-public.json (tunel HTTPS) e publique no GitHub.";
     statusBox.className = "status-box err";
   } else if (statusBox && getApiBase() && !getApiToken()) {
-    statusBox.textContent = "Informe o Token ADNY no painel lateral (uma vez por aparelho).";
+    statusBox.textContent = isMobileViewport()
+      ? "Informe o Token ADNY no popup (uma vez por aparelho)."
+      : "Informe o Token ADNY no painel lateral (uma vez por aparelho).";
     statusBox.className = "status-box warn";
   }
 }
@@ -696,6 +747,7 @@ bindChips();
 async function bootstrap() {
   await carregarPublicConfig();
   initApiRemoto();
+  initTokenModalMobile();
   carregarStatus();
   carregarSnapshot();
   carregarHistorico();

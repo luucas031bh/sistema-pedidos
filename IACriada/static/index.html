@@ -83,6 +83,37 @@
       </footer>
     </main>
   </div>
-  <script src="app.js?v=15"></script>
+
+  <div class="token-modal" id="token-modal-mobile" hidden>
+    <div class="token-modal-backdrop" aria-hidden="true"></div>
+    <div
+      class="token-modal-card"
+      role="dialog"
+      aria-labelledby="token-modal-title"
+      aria-modal="true"
+    >
+      <h2 id="token-modal-title">Token ADNY</h2>
+      <p class="token-modal-desc">
+        Para usar pelo celular, cole o token que a loja enviou. Ele fica salvo neste aparelho.
+      </p>
+      <form id="form-token-mobile">
+        <label for="inp-token-mobile">Token ADNY</label>
+        <input
+          type="text"
+          id="inp-token-mobile"
+          inputmode="text"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+          placeholder="Cole o token aqui"
+          required
+        />
+        <button type="submit" class="token-modal-btn">Salvar e continuar</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js?v=16"></script>
 </body>
 </html>
