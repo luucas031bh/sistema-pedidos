@@ -92,8 +92,8 @@ def _detectar_rota_heuristica(mensagem: str) -> dict:
     if _eh_saudacao(mensagem):
         return {"route": _ROTA_PADRAO, "params": {"tipo": "saudacao"}}
 
-    if any(k in n for k in ("malha", "consumo de tecido", "gasto de malha", "metros de malha")) and any(
-        k in n for k in ("calcular", "calculo", "cálculo", "quanto", "gasto", "consumo", "pedido")
+    if any(k in n for k in ("malha", "consumo de tecido", "gasto de malha", "metros de malha", "calculadoramalha", "calculadora malha")) and any(
+        k in n for k in ("calcular", "calculo", "cálculo", "quanto", "gasto", "consumo", "pedido", "preciso", "quantidade")
     ):
         return {"route": "calcular_gasto_de_malha_por_pedido", "params": {"consulta": mensagem}}
 
@@ -341,7 +341,7 @@ def executar_rota(
     if route == "calcular_gasto_de_malha_por_pedido":
         from agentes.calculadora_malha import executar as calc_executar
 
-        out = calc_executar(mensagem, params, modelo)
+        out = calc_executar(mensagem, params, modelo, sessao=sessao)
         meta = out.get("meta") or {}
         meta["route"] = route
         meta["provedor"] = "adonay"
@@ -417,6 +417,16 @@ def rotear_pergunta_chatbox(
     from agentes.followup_whatsapp import detectar_followup_whatsapp, responder_followup_whatsapp
 
     from agentes.respostas_diretas import tentar_resposta_direta
+
+    from agentes.calculadora_malha import executar as calc_executar, parece_calculadora_malha, sessao_malha_ativa
+
+    if sessao_malha_ativa(sessao):
+        out = calc_executar(mensagem, {}, modelo, sessao=sessao)
+        meta = out.get("meta") or {}
+        meta["routing"] = {"route": "calcular_gasto_de_malha_por_pedido", "params": {"wizard": True}}
+        meta["provedor"] = "adonay"
+        out["meta"] = meta
+        return out
 
     direta = tentar_resposta_direta(mensagem)
     if direta is not None:

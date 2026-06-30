@@ -240,6 +240,37 @@ def _validar_item(item: dict, manifesto: dict) -> tuple[bool, str, str]:
         ok = contem.lower() in texto.lower()
         return ok, contem, texto[:120]
 
+    if tipo == "rp_lista_tamanhos":
+        from rp_formatadores import format_lista_tamanhos_pedido
+
+        fixture = {
+            "sucesso": True,
+            "pedido": {
+                "id": "T-1",
+                "cliente": {"nome": "Teste"},
+                "totalPecas": 12,
+                "produtos": [
+                    {"tamanhos": [{"tamanho": "PP (BL)", "quantidade": 5}, {"tamanho": "G", "quantidade": 7}]}
+                ],
+            },
+        }
+        texto = format_lista_tamanhos_pedido(fixture)
+        contem = item.get("contem") or ""
+        ok = contem.lower() in texto.lower()
+        return ok, contem, texto[:120]
+
+    if tipo == "calc_malha_totais":
+        from calculadora_malha_core import calcular_orcamento
+
+        calc = calcular_orcamento(
+            {"largura": 1.80, "tipo": "ramada", "rendimento_m_por_kg": 4.5, "preco_por_kg": 35.0},
+            [{"tamanho": "P", "quantidade": 10}, {"tamanho": "M", "quantidade": 5}],
+        )
+        metros = float((calc.get("totais") or {}).get("metros_total") or 0)
+        minimo = float(item.get("metros_min") or 1.0)
+        ok = metros >= minimo
+        return ok, f">= {minimo} m", f"{metros:.2f} m"
+
     return False, "?", f"tipo desconhecido: {tipo}"
 
 

@@ -226,6 +226,30 @@ def buscar_manifesto(consulta: str) -> list[dict]:
             }
         )
 
+    for mod, desc in (m.get("modulos_frontend") or {}).items():
+        if _norm(mod) in n or any(t in _norm(desc) for t in _tokens(consulta)):
+            achados.append(
+                {
+                    "fonte": "manifesto",
+                    "caminho": f"sistema-pedidos/{mod}",
+                    "trecho": f"Modulo frontend: {mod} — {desc}",
+                    "relevancia": 0.88,
+                }
+            )
+
+    if any(k in n for k in ("calculadora", "malha", "rendimento", "tubular", "ramada")):
+        achados.append(
+            {
+                "fonte": "manifesto",
+                "caminho": "CalculadoraMalha/index.html",
+                "trecho": (
+                    "Calculadora de Malha — campos: Largura (m), Tipo (ramada/tubular), "
+                    "Rendimento (m/kg), Preco/kg. Usa tabela de pecas por lote por tamanho."
+                ),
+                "relevancia": 0.92,
+            }
+        )
+
     return achados[:8]
 
 

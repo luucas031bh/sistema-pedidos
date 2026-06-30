@@ -332,15 +332,43 @@ def _tentar_resposta_rp_direta(
             f"{dados_rp.get('erro') or 'Verifique a internet e tente de novo.'}"
         )
     if dados_rp.get("ok"):
-        from historico_db import salvar_contexto_rp
+        from historico_db import salvar_contexto_rp, salvar_pedido_ativo
 
         det = clf.get("intencao_detalhada") or clf.get("intencao", "buscar_pedidos_status")
         salvar_contexto_rp(sessao, det, params)
+        if dados_rp.get("action") == "buscarPedido":
+            facts = dados_rp.get("facts") or {}
+            pedido = facts.get("pedido") if isinstance(facts, dict) else None
+            if pedido:
+                ent = extrair_entidades_rp(texto_user)
+                termo = ent.get("codigo") or ent.get("cliente") or ent.get("termo_busca") or ""
+                salvar_pedido_ativo(sessao, pedido, str(termo))
 
     if resposta and dados_rp.get("ok") and deve_sintetizar_rp(texto_user, dados_rp):
-        sintese = sintetizar_resposta_rp(texto_user, resposta, dados_rp, modelo)
+        from agentes.interpretador import organizar_resposta
+
+        kind = dados_rp.get("kind") or ""
+        ctx = (
+            "lista_tamanhos"
+            if kind == "lista_tamanhos_pedido"
+            else "resumo_pedido"
+            if kind == "resumo_completo_pedido"
+            else "rp_pedido"
+        )
+        sintese = organizar_resposta(
+            texto_user,
+            resposta,
+            dados_rp.get("facts"),
+            modelo,
+            contexto=ctx,
+            forcar_llm=True,
+        )
         if sintese:
             resposta = sintese
+        else:
+            sintese_legacy = sintetizar_resposta_rp(texto_user, resposta, dados_rp, modelo)
+            if sintese_legacy:
+                resposta = sintese_legacy
 
     return {
         "resposta": resposta,

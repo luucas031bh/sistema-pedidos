@@ -72,6 +72,19 @@ def gerar_manifesto_sistema(*, salvar: bool = True) -> dict:
         p = raiz / nome
         if p.is_file():
             paginas.append(nome)
+    calc_dir = raiz / "CalculadoraMalha"
+    if calc_dir.is_dir():
+        for p in sorted(calc_dir.glob("*")):
+            if p.is_file() and p.suffix.lower() in (".html", ".js", ".css", ".json"):
+                paginas.append(f"CalculadoraMalha/{p.name}")
+
+    modulos_frontend = {
+        "CalculadoraMalha": "Calculadora de consumo de malha (largura, tipo, rendimento, preco/kg)",
+        "home.html": "Portal principal do sistema de pedidos",
+        "index.html": "Fila RP / tela de pedidos",
+        "relatorio.html": "Relatorios e KPIs",
+        "editar-pedido.html": "Formulario de edicao de pedido",
+    }
 
     manifesto = {
         "gerado_em": datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds"),
@@ -99,6 +112,7 @@ def gerar_manifesto_sistema(*, salvar: bool = True) -> dict:
         },
         "rotas_validas": rotas_validas,
         "paginas_web": paginas,
+        "modulos_frontend": modulos_frontend,
         "fontes_dados_vivos": {
             "rp": "Google Apps Script via consultar_rp.gas_get()",
             "whatsapp": "observador_store.whatsapp_mensagens.jsonl",

@@ -40,7 +40,13 @@ def deve_sintetizar_rp(pergunta: str, dados: dict) -> bool:
     if not dados.get("ok"):
         return False
     kind = dados.get("kind") or ""
-    if kind in ("tamanhos_pedido", "detalhe_pedido", "busca_pedidos"):
+    if kind in (
+        "tamanhos_pedido",
+        "detalhe_pedido",
+        "busca_pedidos",
+        "lista_tamanhos_pedido",
+        "resumo_completo_pedido",
+    ):
         return True
     ent = extrair_entidades_rp(pergunta)
     return bool(ent.get("cliente") and ent.get("quer_tamanhos"))

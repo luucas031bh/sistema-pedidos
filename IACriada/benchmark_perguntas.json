@@ -396,5 +396,26 @@
     "tipo": "rp_formatador_contem",
     "contem": "P: 10 pc",
     "obrigatorio": true
+  },
+  {
+    "id": "rp_lista_tamanhos_formato",
+    "pergunta": "fixture",
+    "tipo": "rp_lista_tamanhos",
+    "contem": "PP(BL) = 5 unidades",
+    "obrigatorio": true
+  },
+  {
+    "id": "calc_malha_core",
+    "pergunta": "fixture",
+    "tipo": "calc_malha_totais",
+    "metros_min": 1.0,
+    "obrigatorio": true
+  },
+  {
+    "id": "rota_calc_malha",
+    "pergunta": "quantidade de malha preciso do pedido Carlos Bastos",
+    "tipo": "rota",
+    "rota_esperada": "calcular_gasto_de_malha_por_pedido",
+    "obrigatorio": true
   }
 ]

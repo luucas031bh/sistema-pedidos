@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from consultar_rp import id_busca_pedido, nome_cliente, pedido_conta_kpi, pedido_esta_aberto
 
 
@@ -176,6 +178,62 @@ def format_entregas_periodo(data: dict, max_linhas: int = 40) -> str:
     return out
 
 
+def _rotulo_tamanho_usuario(tamanho: str) -> str:
+    t = str(tamanho or "").strip()
+    m = re.match(r"^(.+?)\s*\(\s*BL\s*\)$", t, re.I)
+    if m:
+        return f"{m.group(1).strip().upper()}(BL)"
+    return t.upper() if t.isalpha() or re.match(r"^[A-Z0-9]+$", t, re.I) else t
+
+
+def _agregar_tamanhos_pedido(pedido: dict) -> list[tuple[str, int]]:
+    agregado: dict[str, int] = {}
+    for prod in pedido.get("produtos") or []:
+        for tm in prod.get("tamanhos") or []:
+            if not isinstance(tm, dict):
+                continue
+            tam = str(tm.get("tamanho") or "").strip()
+            qtd = int(tm.get("quantidade") or 0)
+            if tam and qtd > 0:
+                agregado[tam] = agregado.get(tam, 0) + qtd
+    return sorted(agregado.items(), key=lambda x: (len(x[0]), x[0]))
+
+
+def format_lista_tamanhos_pedido(data: dict) -> str:
+    """Lista amigavel: PP(BL) = 5 unidades."""
+    if not data.get("sucesso"):
+        return f"Erro: {data.get('erro') or 'nao encontrado'}"
+    p = data.get("pedido")
+    if not p:
+        return "Pedido nao encontrado."
+    pares = _agregar_tamanhos_pedido(p)
+    if not pares:
+        return f"Pedido {p.get('id', '—')} — {nome_cliente(p)}: sem tamanhos cadastrados."
+    linhas = [
+        f"Lista de tamanhos — {nome_cliente(p)} · ID busca {id_busca_pedido(p)}",
+        f"Pedido {p.get('id', '—')} · Total: {p.get('totalPecas', '—')} pecas",
+        "",
+    ]
+    for tam, qtd in pares:
+        linhas.append(f"{_rotulo_tamanho_usuario(tam)} = {qtd} unidades")
+    return "\n".join(linhas)
+
+
+def format_resumo_completo_pedido(data: dict) -> str:
+    """Resumo completo: cabecalho + produtos + obs + lista de tamanhos."""
+    base = format_busca_um(data)
+    if not data.get("sucesso"):
+        return base
+    p = data.get("pedido") or {}
+    pares = _agregar_tamanhos_pedido(p)
+    if not pares:
+        return base
+    linhas = [base, "", "Tamanhos e quantidades:"]
+    for tam, qtd in pares:
+        linhas.append(f"{_rotulo_tamanho_usuario(tam)} = {qtd} unidades")
+    return "\n".join(linhas)
+
+
 def format_tamanhos_pedido(data: dict) -> str:
     """Tamanhos e quantidades de um pedido (produtos[].tamanhos[])."""
     if not data.get("sucesso"):
@@ -295,6 +353,10 @@ def format_intent_fallback(kind: str, facts: dict) -> str:
         return format_busca_um(facts)
     if kind == "tamanhos_pedido":
         return format_tamanhos_pedido(facts)
+    if kind == "lista_tamanhos_pedido":
+        return format_lista_tamanhos_pedido(facts)
+    if kind == "resumo_completo_pedido":
+        return format_resumo_completo_pedido(facts)
     if kind == "relatorio_periodo":
         return format_relatorio(facts)
     if kind == "resumo_financeiro":

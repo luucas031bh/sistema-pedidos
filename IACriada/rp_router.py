@@ -23,6 +23,8 @@ from rp_entidades import (
     candidatos_busca_cliente,
     escolher_pedido_por_nome,
     extrair_entidades_rp,
+    quer_lista_tamanhos,
+    quer_resumo_pedido,
 )
 
 
@@ -102,11 +104,16 @@ def _rota_tamanhos_pedido_especifico(raw: str, n: str, p: dict) -> dict | None:
         return None
 
     data = _resolver_pedido_por_termo(str(termo))
-    txt = format_intent_fallback("tamanhos_pedido", data)
+    ent = extrair_entidades_rp(raw)
+    if quer_lista_tamanhos(raw):
+        kind = "lista_tamanhos_pedido"
+    else:
+        kind = "tamanhos_pedido"
+    txt = format_intent_fallback(kind, data)
     return {
         "ok": bool(data.get("sucesso")),
         "action": "buscarPedido",
-        "kind": "tamanhos_pedido",
+        "kind": kind,
         "facts": data,
         "texto_formatado": txt,
         "erro": data.get("erro") if not data.get("sucesso") else None,
@@ -176,6 +183,51 @@ def rotear_pergunta_rp(texto: str, params: dict | None = None) -> dict:
 
     if not _tema_rp(n) and not p.get("forcar_rp"):
         return {"ok": False, "erro": "Nao e consulta ao RP", "action": "none"}
+
+    ent = extrair_entidades_rp(raw)
+    termo_pedido = p.get("codigo") or p.get("cliente") or ent.get("codigo") or ent.get("cliente") or ent.get("termo_busca")
+
+    # Resumo/detalhe de UM pedido (cliente ou codigo) — antes do resumo financeiro global
+    if termo_pedido and quer_resumo_pedido(raw):
+        data = _resolver_pedido_por_termo(str(termo_pedido))
+        txt = format_intent_fallback("resumo_completo_pedido", data)
+        return {
+            "ok": bool(data.get("sucesso")),
+            "action": "buscarPedido",
+            "kind": "resumo_completo_pedido",
+            "facts": data,
+            "texto_formatado": txt,
+            "erro": data.get("erro") if not data.get("sucesso") else None,
+        }
+
+    # Lista de tamanhos de um pedido
+    if termo_pedido and quer_lista_tamanhos(raw):
+        data = _resolver_pedido_por_termo(str(termo_pedido))
+        txt = format_intent_fallback("lista_tamanhos_pedido", data)
+        return {
+            "ok": bool(data.get("sucesso")),
+            "action": "buscarPedido",
+            "kind": "lista_tamanhos_pedido",
+            "facts": data,
+            "texto_formatado": txt,
+            "erro": data.get("erro") if not data.get("sucesso") else None,
+        }
+
+    if termo_pedido and re.search(r"\bpedido\b", n) and not any(
+        k in n for k in ("fila", "abertos", "insumos", "corte", "arte", "costura", "estampa", "embalo")
+    ):
+        if any(k in n for k in ("resumo", "detalhe", "detalhes", "traga", "mostra", "mostrar", "informac")):
+            if "financeiro" not in n or ent.get("cliente") or ent.get("codigo"):
+                data = _resolver_pedido_por_termo(str(termo_pedido))
+                if data.get("sucesso"):
+                    txt = format_intent_fallback("detalhe_pedido", data)
+                    return {
+                        "ok": True,
+                        "action": "buscarPedido",
+                        "kind": "detalhe_pedido",
+                        "facts": data,
+                        "texto_formatado": txt,
+                    }
 
     # Resumo financeiro (aceita typos: relatorioo, financeir)
     if any(
@@ -449,6 +501,10 @@ def montar_resposta_rp_direta(dados: dict) -> str | None:
             kind = dados.get("kind") or ""
             if kind == "tamanhos_pedido":
                 cab = "Tamanhos e quantidades do pedido (planilha RP):\n\n"
+            elif kind == "lista_tamanhos_pedido":
+                cab = "Lista de tamanhos do pedido (planilha RP):\n\n"
+            elif kind == "resumo_completo_pedido":
+                cab = "Resumo completo do pedido (planilha RP):\n\n"
             else:
                 cab = "Detalhe do pedido (sistema RP):\n\n"
         else:

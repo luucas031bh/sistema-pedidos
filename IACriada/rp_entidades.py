@@ -87,6 +87,18 @@ _PADROES_CLIENTE = (
         r"(?:o\s+|a\s+)?([a-zA-ZÀ-ú][\wÀ-ú\s]{1,45})",
         re.I,
     ),
+    re.compile(
+        r"(?:peiddo|pedido)\s+(?:peiddo|pedido\s+)+([a-zA-ZÀ-ú][\wÀ-ú\s]{2,45})",
+        re.I,
+    ),
+    re.compile(
+        r"(?:peiddo|pedido)\s+([A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+)+)",
+    ),
+    re.compile(
+        r"(?:resumo|detalhe|detalhes|dados)\s+(?:do|da|de)\s+(?:pedido\s+)?(?:do|da|de)?\s*"
+        r"(?:o\s+|a\s+)?([a-zA-ZÀ-ú][\wÀ-ú\s]{2,45})",
+        re.I,
+    ),
 )
 
 
@@ -162,6 +174,40 @@ def escopo_pedido_unico(texto: str, cliente: str | None = None) -> bool:
     if re.search(r"\b(?:do|da)\s+(?:pedido|cliente)\b", n):
         return True
     return False
+
+
+def quer_lista_tamanhos(texto: str) -> bool:
+    n = _norm(texto or "")
+    if not quer_tamanhos_ou_quantidades(texto):
+        return False
+    return any(k in n for k in ("lista", "listar", "liste", "listagem", "enumera", "faça uma lista", "faca uma lista"))
+
+
+def quer_resumo_pedido(texto: str) -> bool:
+    """True quando pede resumo/detalhe de um pedido (nao resumo financeiro da fila)."""
+    n = _norm(texto or "")
+    if any(k in n for k in ("resumo financeiro", "financeiro da fila", "financeiro dos pedidos")):
+        return False
+    return any(
+        k in n
+        for k in (
+            "resumo do pedido",
+            "resumo pedido",
+            "faça um resumo",
+            "faca um resumo",
+            "me faz um resumo",
+            "traga o resumo",
+            "traga resumo",
+            "me traga o resumo",
+            "detalhe do pedido",
+            "detalhes do pedido",
+            "informacoes do pedido",
+            "informações do pedido",
+            "dados do pedido",
+            "todas as informacoes",
+            "todas as informações",
+        )
+    )
 
 
 def quer_tamanhos_ou_quantidades(texto: str) -> bool:

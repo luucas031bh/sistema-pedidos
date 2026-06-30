@@ -201,6 +201,54 @@ def carregar_ultimo_resultado(sessao: str) -> dict | None:
     }
 
 
+def salvar_pedido_ativo(sessao: str, pedido: dict, termo: str = "") -> None:
+    """Guarda ultimo pedido consultado para follow-up (tamanhos, malha)."""
+    from consultar_rp import id_busca_pedido, nome_cliente
+
+    ctx = _ler_contexto_sessao(sessao)
+    ctx["pedido_ativo"] = {
+        "termo": termo,
+        "id": pedido.get("id"),
+        "id_busca": id_busca_pedido(pedido),
+        "cliente": nome_cliente(pedido),
+        "pedido": pedido,
+        "atualizado_em": time.time(),
+    }
+    _gravar_contexto_sessao(sessao, ctx)
+
+
+def carregar_pedido_ativo(sessao: str) -> dict | None:
+    ctx = _ler_contexto_sessao(sessao)
+    pa = ctx.get("pedido_ativo")
+    if not pa or not isinstance(pa, dict):
+        return None
+    if pa.get("atualizado_em") and (time.time() - float(pa["atualizado_em"])) > 86400 * 7:
+        return None
+    return pa
+
+
+def salvar_wizard_malha(sessao: str, estado: dict) -> None:
+    ctx = _ler_contexto_sessao(sessao)
+    ctx["wizard_malha"] = {**estado, "atualizado_em": time.time()}
+    _gravar_contexto_sessao(sessao, ctx)
+
+
+def carregar_wizard_malha(sessao: str) -> dict | None:
+    ctx = _ler_contexto_sessao(sessao)
+    w = ctx.get("wizard_malha")
+    if not w or not isinstance(w, dict):
+        return None
+    if w.get("atualizado_em") and (time.time() - float(w["atualizado_em"])) > 86400:
+        return None
+    return w
+
+
+def limpar_wizard_malha(sessao: str) -> None:
+    ctx = _ler_contexto_sessao(sessao)
+    ctx.pop("wizard_malha", None)
+    _gravar_contexto_sessao(sessao, ctx)
+
+
 def salvar_memoria_verificada(
     benchmark_id: str,
     pergunta: str,
