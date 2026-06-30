@@ -4,14 +4,43 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from historico_db import salvar_ultimo_resultado
 from observador import status_observador
 from observador_store import carregar_mensagens_whatsapp, contar_mensagens_whatsapp
 
+_TZ_BR = ZoneInfo("America/Sao_Paulo")
 
-def _parse_periodo(pergunta: str) -> timedelta:
+
+def _inicio_hoje_utc() -> datetime:
+    agora = datetime.now(_TZ_BR)
+    inicio = agora.replace(hour=0, minute=0, second=0, microsecond=0)
+    return inicio.astimezone(timezone.utc)
+
+
+def _pergunta_pediu_hoje(pergunta: str) -> bool:
+    return "hoje" in (pergunta or "").lower()
+
+
+def _periodo_label(td: timedelta) -> str:
+    s = int(td.total_seconds())
+    if s < 3600:
+        m = max(1, s // 60)
+        return f"{m} minuto(s)"
+    if s < 86400:
+        h = max(1, s // 3600)
+        return f"{h} hora(s)"
+    d = max(1, s // 86400)
+    return f"{d} dia(s)"
+
+
+def _parse_periodo(pergunta: str) -> tuple[datetime | None, timedelta, str]:
+    """Retorna (desde_fixo, fallback_delta, rotulo). desde_fixo tem prioridade."""
     n = (pergunta or "").lower()
+    if "hoje" in n:
+        return _inicio_hoje_utc(), timedelta(hours=24), "hoje"
+
     m = re.search(
         r"(?:ultim(?:os|as)?|nos?\s+ultim(?:os|as)?)\s+(\d+)\s*(minut|hora|dia|semana)",
         n,
@@ -20,22 +49,33 @@ def _parse_periodo(pergunta: str) -> timedelta:
         qtd = int(m.group(1))
         un = m.group(2)
         if un.startswith("minut"):
-            return timedelta(minutes=qtd)
-        if un.startswith("hora"):
-            return timedelta(hours=qtd)
-        if un.startswith("dia"):
-            return timedelta(days=qtd)
-        if un.startswith("semana"):
-            return timedelta(weeks=qtd)
-    if "hoje" in n:
-        return timedelta(hours=24)
+            td = timedelta(minutes=qtd)
+        elif un.startswith("hora"):
+            td = timedelta(hours=qtd)
+        elif un.startswith("dia"):
+            td = timedelta(days=qtd)
+        else:
+            td = timedelta(weeks=qtd)
+        return None, td, _periodo_label(td)
+
     if "minut" in n:
-        return timedelta(minutes=60)
+        td = timedelta(minutes=60)
+        return None, td, _periodo_label(td)
     if "hora" in n:
-        return timedelta(hours=24)
+        td = timedelta(hours=24)
+        return None, td, _periodo_label(td)
     if "dia" in n or "semana" in n:
-        return timedelta(days=7)
-    return timedelta(hours=24)
+        td = timedelta(days=7)
+        return None, td, _periodo_label(td)
+    td = timedelta(hours=24)
+    return None, td, _periodo_label(td)
+
+
+def _desde_para_pergunta(pergunta: str) -> tuple[datetime, str]:
+    fixo, delta, rotulo = _parse_periodo(pergunta)
+    if fixo is not None:
+        return fixo, rotulo
+    return datetime.now(timezone.utc) - delta, rotulo
 
 
 def _parse_sufixo_telefone(pergunta: str) -> str | None:
@@ -89,37 +129,29 @@ def _formatar_mensagem(m: dict, idx: int | None = None) -> str:
     return f'{prefix}{rotulo} [{intent}] {ts}\n   "{texto[:300]}"'
 
 
-def _periodo_label(td: timedelta) -> str:
-    s = int(td.total_seconds())
-    if s < 3600:
-        m = max(1, s // 60)
-        return f"{m} minuto(s)"
-    if s < 86400:
-        h = max(1, s // 3600)
-        return f"{h} hora(s)"
-    d = max(1, s // 86400)
-    return f"{d} dia(s)"
-
-
-def _formatar_resposta_curta(mensagens: list[dict], periodo: timedelta) -> str:
+def _formatar_resposta_curta(mensagens: list[dict], rotulo_periodo: str) -> str:
     n = len(mensagens)
-    rotulo = _periodo_label(periodo)
+    if rotulo_periodo == "hoje":
+        if n == 0:
+            return "0 mensagem(ns) hoje."
+        return f"{n} mensagem(ns) hoje. Quer ver de quais clientes?"
     if n == 0:
-        return f"0 mensagem(ns) nos ultimos {rotulo}."
-    return f"{n} mensagem(ns) nos ultimos {rotulo}. Quer ver de quais clientes?"
+        return f"0 mensagem(ns) nos ultimos {rotulo_periodo}."
+    return f"{n} mensagem(ns) nos ultimos {rotulo_periodo}. Quer ver de quais clientes?"
 
 
 def _formatar_resposta(
     mensagens: list[dict],
     pergunta: str,
-    periodo: timedelta,
+    desde: datetime,
+    rotulo_periodo: str,
     status: dict,
     filtro_comercial: bool,
 ) -> str:
     if _eh_pergunta_contagem_pura(pergunta):
-        return _formatar_resposta_curta(mensagens, periodo)
+        return _formatar_resposta_curta(mensagens, rotulo_periodo)
 
-    total_periodo = contar_mensagens_whatsapp(desde=datetime.now(timezone.utc) - periodo)
+    total_periodo = contar_mensagens_whatsapp(desde=desde)
     conectado = status.get("whatsapp_conectado")
     nome_conta = (status.get("whatsapp_nome") or "").strip()
 
@@ -129,7 +161,7 @@ def _formatar_resposta(
     else:
         cab.append("WhatsApp desconectado — so ha mensagens capturadas desde a ultima conexao.")
     cab.append(
-        f"Periodo: ultimos {_periodo_label(periodo)} "
+        f"Periodo: {rotulo_periodo if rotulo_periodo == 'hoje' else 'ultimos ' + rotulo_periodo} "
         f"({total_periodo} msg no log, {len(mensagens)} apos filtros)."
     )
     if filtro_comercial:
@@ -178,7 +210,8 @@ def executar(
     sessao: str = "padrao",
 ) -> dict:
     params = params or {}
-    periodo = _parse_periodo(params.get("periodo") or pergunta)
+    _, delta, _ = _parse_periodo(params.get("periodo") or pergunta)
+    desde, rotulo = _desde_para_pergunta(params.get("periodo") or pergunta)
     sufixo = params.get("telefone_sufixo") or _parse_sufixo_telefone(pergunta)
     filtro_comercial = params.get("filtro") in ("orcamento", "preco", "comercial") or _pede_orcamento_ou_preco(
         pergunta
@@ -188,7 +221,6 @@ def executar(
     if filtro_comercial:
         intencoes = ["orcamento", "preco"]
 
-    desde = datetime.now(timezone.utc) - periodo
     mensagens = carregar_mensagens_whatsapp(
         desde=desde,
         telefone_sufixo=sufixo,
@@ -203,13 +235,14 @@ def executar(
             {
                 "mensagens": _serializar_mensagens(mensagens),
                 "pergunta_original": pergunta,
-                "periodo_horas": round(periodo.total_seconds() / 3600, 2),
+                "periodo_horas": round(delta.total_seconds() / 3600, 2),
+                "periodo_rotulo": rotulo,
                 "filtro_comercial": filtro_comercial,
             },
         )
 
     status = status_observador()
-    resposta = _formatar_resposta(mensagens, pergunta, periodo, status, filtro_comercial)
+    resposta = _formatar_resposta(mensagens, pergunta, desde, rotulo, status, filtro_comercial)
 
     return {
         "resposta": resposta,
@@ -218,7 +251,8 @@ def executar(
             {
                 "agente": "consultor_whatsapp",
                 "mensagens": len(mensagens),
-                "periodo_horas": round(periodo.total_seconds() / 3600, 2),
+                "periodo_horas": round(delta.total_seconds() / 3600, 2),
+                "periodo_rotulo": rotulo,
             }
         ],
         "meta": {

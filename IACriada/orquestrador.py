@@ -200,25 +200,6 @@ def _detectar_rota_heuristica(mensagem: str) -> dict:
     ) and any(k in n for k in ("whatsapp", "wpp")):
         return {"route": _ROTA_PADRAO, "params": {}}
 
-    if any(
-        k in n
-        for k in (
-            "pedido",
-            "pedidos",
-            "fila",
-            " rp",
-            "rp ",
-            "insumos",
-            "arte",
-            "financeiro",
-            "status",
-            "etapa",
-            "producao",
-            "produção",
-        )
-    ) and not any(k in n for k in ("abrir", "abre", "corel", "photoshop", "pasta", "cdr", "psd")):
-        return {"route": "consultar_fila_rp", "params": {"consulta": mensagem}}
-
     _TERMOS_INVESTIGAR = (
         "relatorio",
         "relatório",
@@ -244,6 +225,25 @@ def _detectar_rota_heuristica(mensagem: str) -> dict:
     )
     if any(k in n for k in _TERMOS_INVESTIGAR):
         return {"route": "investigar_sistema", "params": {"consulta": mensagem}}
+
+    if any(
+        k in n
+        for k in (
+            "pedido",
+            "pedidos",
+            "fila",
+            " rp",
+            "rp ",
+            "insumos",
+            "arte",
+            "financeiro",
+            "status",
+            "etapa",
+            "producao",
+            "produção",
+        )
+    ) and not any(k in n for k in ("abrir", "abre", "corel", "photoshop", "pasta", "cdr", "psd")):
+        return {"route": "consultar_fila_rp", "params": {"consulta": mensagem}}
 
     return {"route": _ROTA_PADRAO, "params": {}}
 
@@ -453,6 +453,16 @@ def rotear_pergunta_chatbox(
         return out
 
     from agentes.followup_whatsapp import detectar_followup_whatsapp, responder_followup_whatsapp
+
+    from agentes.respostas_diretas import tentar_resposta_direta
+
+    direta = tentar_resposta_direta(mensagem)
+    if direta is not None:
+        meta = direta.get("meta") or {}
+        meta["routing"] = {"route": "resposta_direta", "params": {}}
+        meta["provedor"] = "adonay"
+        direta["meta"] = meta
+        return direta
 
     if _eh_consulta_com_referencia_temporal(mensagem):
         rota = decidir_rota(mensagem, historico, modelo)

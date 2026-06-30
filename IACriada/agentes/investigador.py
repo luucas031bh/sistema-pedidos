@@ -16,6 +16,18 @@ from consultar_rp import (
 from observador_store import carregar_mensagens_whatsapp
 
 
+def _manifesto_etapas() -> list[str]:
+    try:
+        from gerar_manifesto_sistema import carregar_manifesto
+
+        m = carregar_manifesto()
+        if m and m.get("etapas_producao"):
+            return list(m["etapas_producao"])
+    except ImportError:
+        pass
+    return []
+
+
 def _planejar_coleta(pergunta: str) -> list[str]:
     n = (pergunta or "").lower()
 
@@ -42,6 +54,7 @@ def _planejar_coleta(pergunta: str) -> list[str]:
             "quantos clientes",
             "em aberto",
         )
+        + tuple(e.lower() for e in _manifesto_etapas())
     ):
         fontes.append("etapas")
         fontes.append("pedidos_abertos")
@@ -193,7 +206,9 @@ def _coletar_dados(fontes: list[str], pergunta: str) -> dict:
         dados["stats"] = estatisticas_rp()
 
     if "whatsapp" in fontes:
-        desde = datetime.now(timezone.utc) - timedelta(hours=24)
+        from agentes.consultor_whatsapp import _desde_para_pergunta
+
+        desde, rotulo_wpp = _desde_para_pergunta(pergunta)
         msgs = carregar_mensagens_whatsapp(desde=desde, limite=30)
         dados["whatsapp"] = [
             {
@@ -205,8 +220,48 @@ def _coletar_dados(fontes: list[str], pergunta: str) -> dict:
             }
             for m in msgs
         ]
+        dados["whatsapp_rotulo"] = rotulo_wpp
 
     return dados
+
+
+def _eh_pergunta_numerica_simples(pergunta: str) -> bool:
+    n = (pergunta or "").lower()
+    if any(k in n for k in ("relatorio", "relatório", "resumo geral", "panorama", "detalh", "lista completa")):
+        return False
+    return any(k in n for k in ("quantos", "quantas", "total a receber", "valor a receber", "total de pedidos"))
+
+
+def _resposta_direta_dados(pergunta: str, dados: dict) -> str | None:
+    n = (pergunta or "").lower()
+    filtros = extrair_filtros_do_texto(pergunta)
+    etapa = filtros.get("etapa_producao")
+
+    if etapa and any(k in n for k in ("quantos", "quantas")):
+        por = dados.get("por_etapa") or {}
+        if etapa in por:
+            return f"{por[etapa]} pedido(s) na etapa {etapa}."
+        if dados.get("total_abertos") is not None and len(por) == 1:
+            return f"{dados['total_abertos']} pedido(s) na etapa {etapa}."
+
+    if any(k in n for k in ("total a receber", "valor a receber", "quanto tenho a receber")):
+        f = dados.get("financeiro") or {}
+        val = f.get("total_a_receber")
+        if val is not None:
+            return f"Total a receber nos pedidos abertos: R$ {float(val):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+    if "whatsapp" in dados and any(k in n for k in ("mensagem", "mensagens", "wpp", "whatsapp")):
+        rot = dados.get("whatsapp_rotulo") or "periodo"
+        nmsg = len(dados["whatsapp"])
+        if rot == "hoje":
+            return f"{nmsg} mensagem(ns) hoje (capturadas pelo observador)."
+        return f"{nmsg} mensagem(ns) no periodo consultado."
+
+    if any(k in n for k in ("quantos pedidos em aberto", "total de pedidos abertos")):
+        if dados.get("total_abertos") is not None:
+            return f"{dados['total_abertos']} pedido(s) em aberto no RP."
+
+    return None
 
 
 def _montar_contexto_llm(dados: dict, pergunta: str) -> str:
@@ -251,7 +306,8 @@ def _montar_contexto_llm(dados: dict, pergunta: str) -> str:
             linhas.append(f"\nEstatísticas gerais: {st}")
 
     if "whatsapp" in dados and dados["whatsapp"]:
-        linhas.append(f"\nMensagens WhatsApp (últimas 24h): {len(dados['whatsapp'])} mensagem(ns)")
+        rot = dados.get("whatsapp_rotulo") or "ultimas 24h"
+        linhas.append(f"\nMensagens WhatsApp ({rot}): {len(dados['whatsapp'])} mensagem(ns)")
         for m in dados["whatsapp"]:
             rotulo = m.get("nome") or m.get("telefone") or "?"
             linhas.append(f"  - {rotulo} [{m.get('intencao')}]: {m.get('texto', '')[:80]}")
@@ -279,6 +335,22 @@ def executar(
             "passos": [{"agente": "investigador", "erro": str(e)}],
             "meta": {"route": "investigar_sistema", "agente": "investigador", "erro": True},
         }
+
+    if _eh_pergunta_numerica_simples(pergunta):
+        direta = _resposta_direta_dados(pergunta, dados)
+        if direta:
+            return {
+                "resposta": direta,
+                "modelo": "investigador_direto",
+                "passos": [{"agente": "investigador", "fontes": fontes, "llm": False, "direto": True}],
+                "meta": {
+                    "route": "investigar_sistema",
+                    "agente": "investigador",
+                    "fontes": fontes,
+                    "dados_coletados": list(dados.keys()),
+                    "resposta_direta": True,
+                },
+            }
 
     contexto = _montar_contexto_llm(dados, pergunta)
 

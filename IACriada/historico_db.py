@@ -36,6 +36,16 @@ CREATE TABLE IF NOT EXISTS contexto_sessao (
     contexto_json TEXT NOT NULL,
     atualizado_em REAL NOT NULL
 );
+CREATE TABLE IF NOT EXISTS memoria_verificada (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    benchmark_id TEXT UNIQUE NOT NULL,
+    pergunta TEXT NOT NULL,
+    resposta_esperada TEXT NOT NULL,
+    resposta_obtida TEXT,
+    fonte TEXT,
+    criado_em REAL NOT NULL,
+    atualizado_em REAL NOT NULL
+);
 """
 
 
@@ -188,6 +198,106 @@ def carregar_ultimo_resultado(sessao: str) -> dict | None:
         "tipo": ur.get("tipo"),
         "dados": ur.get("dados") or {},
         "atualizado_em": ur.get("atualizado_em"),
+    }
+
+
+def salvar_memoria_verificada(
+    benchmark_id: str,
+    pergunta: str,
+    resposta_esperada: str,
+    resposta_obtida: str = "",
+    fonte: str = "",
+):
+    agora = time.time()
+    conn = _conn()
+    conn.execute(
+        """
+        INSERT INTO memoria_verificada
+        (benchmark_id, pergunta, resposta_esperada, resposta_obtida, fonte, criado_em, atualizado_em)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(benchmark_id) DO UPDATE SET
+            pergunta = excluded.pergunta,
+            resposta_esperada = excluded.resposta_esperada,
+            resposta_obtida = excluded.resposta_obtida,
+            fonte = excluded.fonte,
+            atualizado_em = excluded.atualizado_em
+        """,
+        (benchmark_id, pergunta, resposta_esperada, resposta_obtida, fonte, agora, agora),
+    )
+    conn.commit()
+    conn.close()
+
+
+def listar_memoria_verificada(limite: int = 200) -> list[dict]:
+    conn = _conn()
+    rows = conn.execute(
+        """
+        SELECT benchmark_id, pergunta, resposta_esperada, resposta_obtida, fonte, atualizado_em
+        FROM memoria_verificada
+        ORDER BY atualizado_em DESC
+        LIMIT ?
+        """,
+        (limite,),
+    ).fetchall()
+    conn.close()
+    return [
+        {
+            "benchmark_id": r[0],
+            "pergunta": r[1],
+            "resposta_esperada": r[2],
+            "resposta_obtida": r[3],
+            "fonte": r[4],
+            "atualizado_em": r[5],
+        }
+        for r in rows
+    ]
+
+
+def _similaridade_perguntas(a: str, b: str) -> float:
+    import unicodedata
+
+    def norm(t: str) -> set[str]:
+        x = (t or "").strip().lower()
+        x = unicodedata.normalize("NFD", x)
+        x = "".join(c for c in x if unicodedata.category(c) != "Mn")
+        return set(x.split())
+
+    ta, tb = norm(a), norm(b)
+    if not ta or not tb:
+        return 0.0
+    return len(ta & tb) / len(ta | tb)
+
+
+def buscar_memoria_similar(pergunta: str, limiar: float = 0.72) -> dict | None:
+    melhor = None
+    melhor_score = 0.0
+    for item in listar_memoria_verificada(200):
+        p = item.get("pergunta") or ""
+        score = _similaridade_perguntas(pergunta, p)
+        if score >= limiar and score > melhor_score:
+            melhor_score = score
+            melhor = {**item, "similaridade": round(score, 3)}
+    return melhor
+
+
+def buscar_memoria_por_benchmark(benchmark_id: str) -> dict | None:
+    conn = _conn()
+    row = conn.execute(
+        """
+        SELECT benchmark_id, pergunta, resposta_esperada, resposta_obtida, fonte
+        FROM memoria_verificada WHERE benchmark_id = ?
+        """,
+        (benchmark_id,),
+    ).fetchone()
+    conn.close()
+    if not row:
+        return None
+    return {
+        "benchmark_id": row[0],
+        "pergunta": row[1],
+        "resposta_esperada": row[2],
+        "resposta_obtida": row[3],
+        "fonte": row[4],
     }
 
 

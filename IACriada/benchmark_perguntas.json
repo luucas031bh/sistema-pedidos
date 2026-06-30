@@ -1,0 +1,178 @@
+[
+  {
+    "id": "manifesto_action_listarPedidos",
+    "pergunta": "Qual action do Apps Script lista pedidos?",
+    "tipo": "manifesto_contains",
+    "lista": "gas_actions",
+    "valor": "listarPedidos",
+    "obrigatorio": true
+  },
+  {
+    "id": "manifesto_action_getStats",
+    "pergunta": "Qual action retorna estatisticas compactas?",
+    "tipo": "manifesto_contains",
+    "lista": "gas_actions",
+    "valor": "getStats",
+    "obrigatorio": true
+  },
+  {
+    "id": "manifesto_action_contarEtapa",
+    "pergunta": "Qual action conta pedidos por etapa de producao?",
+    "tipo": "manifesto_contains",
+    "lista": "gas_actions",
+    "valor": "contarPorEtapaProducao",
+    "obrigatorio": true
+  },
+  {
+    "id": "manifesto_mapa_listar",
+    "pergunta": "Qual funcao Python chama listarPedidos?",
+    "tipo": "manifesto_mapa_gas",
+    "funcao_python": "listar_pedidos_rp",
+    "gas": "listarPedidos",
+    "obrigatorio": true
+  },
+  {
+    "id": "manifesto_etapa_insumos",
+    "pergunta": "Insumos e uma etapa de producao valida?",
+    "tipo": "manifesto_contains",
+    "lista": "etapas_producao",
+    "valor": "Insumos",
+    "obrigatorio": true
+  },
+  {
+    "id": "manifesto_etapa_arte",
+    "pergunta": "Arte e uma etapa de producao valida?",
+    "tipo": "manifesto_contains",
+    "lista": "etapas_producao",
+    "valor": "Arte",
+    "obrigatorio": true
+  },
+  {
+    "id": "rota_whatsapp",
+    "pergunta": "quantas mensagens recebi no whatsapp hoje",
+    "tipo": "rota",
+    "rota_esperada": "consultar_mensagens_whatsapp",
+    "obrigatorio": true
+  },
+  {
+    "id": "rota_fila_rp",
+    "pergunta": "quais pedidos estao em insumos",
+    "tipo": "rota",
+    "rota_esperada": "consultar_fila_rp",
+    "obrigatorio": true
+  },
+  {
+    "id": "rota_investigador_resumo",
+    "pergunta": "me faz um resumo geral de como esta tudo",
+    "tipo": "rota",
+    "rota_esperada": "investigar_sistema",
+    "obrigatorio": true
+  },
+  {
+    "id": "rota_agente_whatsapp",
+    "pergunta": "Qual agente ADNY consulta mensagens WhatsApp?",
+    "tipo": "manifesto_rota_agente",
+    "rota": "consultar_mensagens_whatsapp",
+    "agente": "consultor_whatsapp",
+    "obrigatorio": true
+  },
+  {
+    "id": "rota_agente_rp",
+    "pergunta": "Qual agente ADNY consulta a fila RP?",
+    "tipo": "manifesto_rota_agente",
+    "rota": "consultar_fila_rp",
+    "agente": "rp_direto",
+    "obrigatorio": true
+  },
+  {
+    "id": "indice_codigo_indexado",
+    "pergunta": "O codigo do sistema-pedidos esta indexado?",
+    "tipo": "indice_min",
+    "min_arquivos": 5,
+    "obrigatorio": true
+  },
+  {
+    "id": "gas_total_abertos",
+    "pergunta": "Quantos pedidos em aberto existem no RP?",
+    "tipo": "funcao_valor",
+    "modulo": "consultar_rp",
+    "funcao": "listar_pedidos_rp",
+    "kwargs": {"apenas_abertos": true},
+    "campo": "total",
+    "tipo_valor": "int_min",
+    "min": 0,
+    "obrigatorio": false
+  },
+  {
+    "id": "gas_insumos_count",
+    "pergunta": "Quantos pedidos na etapa Insumos?",
+    "tipo": "funcao_valor",
+    "modulo": "consultar_rp",
+    "funcao": "contar_etapa_producao_rp",
+    "kwargs": {"etapa": "Insumos"},
+    "campo": "total",
+    "tipo_valor": "int_min",
+    "min": 0,
+    "obrigatorio": false
+  },
+  {
+    "id": "gas_financeiro_receber",
+    "pergunta": "Qual o total a receber nos pedidos abertos?",
+    "tipo": "funcao_valor",
+    "modulo": "consultar_rp",
+    "funcao": "resumo_financeiro_rp",
+    "kwargs": {},
+    "campo": "totais.valor_a_receber",
+    "tipo_valor": "float_min",
+    "min": 0,
+    "obrigatorio": false
+  },
+  {
+    "id": "gas_stats_sucesso",
+    "pergunta": "getStats responde com sucesso?",
+    "tipo": "funcao_ok",
+    "modulo": "consultar_rp",
+    "funcao": "estatisticas_rp",
+    "kwargs": {},
+    "obrigatorio": false
+  },
+  {
+    "id": "whatsapp_log_existe",
+    "pergunta": "Existe log de mensagens WhatsApp local?",
+    "tipo": "arquivo_existe",
+    "caminho_relativo": "whatsapp_mensagens.jsonl",
+    "obrigatorio": false
+  },
+  {
+    "id": "manifesto_pagina_home",
+    "pergunta": "home.html existe no repositorio?",
+    "tipo": "manifesto_contains",
+    "lista": "paginas_web",
+    "valor": "home.html",
+    "obrigatorio": true
+  },
+  {
+    "id": "manifesto_fonte_rp",
+    "pergunta": "De onde vem os dados vivos do RP?",
+    "tipo": "manifesto_campo",
+    "campo": "fontes_dados_vivos.rp",
+    "contem": "Apps Script",
+    "obrigatorio": true
+  },
+  {
+    "id": "rota_insumos_investigador",
+    "pergunta": "quantos clientes tenho em insumos",
+    "tipo": "rota",
+    "rota_esperada": "investigar_sistema",
+    "obrigatorio": true
+  },
+  {
+    "id": "investigador_coleta_etapas",
+    "pergunta": "quantos clientes tenho em insumos",
+    "tipo": "planejamento_fontes",
+    "modulo": "agentes.investigador",
+    "funcao": "_planejar_coleta",
+    "fontes_contem": ["etapas", "pedidos_abertos"],
+    "obrigatorio": true
+  }
+]
