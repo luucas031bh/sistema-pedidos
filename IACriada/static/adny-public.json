@@ -1,6 +1,5 @@
 {
-  "api_url": "",
+  "api_url": "https://pas-political-tracy-travesti.trycloudflare.com",
   "requer_token": true,
-  "github_ui": "https://luucas031bh.github.io/sistema-pedidos/IACriada/static/index.html",
-  "_comentario": "Preencha api_url com a URL HTTPS do tunel (Cloudflare). Rode: python configurar_acesso_remoto.py"
+  "github_ui": "https://luucas031bh.github.io/sistema-pedidos/IACriada/static/index.html"
 }
