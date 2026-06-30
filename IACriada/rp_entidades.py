@@ -83,7 +83,7 @@ _PADROES_CLIENTE = (
         re.I,
     ),
     re.compile(
-        r"(?:tamanhos?|quantidades?|pecas?|peças?)\s+(?:do|da|de)\s+(?:pedido\s+)?(?:do|da|de)?\s*"
+        r"(?:tamanhos?|quantidades?|pecas?|peças?)\s+(?:do|da)\s+(?:pedido\s+)?(?:do|da|de)?\s*"
         r"(?:o\s+|a\s+)?([a-zA-ZÀ-ú][\wÀ-ú\s]{1,45})",
         re.I,
     ),

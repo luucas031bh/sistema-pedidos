@@ -20,6 +20,7 @@ __all__ = [
     "cfg_observador",
     "cfg_whatsapp_modo",
     "cfg_observador_token",
+    "cfg_acesso_remoto",
 ]
 
 _DEFAULT = {
@@ -66,6 +67,14 @@ _DEFAULT = {
         "usar_browser": True,
         "headless": True,
     },
+    "acesso_remoto": {
+        "ativo": False,
+        "api_publica_url": "",
+        "api_token": "",
+        "exigir_token_remoto": True,
+        "cors_origins": ["https://luucas031bh.github.io"],
+        "tunnel_comando": "cloudflared tunnel --url http://127.0.0.1:8765",
+    },
 }
 
 
@@ -90,6 +99,10 @@ def carregar_config() -> dict:
             cfg["whatsapp"] = {**_DEFAULT.get("whatsapp", {}), **dados["whatsapp"]}
         if "observador" in dados:
             cfg["observador"] = {**_DEFAULT.get("observador", {}), **dados["observador"]}
+        if "acesso_remoto" in dados:
+            cfg["acesso_remoto"] = {**_DEFAULT.get("acesso_remoto", {}), **dados["acesso_remoto"]}
+        if "calculadora_malha" in dados:
+            cfg["calculadora_malha"] = {**_DEFAULT.get("calculadora_malha", {}), **dados["calculadora_malha"]}
         return cfg
     return dict(_DEFAULT)
 
@@ -182,3 +195,9 @@ def cfg_whatsapp_modo() -> str:
 
 def cfg_observador_token() -> str:
     return str(cfg_observador().get("token") or "adonay-bot-local")
+
+
+def cfg_acesso_remoto() -> dict:
+    from acesso_remoto import cfg_acesso_remoto as _cfg
+
+    return _cfg()

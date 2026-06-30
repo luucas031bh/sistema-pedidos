@@ -74,5 +74,13 @@
       "pedido": "home.html",
       "pedido_id": "index.html?id={codigo}"
     }
+  },
+  "acesso_remoto": {
+    "ativo": false,
+    "api_publica_url": "",
+    "api_token": "",
+    "exigir_token_remoto": true,
+    "cors_origins": ["https://luucas031bh.github.io"],
+    "tunnel_comando": "cloudflared tunnel --url http://127.0.0.1:8765"
   }
 }

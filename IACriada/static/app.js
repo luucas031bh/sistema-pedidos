@@ -26,6 +26,8 @@ const ctxLabel = document.getElementById("ctx-label");
 const listaTerminais = document.getElementById("lista-terminais");
 const panelApiRemoto = document.getElementById("panel-api-remoto");
 const inpApiBase = document.getElementById("inp-api-base");
+const inpApiToken = document.getElementById("inp-api-token");
+const apiRemotoAjuda = document.getElementById("api-remoto-ajuda");
 const llmAviso = document.getElementById("llm-aviso");
 const linkFilaRp = document.getElementById("link-fila-rp");
 
@@ -36,7 +38,9 @@ const SESSAO_KEY = "adonay_sessao_id";
 const PROVEDOR_KEY = "adonay_provedor";
 const MODO_KEY = "adonay_modo";
 const API_BASE_KEY = "adonay_api_base";
+const API_TOKEN_KEY = "adonay_api_token";
 const DEFAULT_API_BASE = "http://127.0.0.1:8765";
+const PUBLIC_CONFIG_FILE = "adny-public.json";
 
 const PROVEDOR_FIXO = "adonay";
 
@@ -64,6 +68,46 @@ function setApiBase(url) {
   const clean = (url || "").trim().replace(/\/$/, "");
   if (clean) localStorage.setItem(API_BASE_KEY, clean);
   else localStorage.removeItem(API_BASE_KEY);
+}
+
+function getApiToken() {
+  return (localStorage.getItem(API_TOKEN_KEY) || "").trim();
+}
+
+function setApiToken(token) {
+  const t = (token || "").trim();
+  if (t) localStorage.setItem(API_TOKEN_KEY, t);
+  else localStorage.removeItem(API_TOKEN_KEY);
+}
+
+function apiHeaders(extra = {}) {
+  const h = { ...extra };
+  const t = getApiToken();
+  if (t) h["X-Adonay-Token"] = t;
+  return h;
+}
+
+async function apiFetch(path, options = {}) {
+  const opts = { ...options };
+  opts.headers = apiHeaders(opts.headers || {});
+  return fetch(apiUrl(path), opts);
+}
+
+async function carregarPublicConfig() {
+  if (isLocalUi()) return null;
+  try {
+    const cfgUrl = new URL(PUBLIC_CONFIG_FILE, location.href).href;
+    const r = await fetch(`${cfgUrl}?v=${Date.now()}`);
+    if (!r.ok) return null;
+    const cfg = await r.json();
+    if (cfg.api_url) {
+      setApiBase(String(cfg.api_url).replace(/\/$/, ""));
+      if (inpApiBase) inpApiBase.value = getApiBase();
+    }
+    return cfg;
+  } catch {
+    return null;
+  }
 }
 
 function apiUrl(path) {
@@ -111,7 +155,7 @@ function atualizarHintProvedor() {
 
 async function abrirTerminalIntegracao(id) {
   try {
-    const r = await fetch(apiUrl("/api/launch-integracao"), {
+    const r = await apiFetch("/api/launch-integracao", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
@@ -166,7 +210,7 @@ function initLinkFilaRp() {
 async function atualizarLinkFilaRp() {
   if (!linkFilaRp) return;
   try {
-    const r = await fetch(apiUrl("/api/config"));
+    const r = await apiFetch("/api/config");
     if (!r.ok) return;
     const cfg = await r.json();
     const rp = cfg.rp || {};
@@ -188,15 +232,30 @@ function initApiRemoto() {
     inpApiBase.value = getApiBase();
     inpApiBase.addEventListener("change", () => {
       setApiBase(inpApiBase.value);
-      carregarStatus();
-      carregarHistorico();
+      recarregarPainel();
     });
   }
-  if (statusBox) {
-    statusBox.textContent =
-      "Pagina no GitHub — aponte o servidor para http://127.0.0.1:8765";
-    statusBox.className = "status-box err";
+  if (inpApiToken) {
+    inpApiToken.value = getApiToken();
+    inpApiToken.addEventListener("change", () => {
+      setApiToken(inpApiToken.value);
+      recarregarPainel();
+    });
   }
+  if (statusBox && !getApiBase()) {
+    statusBox.textContent =
+      "Configure api_url em static/adny-public.json (tunel HTTPS) e publique no GitHub.";
+    statusBox.className = "status-box err";
+  } else if (statusBox && getApiBase() && !getApiToken()) {
+    statusBox.textContent = "Informe o Token ADNY no painel lateral (uma vez por aparelho).";
+    statusBox.className = "status-box warn";
+  }
+}
+
+function recarregarPainel() {
+  carregarStatus();
+  carregarSnapshot();
+  carregarHistorico();
 }
 
 function initLlmPills() {
@@ -363,8 +422,8 @@ async function carregarSnapshot() {
   if (!snapshotResumo || !listaAtendimentos) return;
   try {
     const [rSnap, rStatus] = await Promise.all([
-      fetch(apiUrl("/api/pedidos-snapshot")),
-      fetch(apiUrl("/api/observador/status")),
+      apiFetch("/api/pedidos-snapshot"),
+      apiFetch("/api/observador/status"),
     ]);
     const d = await rSnap.json();
     const st = rStatus.ok ? await rStatus.json() : {};
@@ -435,7 +494,7 @@ async function carregarSnapshot() {
 
 async function conectarWhatsapp() {
   try {
-    const r = await fetch(apiUrl("/api/launch-whatsapp"), { method: "POST" });
+    const r = await apiFetch("/api/launch-whatsapp", { method: "POST" });
     const d = await r.json();
     if (!r.ok) throw new Error(d.detail || "Falha ao abrir bot");
     if (whatsappStatus) {
@@ -452,7 +511,7 @@ btnWhatsappQr?.addEventListener("click", conectarWhatsapp);
 
 async function carregarStatus() {
   try {
-    const r = await fetch(apiUrl("/api/status"));
+    const r = await apiFetch("/api/status");
     const d = await r.json();
     if (selModelo) {
       selModelo.innerHTML = "";
@@ -482,7 +541,7 @@ async function carregarStatus() {
   } catch (err) {
     statusBox.textContent = isLocalUi()
       ? "Offline — AdonayPainel.exe ou INICIAR_TUDO.bat"
-      : `Sem conexao com ${getApiBase()} — ligue o servidor no PC`;
+      : `Sem conexao com ${getApiBase()} — PC host ligado? Tunel ativo? Token correto?`;
     statusBox.className = "status-box err";
     renderTerminais([]);
   }
@@ -490,9 +549,9 @@ async function carregarStatus() {
 
 btnIndexarSistema?.addEventListener("click", async () => {
   indexStatus.textContent = "Indexando sistema…";
-  await fetch(apiUrl("/api/indexar-sistema"), { method: "POST" });
+  await apiFetch("/api/indexar-sistema", { method: "POST" });
   const poll = setInterval(async () => {
-    const s = await (await fetch(apiUrl("/api/indexar-sistema/status"))).json();
+    const s = await (await apiFetch("/api/indexar-sistema/status")).json();
     if (s.rodando) return;
     clearInterval(poll);
     indexStatus.textContent = s.resultado?.total_arquivos
@@ -504,9 +563,9 @@ btnIndexarSistema?.addEventListener("click", async () => {
 
 btnIndexar?.addEventListener("click", async () => {
   indexStatus.textContent = "Indexando…";
-  await fetch(apiUrl("/api/indexar"), { method: "POST" });
+  await apiFetch("/api/indexar", { method: "POST" });
   const poll = setInterval(async () => {
-    const s = await (await fetch(apiUrl("/api/indexar/status"))).json();
+    const s = await (await apiFetch("/api/indexar/status")).json();
     if (s.rodando) return;
     clearInterval(poll);
     indexStatus.textContent = s.resultado?.total ? `OK: ${s.resultado.total}` : "OK";
@@ -522,7 +581,7 @@ filePdf?.addEventListener("change", async () => {
   const fd = new FormData();
   fd.append("file", f);
   try {
-    const r = await fetch(apiUrl("/api/upload-pdf"), { method: "POST", body: fd });
+    const r = await apiFetch("/api/upload-pdf", { method: "POST", body: fd });
     const d = await r.json();
     if (!r.ok) throw new Error(d.detail);
     input.value = `leia o pdf em ${d.caminho}`;
@@ -547,7 +606,7 @@ form.addEventListener("submit", async (e) => {
   addTyping();
 
   try {
-    const r = await fetch(apiUrl("/api/chat"), {
+    const r = await apiFetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -561,7 +620,12 @@ form.addEventListener("submit", async (e) => {
     });
     const d = await r.json();
     removeTyping();
-    if (!r.ok) throw new Error(d.detail || "Erro na API");
+    if (!r.ok) {
+      if (r.status === 401) {
+        throw new Error("Token invalido ou ausente — preencha Token ADNY no painel lateral.");
+      }
+      throw new Error(d.detail || "Erro na API");
+    }
     const respostaBot = (d.resposta || "").trim();
     addMessage(
       "bot",
@@ -573,7 +637,7 @@ form.addEventListener("submit", async (e) => {
     removeTyping();
     let msg = err.message;
     if (!isLocalUi() && /fetch|network|failed/i.test(msg)) {
-      msg += "\n\nConfira se o servidor local esta ligado (porta 8765).";
+      msg += "\n\nConfira: PC host ligado, tunel ativo, Token ADNY no painel lateral.";
     }
     addMessage("bot", "Erro: " + msg);
   }
@@ -587,8 +651,8 @@ const WELCOME_HTML = document.getElementById("welcome")?.outerHTML || "";
 
 async function carregarHistorico() {
   try {
-    const r = await fetch(
-      apiUrl("/api/historico?sessao=" + encodeURIComponent(obterSessaoId()) + "&limite=200")
+    const r = await apiFetch(
+      "/api/historico?sessao=" + encodeURIComponent(obterSessaoId()) + "&limite=200"
     );
     const d = await r.json();
     const msgs = d.mensagens || [];
@@ -604,7 +668,7 @@ async function carregarHistorico() {
 
 btnNovo?.addEventListener("click", async () => {
   const antiga = obterSessaoId();
-  await fetch(apiUrl("/api/limpar?sessao=" + encodeURIComponent(antiga)), { method: "POST" });
+  await apiFetch("/api/limpar?sessao=" + encodeURIComponent(antiga), { method: "POST" });
   novaSessaoId();
   messagesEl.innerHTML = "";
   if (WELCOME_HTML) {
@@ -623,14 +687,20 @@ function bindChips() {
   });
 }
 
-initApiRemoto();
 initLinkFilaRp();
 atualizarLinkFilaRp();
 initLlmPills();
 initModoButtons();
 bindChips();
-carregarStatus();
-carregarSnapshot();
-carregarHistorico();
+
+async function bootstrap() {
+  await carregarPublicConfig();
+  initApiRemoto();
+  carregarStatus();
+  carregarSnapshot();
+  carregarHistorico();
+}
+
+bootstrap();
 setInterval(carregarStatus, 15000);
 setInterval(carregarSnapshot, 10000);

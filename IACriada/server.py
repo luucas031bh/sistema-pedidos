@@ -46,13 +46,29 @@ CORS_ORIGINS = frozenset(
 
 
 def _set_cors(handler):
+    from acesso_remoto import origens_cors_permitidas
+
     origin = handler.headers.get("Origin", "")
-    if origin in CORS_ORIGINS:
+    permitidas = origens_cors_permitidas()
+    if origin in permitidas:
         handler.send_header("Access-Control-Allow-Origin", origin)
     elif origin.startswith(("http://127.0.0.1:", "http://localhost:")):
         handler.send_header("Access-Control-Allow-Origin", origin)
     handler.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-    handler.send_header("Access-Control-Allow-Headers", "Content-Type")
+    handler.send_header(
+        "Access-Control-Allow-Headers",
+        "Content-Type, X-Adonay-Token, Authorization",
+    )
+
+
+def _checar_auth_api(handler, path: str) -> bool:
+    from acesso_remoto import verificar_auth
+
+    ok, msg = verificar_auth(handler, path)
+    if ok:
+        return True
+    _json_response(handler, 401, {"detail": msg, "auth": "token_required"})
+    return False
 
 
 def _json_response(handler, status, data):
@@ -132,6 +148,9 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         qs = parse_qs(urlparse(self.path).query)
 
+        if path.startswith("/api/") and not _checar_auth_api(self, path):
+            return
+
         if path in ("/", "/index.html"):
             return _servir_arquivo(self, STATIC / "index.html", "text/html; charset=utf-8")
 
@@ -157,6 +176,16 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/ping":
             return _json_response(self, 200, {"ok": True})
+
+        if path == "/api/public-client":
+            from acesso_remoto import public_client_info
+
+            return _json_response(self, 200, public_client_info())
+
+        if path in ("/adny-public.json", "/static/adny-public.json"):
+            return _servir_arquivo(
+                self, STATIC / "adny-public.json", "application/json; charset=utf-8"
+            )
 
         if path == "/api/diagnostico-ias":
             from provedores_llm import diagnostico_provedores
@@ -299,6 +328,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         path = urlparse(self.path).path
+
+        if path.startswith("/api/") and not _checar_auth_api(self, path):
+            return
 
         if path == "/api/chat":
             try:

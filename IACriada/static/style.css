@@ -100,6 +100,7 @@ html, body {
 }
 
 .status-box.ok { color: #6ee7b7; }
+.status-box.warn { color: #fbbf24; }
 .status-box.err { color: #fca5a5; }
 
 .index-status { font-size: 11px; color: var(--text-muted); padding: 0 4px; }

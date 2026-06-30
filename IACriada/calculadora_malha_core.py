@@ -73,7 +73,20 @@ CAMPOS_WIZARD = (
 
 
 def normalizar_chave_tamanho(tamanho: str) -> str:
-    return str(tamanho or "").strip().upper()
+    s = str(tamanho or "").strip().upper()
+    s = s.replace("（", "(").replace("）", ")")
+    return s
+
+
+def extrair_primeiro_numero(valor) -> float | None:
+    """Extrai o primeiro numero de texto com unidades (ex.: '2,4 metros', 'R$ 35')."""
+    s = str(valor or "").strip()
+    if not s:
+        return None
+    m = re.search(r"(\d+(?:[.,]\d+)?)", s)
+    if not m:
+        return None
+    return normalizar_numero(m.group(1))
 
 
 def normalizar_numero(valor) -> float | None:
@@ -81,9 +94,12 @@ def normalizar_numero(valor) -> float | None:
         return None
     if isinstance(valor, (int, float)):
         return float(valor)
-    s = str(valor).strip().replace(" ", "")
+    s = str(valor).strip()
     if not s:
         return None
+    m = re.match(r"^(\d+(?:[.,]\d+)?)", s.replace(" ", ""))
+    if m:
+        s = m.group(1)
     if "," in s and "." in s:
         s = s.replace(".", "").replace(",", ".")
     elif "," in s:
@@ -91,7 +107,7 @@ def normalizar_numero(valor) -> float | None:
     try:
         return float(s)
     except ValueError:
-        return None
+        return extrair_primeiro_numero(valor)
 
 
 def carregar_tabela_rendimento() -> dict:
@@ -122,8 +138,15 @@ def buscar_referencia(tabela: dict, largura: float, tipo: str, tamanho: str) -> 
         ref = tamanhos.get(chave)
         if ref:
             return ref
-        if "(BL)" in chave:
+        if "(BL)" in chave or " BL" in chave:
             base = re.sub(r"\s*\(BL\)", "", chave).strip()
+            base = re.sub(r"\s+BL$", "", base).strip()
+            ref = tamanhos.get(base)
+            if ref:
+                return ref
+        # PP(BL) sem parenteses
+        if chave.endswith("(BL)") or re.search(r"^[A-Z0-9]+\(BL\)$", chave):
+            base = re.sub(r"\(BL\)$", "", chave).strip()
             ref = tamanhos.get(base)
             if ref:
                 return ref

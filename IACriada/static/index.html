@@ -29,9 +29,13 @@
         <p id="model-hint" class="ias-help muted">Orquestrador Hub-and-Spoke · roteador decide o agente.</p>
       </div>
       <div class="panel-api" id="panel-api-remoto" hidden>
-        <label for="inp-api-base">Servidor no PC</label>
-        <input type="url" id="inp-api-base" placeholder="http://127.0.0.1:8765" />
-        <p class="ias-help muted">GitHub: porta <strong>8765</strong>. <a href="http://127.0.0.1:8765" target="_blank" rel="noopener">Abrir local ↗</a></p>
+        <label for="inp-api-base">Servidor remoto (HTTPS)</label>
+        <input type="url" id="inp-api-base" placeholder="https://adny.seudominio.com" />
+        <label for="inp-api-token">Token ADNY</label>
+        <input type="password" id="inp-api-token" placeholder="Token do configurar_acesso_remoto.py" autocomplete="off" />
+        <p class="ias-help muted" id="api-remoto-ajuda">
+          Celular/PC fora da loja: use o link GitHub — a API aponta para o tunel do PC host.
+        </p>
       </div>
       <div class="panel-atendimentos" id="panel-atendimentos">
         <h3>Atendimentos WhatsApp</h3>
