@@ -310,8 +310,21 @@ def _tentar_resposta_rp_direta(
             if not clf.get("executar"):
                 return None
 
+    from rp_entidades import extrair_entidades_rp
+    from rp_router import rotear_tamanhos_pedido_especifico
+    from rp_sintese import deve_sintetizar_rp, sintetizar_resposta_rp, validar_escopo_resposta
+
     params = clf.get("params") or {}
     dados_rp = rotear_pergunta_rp(texto_user, params)
+
+    escopo_erro = validar_escopo_resposta(texto_user, dados_rp)
+    if escopo_erro and dados_rp.get("action") == "agregarPecasAbertos":
+        ent = extrair_entidades_rp(texto_user)
+        if ent.get("quer_tamanhos") and (ent.get("cliente") or ent.get("codigo") or ent.get("termo_busca")):
+            retry = rotear_tamanhos_pedido_especifico(texto_user, params)
+            if retry and retry.get("ok"):
+                dados_rp = retry
+
     resposta = montar_resposta_rp_direta(dados_rp)
     if not resposta:
         resposta = (
@@ -323,6 +336,12 @@ def _tentar_resposta_rp_direta(
 
         det = clf.get("intencao_detalhada") or clf.get("intencao", "buscar_pedidos_status")
         salvar_contexto_rp(sessao, det, params)
+
+    if resposta and dados_rp.get("ok") and deve_sintetizar_rp(texto_user, dados_rp):
+        sintese = sintetizar_resposta_rp(texto_user, resposta, dados_rp, modelo)
+        if sintese:
+            resposta = sintese
+
     return {
         "resposta": resposta,
         "modelo": modelo,

@@ -176,6 +176,58 @@ def format_entregas_periodo(data: dict, max_linhas: int = 40) -> str:
     return out
 
 
+def format_tamanhos_pedido(data: dict) -> str:
+    """Tamanhos e quantidades de um pedido (produtos[].tamanhos[])."""
+    if not data.get("sucesso"):
+        return f"Erro: {data.get('erro') or 'nao encontrado'}"
+    p = data.get("pedido")
+    if not p:
+        return "Pedido nao encontrado."
+    produtos = p.get("produtos") or []
+    linhas = [
+        f"Pedido {p.get('id', '—')} · Cliente: {nome_cliente(p)} · ID busca: {id_busca_pedido(p)}",
+        f"Status: {p.get('statusOperacional') or '—'} · Total pecas: {p.get('totalPecas', '—')}",
+        "",
+        "Tamanhos e quantidades:",
+    ]
+    total_qtd = 0
+    tem_grade = False
+    for i, prod in enumerate(produtos):
+        tamanhos = prod.get("tamanhos") or []
+        if not tamanhos:
+            continue
+        tem_grade = True
+        titulo = (
+            f"{prod.get('tipoPeca', '?')} | {prod.get('tipoMalha', '?')} | "
+            f"{prod.get('corMalha', '?')}"
+        )
+        det = prod.get("detalhesPeca") or prod.get("detalhePeca") or ""
+        if det:
+            titulo += f" | {det}"
+        linhas.append(f"\nProduto {i + 1}: {titulo}")
+        agregado: dict[str, int] = {}
+        for tm in tamanhos:
+            if not isinstance(tm, dict):
+                continue
+            tam = str(tm.get("tamanho") or "").strip()
+            if not tam:
+                continue
+            qtd = int(tm.get("quantidade") or 0)
+            if qtd <= 0:
+                continue
+            agregado[tam] = agregado.get(tam, 0) + qtd
+            total_qtd += qtd
+        for tam in sorted(agregado.keys(), key=lambda x: (len(x), x)):
+            linhas.append(f"  · {tam}: {agregado[tam]} pc")
+    if not tem_grade:
+        return (
+            f"Pedido {p.get('id', '—')} — {nome_cliente(p)}: "
+            "nenhum tamanho/quantidade cadastrado nos produtos deste pedido."
+        )
+    linhas.append(f"\nTotal (soma das grades): {total_qtd} pc")
+    return "\n".join(linhas)
+
+
 def format_agregacao_tamanhos(data: dict) -> str:
     if not data.get("sucesso"):
         return f"Erro: {data.get('erro') or 'agregacao'}"
@@ -241,6 +293,8 @@ def format_intent_fallback(kind: str, facts: dict) -> str:
         return format_busca_multipla(facts)
     if kind == "detalhe_pedido":
         return format_busca_um(facts)
+    if kind == "tamanhos_pedido":
+        return format_tamanhos_pedido(facts)
     if kind == "relatorio_periodo":
         return format_relatorio(facts)
     if kind == "resumo_financeiro":

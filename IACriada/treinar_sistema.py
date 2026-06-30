@@ -189,6 +189,57 @@ def _validar_item(item: dict, manifesto: dict) -> tuple[bool, str, str]:
         ok = obtidos[: len(esperados)] == esperados
         return ok, str(esperados), str(obtidos)
 
+    if tipo == "rp_entidades":
+        from rp_entidades import extrair_entidades_rp
+
+        pergunta = item.get("pergunta") or ""
+        campo = item.get("campo") or "cliente"
+        ent = extrair_entidades_rp(pergunta)
+        if "valor_bool" in item:
+            esperado = bool(item.get("valor_bool"))
+            obtido = bool(ent.get(campo))
+            return obtido == esperado, str(esperado), str(obtido)
+        esperado = (item.get("valor") or "").strip()
+        obtido = str(ent.get(campo) or "").strip()
+        ok = obtido.lower() == esperado.lower() or esperado.lower() in obtido.lower()
+        return ok, esperado, obtido
+
+    if tipo == "rp_deve_tamanhos_pedido":
+        from rp_entidades import deve_buscar_tamanhos_pedido
+
+        pergunta = item.get("pergunta") or ""
+        esperado = bool(item.get("valor", True))
+        obtido = deve_buscar_tamanhos_pedido(pergunta)
+        return obtido == esperado, str(esperado), str(obtido)
+
+    if tipo == "rp_formatador_contem":
+        from rp_formatadores import format_tamanhos_pedido
+
+        fixture = {
+            "sucesso": True,
+            "pedido": {
+                "id": "TEST-1",
+                "cliente": {"nome": "Cliente Teste", "telefone": "11999999999"},
+                "statusOperacional": "Em produção",
+                "totalPecas": 10,
+                "produtos": [
+                    {
+                        "tipoPeca": "Camiseta",
+                        "tipoMalha": "PV",
+                        "corMalha": "Preta",
+                        "tamanhos": [
+                            {"tamanho": "P", "quantidade": 10},
+                            {"tamanho": "M", "quantidade": 5},
+                        ],
+                    }
+                ],
+            },
+        }
+        texto = format_tamanhos_pedido(fixture)
+        contem = item.get("contem") or ""
+        ok = contem.lower() in texto.lower()
+        return ok, contem, texto[:120]
+
     return False, "?", f"tipo desconhecido: {tipo}"
 
 

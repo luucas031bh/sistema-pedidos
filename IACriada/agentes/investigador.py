@@ -115,6 +115,18 @@ def _planejar_coleta(pergunta: str) -> list[str]:
         fontes.append("etapas")
         fontes.append("whatsapp")
 
+    if any(
+        k in n
+        for k in (
+            "tamanho",
+            "tamanhos",
+            "quantidade",
+            "quantidades",
+            "grade",
+        )
+    ):
+        fontes.append("pedido_detalhe")
+
     if not fontes:
         fontes = ["stats", "etapas", "pedidos_abertos", "financeiro", "whatsapp"]
 
@@ -221,6 +233,21 @@ def _coletar_dados(fontes: list[str], pergunta: str) -> dict:
         ]
         dados["whatsapp_rotulo"] = rotulo_wpp
 
+    if "pedido_detalhe" in fontes:
+        from rp_formatadores import format_tamanhos_pedido
+        from rp_router import rotear_tamanhos_pedido_especifico
+
+        rota = rotear_tamanhos_pedido_especifico(pergunta, {})
+        if rota and rota.get("ok"):
+            facts = rota.get("facts") or {}
+            dados["pedido_tamanhos_texto"] = format_tamanhos_pedido(facts)
+            ped = facts.get("pedido") or {}
+            dados["pedido_cliente"] = ped.get("cliente") if isinstance(ped.get("cliente"), str) else None
+            if not dados["pedido_cliente"]:
+                cli = ped.get("cliente") or {}
+                if isinstance(cli, dict):
+                    dados["pedido_cliente"] = cli.get("nome")
+
     return dados
 
 
@@ -320,6 +347,10 @@ def _montar_contexto_llm(dados: dict, pergunta: str) -> str:
         for m in dados["whatsapp"]:
             rotulo = m.get("nome") or m.get("telefone") or "?"
             linhas.append(f"  - {rotulo} [{m.get('intencao')}]: {m.get('texto', '')[:80]}")
+
+    if dados.get("pedido_tamanhos_texto"):
+        linhas.append("\nTamanhos e quantidades do pedido consultado:")
+        linhas.append(str(dados["pedido_tamanhos_texto"]))
 
     linhas.append("\n=== FIM DOS DADOS ===")
 

@@ -366,5 +366,35 @@
     "tipo": "wpp_sequencia_periodos",
     "periodos": ["24 horas", "7 dias"],
     "obrigatorio": true
+  },
+  {
+    "id": "rp_entidades_carloso",
+    "pergunta": "preciso saber a Tamanhos e Quantidades somente do pedido do Carloso Bastos",
+    "tipo": "rp_entidades",
+    "campo": "cliente",
+    "valor": "Carloso Bastos",
+    "obrigatorio": true
+  },
+  {
+    "id": "rp_entidades_escopo_carloso",
+    "pergunta": "preciso saber a Tamanhos e Quantidades somente do pedido do Carloso Bastos",
+    "tipo": "rp_entidades",
+    "campo": "escopo_pedido",
+    "valor_bool": true,
+    "obrigatorio": true
+  },
+  {
+    "id": "rp_tamanhos_pedido_nao_fila",
+    "pergunta": "preciso saber a Tamanhos e Quantidades somente do pedido do Carloso Bastos",
+    "tipo": "rp_deve_tamanhos_pedido",
+    "valor": true,
+    "obrigatorio": true
+  },
+  {
+    "id": "rp_formatador_tamanhos",
+    "pergunta": "fixture",
+    "tipo": "rp_formatador_contem",
+    "contem": "P: 10 pc",
+    "obrigatorio": true
   }
 ]

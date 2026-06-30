@@ -19,6 +19,11 @@ from consultar_rp import (
     _norm,
 )
 from rp_formatadores import format_intent_fallback
+from rp_entidades import (
+    candidatos_busca_cliente,
+    escolher_pedido_por_nome,
+    extrair_entidades_rp,
+)
 
 
 def _extrair_datas_iso(texto: str) -> list[str]:
@@ -40,21 +45,72 @@ def _extrair_etapa(texto_norm: str) -> str | None:
 
 
 def _extrair_termo_busca(texto: str, texto_norm: str) -> str | None:
+    ent = extrair_entidades_rp(texto)
+    if ent.get("termo_busca"):
+        return ent["termo_busca"]
     m = re.search(r"\b(\d{4})\b", texto)
     if m:
         return m.group(1)
-    m2 = re.search(
-        r"(?:busca|buscar|pedido|cliente|detalhe|detalhes)\s+(?:do|da|de)?\s*([a-zA-ZÀ-ú][\w\s]{1,40})",
-        texto,
-        re.I,
-    )
-    if m2:
-        termo = m2.group(1).strip()
-        stop = {"rp", "pedido", "pedidos", "aberto", "abertos", "insumos", "arte"}
-        palavras = [w for w in termo.split() if _norm(w) not in stop]
-        if palavras:
-            return " ".join(palavras)
     return None
+
+
+def _resolver_pedido_por_termo(termo: str) -> dict:
+    """buscarPedido com candidatos e fuzzy quando ha varios resultados."""
+    termo = (termo or "").strip()
+    if not termo:
+        return {"sucesso": False, "erro": "Informe cliente, codigo ou nome do pedido"}
+
+    for cand in candidatos_busca_cliente(termo):
+        data = buscar_pedido_rp(cand)
+        if data.get("sucesso") and data.get("pedido"):
+            return data
+
+    for cand in candidatos_busca_cliente(termo):
+        multi = buscar_pedidos_rp(cand)
+        if not multi.get("sucesso"):
+            continue
+        lista = multi.get("pedidos") or []
+        if not lista:
+            continue
+        escolhido = escolher_pedido_por_nome(lista, termo)
+        if escolhido:
+            return {"sucesso": True, "pedido": escolhido}
+
+    return {"sucesso": False, "erro": "Pedido nao encontrado"}
+
+
+def rotear_tamanhos_pedido_especifico(raw: str, params: dict | None = None) -> dict | None:
+    """API publica: tamanhos de um pedido (cliente/codigo)."""
+    p = params or {}
+    n = _norm(raw)
+    return _rota_tamanhos_pedido_especifico(raw, n, p)
+
+
+def _rota_tamanhos_pedido_especifico(raw: str, n: str, p: dict) -> dict | None:
+    """Tamanhos/quantidades de UM pedido (cliente ou codigo), nao da fila inteira."""
+    ent = extrair_entidades_rp(raw)
+    if not ent.get("quer_tamanhos"):
+        return None
+
+    termo = p.get("codigo") or p.get("cliente") or ent.get("codigo") or ent.get("cliente")
+    if not termo and ent.get("escopo_pedido"):
+        termo = ent.get("termo_busca")
+
+    if not termo:
+        return None
+    if not ent.get("escopo_pedido") and not ent.get("cliente") and not ent.get("codigo"):
+        return None
+
+    data = _resolver_pedido_por_termo(str(termo))
+    txt = format_intent_fallback("tamanhos_pedido", data)
+    return {
+        "ok": bool(data.get("sucesso")),
+        "action": "buscarPedido",
+        "kind": "tamanhos_pedido",
+        "facts": data,
+        "texto_formatado": txt,
+        "erro": data.get("erro") if not data.get("sucesso") else None,
+    }
 
 
 def tema_parece_rp(texto: str) -> bool:
@@ -174,15 +230,20 @@ def rotear_pergunta_rp(texto: str, params: dict | None = None) -> dict:
     ) or (("pedido" in n or "cliente" in n) and re.search(r"\b\d{4}\b", raw)):
         termo = p.get("codigo") or p.get("cliente") or _extrair_termo_busca(raw, n)
         if termo:
-            data = buscar_pedido_rp(str(termo))
+            data = _resolver_pedido_por_termo(str(termo))
             txt = format_intent_fallback("detalhe_pedido", data)
             return {
-                "ok": True,
+                "ok": bool(data.get("sucesso")),
                 "action": "buscarPedido",
                 "kind": "detalhe_pedido",
                 "facts": data,
                 "texto_formatado": txt,
             }
+
+    # Tamanhos/quantidades de UM pedido (antes do agregado global)
+    rota_pedido = _rota_tamanhos_pedido_especifico(raw, n, p)
+    if rota_pedido is not None:
+        return rota_pedido
 
     # Busca multipla
     if any(k in n for k in ("busca", "buscar", "procurar", "encontrar")) and (
@@ -385,7 +446,11 @@ def montar_resposta_rp_direta(dados: dict) -> str | None:
         elif action == "contarPorEtapaProducao":
             cab = "Contagem no RP (planilha):\n\n"
         elif action == "buscarPedido":
-            cab = "Detalhe do pedido (sistema RP):\n\n"
+            kind = dados.get("kind") or ""
+            if kind == "tamanhos_pedido":
+                cab = "Tamanhos e quantidades do pedido (planilha RP):\n\n"
+            else:
+                cab = "Detalhe do pedido (sistema RP):\n\n"
         else:
             cab = "Consulta ao RP (dados reais da planilha, agora):\n\n"
         rodape = "\n\n— Fonte: planilha do sistema de pedidos (nao inventar outros nomes)."
