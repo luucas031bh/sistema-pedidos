@@ -18,7 +18,7 @@
     },
     "calcular_gasto_de_malha_por_pedido": {
       "agente": "calculadora_malha",
-      "descricao": "Calculo mecanico de malha por pedido (Fase 2 parcial)"
+      "descricao": "Wizard conversacional + Playwright na CalculadoraMalha web (preenche campos e le resultados)"
     },
     "criar_nova_funcionalidade_no_codigo": {
       "agente": "developer_local",

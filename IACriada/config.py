@@ -61,6 +61,11 @@ _DEFAULT = {
         "anthropic_base_url": "http://localhost:11434",
         "anthropic_auth_token": "ollama",
     },
+    "calculadora_malha": {
+        "url": "https://luucas031bh.github.io/sistema-pedidos/CalculadoraMalha/",
+        "usar_browser": True,
+        "headless": True,
+    },
 }
 
 

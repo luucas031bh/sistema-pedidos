@@ -113,6 +113,9 @@ def _pergunta_proximo_campo(estado: dict) -> str:
             f"**{passo + 1}/{len(CAMPOS_WIZARD)} — {titulo}**",
             ajuda,
             "",
+            "Ao final, abrirei a [Calculadora de Malha](https://luucas031bh.github.io/sistema-pedidos/CalculadoraMalha/), "
+            "preencherei os campos como voce e trarei os resultados da pagina.",
+            "",
             "_Responda com um valor por mensagem. Digite **cancelar** para sair._",
         ]
     )
@@ -233,16 +236,17 @@ def _continuar_wizard(pergunta: str, sessao: str, estado: dict, modelo: str | No
             },
         }
 
-    calc = calcular_orcamento(inputs, estado.get("pecas") or [])
+    pecas = estado.get("pecas") or []
+    pedido_resumo = estado.get("pedido_resumo") or ""
+    factual, fonte_calc, payload = _executar_calculo(inputs, pecas, pedido_resumo)
     limpar_wizard_malha(sessao)
-    factual = formatar_resultado_calculo(calc, estado.get("pedido_resumo") or "")
 
     from agentes.interpretador import organizar_resposta
 
     resposta = organizar_resposta(
         pergunta or "resultado calculadora malha",
         factual,
-        {"calculo_malha": calc},
+        payload,
         modelo,
         contexto="calculadora_malha",
     )
@@ -250,14 +254,44 @@ def _continuar_wizard(pergunta: str, sessao: str, estado: dict, modelo: str | No
     return {
         "resposta": resposta,
         "modelo": modelo or "calculadora_malha",
-        "passos": [{"agente": "calculadora_malha", "wizard": "concluido"}],
+        "passos": [{"agente": "calculadora_malha", "wizard": "concluido", "fonte": fonte_calc}],
         "meta": {
             "route": "calcular_gasto_de_malha_por_pedido",
             "agente": "calculadora_malha",
             "wizard_malha": False,
             "concluido": True,
+            "fonte_calculo": fonte_calc,
         },
     }
+
+
+def _executar_calculo(inputs: dict, pecas: list[dict], pedido_resumo: str) -> tuple[str, str, dict]:
+    """Prioriza calculadora web (Playwright); fallback motor Python local."""
+    from calculadora_malha_browser import (
+        browser_disponivel,
+        executar_na_calculadora_web,
+        formatar_resultado_web,
+        usar_browser_calculadora,
+    )
+
+    if usar_browser_calculadora() and browser_disponivel():
+        web = executar_na_calculadora_web(inputs, pecas)
+        if web.get("ok"):
+            factual = formatar_resultado_web(web, pedido_resumo)
+            return factual, "calculadora_web", {"calculo_malha_web": web}
+
+    calc = calcular_orcamento(inputs, pecas)
+    factual = formatar_resultado_calculo(calc, pedido_resumo)
+    aviso = ""
+    if usar_browser_calculadora() and not browser_disponivel():
+        aviso = (
+            "\n\n_(Modo local: instale Playwright para usar a pagina "
+            "https://luucas031bh.github.io/sistema-pedidos/CalculadoraMalha/ — "
+            "`pip install playwright` e `playwright install chromium`.)_"
+        )
+    elif usar_browser_calculadora():
+        aviso = "\n\n_(Fallback: motor Python — a pagina web nao respondeu.)_"
+    return factual + aviso, "calculadora_python", {"calculo_malha": calc}
 
 
 def executar(
