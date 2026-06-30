@@ -4,7 +4,12 @@
     "modelo_integracoes": "llama3.1:8b",
     "anthropic_base_url": "http://localhost:11434",
     "anthropic_auth_token": "ollama",
-    "modelos_sugeridos": ["llama3.1:8b", "llama3.1", "qwen2.5:7b", "qwen2.5:14b"],
+    "modelos_sugeridos": [
+      "llama3.1:8b",
+      "llama3.1",
+      "qwen2.5:7b",
+      "qwen2.5:14b"
+    ],
     "integracoes": {
       "claude": {
         "nome": "Claude Code",
@@ -55,7 +60,9 @@
   "rp_url_base": "https://luucas031bh.github.io/sistema-pedidos/",
   "rp_apps_script_url": "https://script.google.com/macros/s/AKfycby9LFyzYkXW_Zo9i_u3jdGfRweu5UaDvf4PsGWyTh8UB0hXGEls2l_oELjJSDkpZwDoAQ/exec",
   "whatsapp": {
-    "admins": ["5531999999999"],
+    "admins": [
+      "5531999999999"
+    ],
     "modo": "observador"
   },
   "observador": {
@@ -76,11 +83,13 @@
     }
   },
   "acesso_remoto": {
-    "ativo": false,
-    "api_publica_url": "",
-    "api_token": "",
+    "ativo": true,
+    "api_publica_url": "https://pas-political-tracy-travesti.trycloudflare.com",
+    "api_token": "mRcceAE1J1Bv9SMxVD8wDbDJeOwXQpeE",
     "exigir_token_remoto": true,
-    "cors_origins": ["https://luucas031bh.github.io"],
+    "cors_origins": [
+      "https://luucas031bh.github.io"
+    ],
     "tunnel_comando": "cloudflared tunnel --url http://127.0.0.1:8765"
   }
 }

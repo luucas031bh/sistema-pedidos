@@ -31,6 +31,33 @@ def _salvar_public(api_url: str) -> None:
     PUBLIC_PATH.write_text(json.dumps(dados, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def aplicar_config(api_url: str, token: str | None = None) -> str:
+    """Aplica URL + token sem prompt interativo. Retorna o token usado."""
+    url = (api_url or "").strip().rstrip("/")
+    if not url.startswith("https://"):
+        raise ValueError("URL invalida — deve comecar com https://")
+
+    cfg = _carregar()
+    remoto = dict(cfg.get("acesso_remoto") or {})
+    token_atual = (token or remoto.get("api_token") or "").strip()
+    if not token_atual:
+        token_atual = secrets.token_urlsafe(24)
+
+    remoto.update(
+        {
+            "ativo": True,
+            "api_publica_url": url,
+            "api_token": token_atual,
+            "exigir_token_remoto": True,
+            "cors_origins": ["https://luucas031bh.github.io"],
+        }
+    )
+    cfg["acesso_remoto"] = remoto
+    _salvar(cfg)
+    _salvar_public(url)
+    return token_atual
+
+
 def main() -> int:
     print("=" * 60)
     print("  ADNY — Configurar acesso remoto (GitHub + tunel HTTPS)")

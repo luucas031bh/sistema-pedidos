@@ -19,10 +19,15 @@ echo.
 
 where cloudflared >nul 2>&1
 if errorlevel 1 (
-  echo [ERRO] cloudflared nao encontrado no PATH.
-  pause
-  exit /b 1
+  set "CF=%LOCALAPPDATA%\Microsoft\WinGet\Packages\Cloudflare.cloudflared_Microsoft.Winget.Source_8wekyb3d8bbwe\cloudflared.exe"
+  if not exist "%CF%" (
+    echo [ERRO] cloudflared nao encontrado. Rode: winget install Cloudflare.cloudflared
+    pause
+    exit /b 1
+  )
+) else (
+  set "CF=cloudflared"
 )
 
-cloudflared tunnel --url http://127.0.0.1:8765
+"%CF%" tunnel --url http://127.0.0.1:8765 > "%~dp0data\tunnel.log" 2>&1
 pause
