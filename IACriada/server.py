@@ -540,6 +540,7 @@ class Handler(BaseHTTPRequestHandler):
                 timestamp=req.get("timestamp"),
                 nome=req.get("nome"),
                 classificar=bool(req.get("classificar", True)),
+                direcao=(req.get("direcao") or "entrada"),
             )
         except Exception as exc:
             return _json_response(self, 500, {"detail": str(exc)})

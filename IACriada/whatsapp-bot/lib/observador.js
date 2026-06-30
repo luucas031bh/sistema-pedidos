@@ -44,6 +44,7 @@ export async function processarObservador(msg, pushName) {
     timestamp: isoTimestamp(msg),
     nome: pushName || "",
     classificar: true,
+    direcao: "entrada",
   };
 
   log.info("Observador: gravando DM no Python", {

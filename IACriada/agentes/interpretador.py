@@ -34,15 +34,31 @@ def organizar_resposta(
         except (TypeError, ValueError):
             bloco_json = str(facts)[:5000]
 
-    prompt_sistema = (
-        "Voce e o ADNY, assistente da Adonay Confeções.\n"
-        "Organize a resposta em portugues do Brasil conforme a PERGUNTA do operador.\n"
-        "Use APENAS os dados do bloco FACTUAL abaixo. NUNCA invente pedidos, valores ou tamanhos.\n"
-        "Se a pergunta pede resumo do pedido, mostre cliente, status, etapa, financeiro, produtos e tamanhos.\n"
-        "Se pede lista de tamanhos, use formato: TAMANHO = N unidades (ex.: PP(BL) = 5 unidades).\n"
-        "Se pede calculo de malha, mantenha metros, kg e custos exatamente como nos dados.\n"
-        "Se faltar informacao no bloco, diga o que falta — nao preencha com suposicao."
-    )
+    if contexto == "whatsapp":
+        prompt_sistema = (
+            "Voce e o ADNY, cerebro analitico da Adonay Confeções.\n"
+            "Organize em portugues do Brasil uma resposta clara a partir dos dados reais do WhatsApp.\n"
+            "Use APENAS o bloco FACTUAL e o JSON — NUNCA invente contatos, mensagens, horarios ou pedidos.\n"
+            "Estruture quando fizer sentido:\n"
+            "1) Visao geral (periodo, quantidade de contatos/mensagens, status da conexao)\n"
+            "2) Por contato/conversa: nome, telefone, data/hora de cada mensagem, quem falou "
+            "(Cliente vs Adonay/equipe), intencao e tom emocional\n"
+            "3) Correlacao com pedidos RP quando existir no bloco (pedido, cliente, etapa, pecas, status)\n"
+            "4) Pontos de atencao (urgencia, reclamacao, orcamentos sem resposta, etc.)\n"
+            "Cite datas no formato DD/MM/AAAA HH:MM como nos dados.\n"
+            "Se mensagens antigas nao tiverem direcao 'saida', trate como recebidas do cliente.\n"
+            "Se faltar dado, diga explicitamente — nao preencha com suposicao."
+        )
+    else:
+        prompt_sistema = (
+            "Voce e o ADNY, assistente da Adonay Confeções.\n"
+            "Organize a resposta em portugues do Brasil conforme a PERGUNTA do operador.\n"
+            "Use APENAS os dados do bloco FACTUAL abaixo. NUNCA invente pedidos, valores ou tamanhos.\n"
+            "Se a pergunta pede resumo do pedido, mostre cliente, status, etapa, financeiro, produtos e tamanhos.\n"
+            "Se pede lista de tamanhos, use formato: TAMANHO = N unidades (ex.: PP(BL) = 5 unidades).\n"
+            "Se pede calculo de malha, mantenha metros, kg e custos exatamente como nos dados.\n"
+            "Se faltar informacao no bloco, diga o que falta — nao preencha com suposicao."
+        )
 
     prompt_user = (
         f"CONTEXTO: {contexto}\n\n"
@@ -72,7 +88,7 @@ def organizar_resposta(
 
 
 def _deve_sintetizar(pergunta: str, contexto: str) -> bool:
-    if contexto in ("calculadora_malha", "resumo_pedido", "lista_tamanhos", "rp_pedido"):
+    if contexto in ("calculadora_malha", "resumo_pedido", "lista_tamanhos", "rp_pedido", "whatsapp"):
         return True
     n = (pergunta or "").lower()
     return any(
@@ -86,5 +102,37 @@ def _deve_sintetizar(pergunta: str, contexto: str) -> bool:
             "me fale",
             "me diga",
             "traga",
+            "correlacion",
+            "relacion",
+            "analise",
+            "análise",
+            "conversa",
+            "emocao",
+            "emoção",
+            "tom",
+            "historico",
+            "histórico",
+            "contexto",
+            "situacao",
+            "situação",
         )
+    )
+
+
+def sintetizar_whatsapp(
+    pergunta: str,
+    texto_factual: str,
+    facts: dict | None = None,
+    modelo: str | None = None,
+    *,
+    forcar_llm: bool = False,
+) -> str:
+    """LLM organiza conversas WPP + correlacao RP a partir de dados factuais."""
+    return organizar_resposta(
+        pergunta,
+        texto_factual,
+        facts=facts,
+        modelo=modelo,
+        contexto="whatsapp",
+        forcar_llm=forcar_llm,
     )

@@ -38,6 +38,19 @@ export async function enviarEventoWhatsapp(payload) {
   return postJson("/api/observador/whatsapp", payload, config.aiTimeoutMs);
 }
 
+/** Registra mensagem enviada pela equipe/bot (direcao: saida). */
+export async function registrarMensagemSaida(payload) {
+  return postJson(
+    "/api/observador/whatsapp",
+    {
+      ...payload,
+      direcao: payload?.direcao || "saida",
+      classificar: payload?.classificar ?? false,
+    },
+    config.aiTimeoutMs
+  );
+}
+
 export async function tickSnapshotRp() {
   return postJson("/api/observador/tick", {}, 120000);
 }

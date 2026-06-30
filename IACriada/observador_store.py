@@ -222,15 +222,24 @@ def append_mensagem_global(
     timestamp: str | None = None,
     nome: str | None = None,
     intencao: str = "outro",
+    direcao: str = "entrada",
+    tom: str | None = None,
+    tipo_mensagem: str = "texto",
 ) -> dict:
-    """Log central de TODAS as DMs capturadas (consulta pelo chatbox)."""
+    """Log central de DMs — entrada (cliente) ou saida (equipe/bot)."""
     ts = timestamp or _iso_now()
+    d = (direcao or "entrada").strip().lower()
+    if d not in ("entrada", "saida"):
+        d = "entrada"
     registro = {
         "ts": ts,
         "telefone": _norm_tel(telefone),
         "nome": (nome or "").strip(),
         "texto": texto,
         "intencao": intencao or "outro",
+        "direcao": d,
+        "tom": tom or "",
+        "tipo_mensagem": tipo_mensagem or "texto",
     }
     with open(path_mensagens_whatsapp_global(), "a", encoding="utf-8") as f:
         f.write(json.dumps(registro, ensure_ascii=False) + "\n")

@@ -1,4 +1,18 @@
 import { config } from "./config.js";
+import { registrarMensagemSaida } from "./observador-client.js";
+import { normalizarNumero } from "./permissions.js";
+
+function logMensagemSaida(jid, texto) {
+  const numero = normalizarNumero(jid);
+  if (!numero || !(texto || "").trim()) return;
+  registrarMensagemSaida({
+    telefone: numero,
+    texto: String(texto).trim(),
+    timestamp: new Date().toISOString(),
+    classificar: false,
+    direcao: "saida",
+  }).catch(() => {});
+}
 
 export async function responderGrupo(sock, jid, texto) {
   const txt = (texto || "").trim();
@@ -8,6 +22,7 @@ export async function responderGrupo(sock, jid, texto) {
       ? txt.slice(0, config.maxMessageLength - 20) + "\n…(cortado)"
       : txt;
   await sock.sendMessage(jid, { text: parte });
+  logMensagemSaida(jid, parte);
 }
 
 export async function responderComDigitacao(sock, jid, texto) {

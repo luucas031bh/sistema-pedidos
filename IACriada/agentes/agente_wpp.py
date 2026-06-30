@@ -6,6 +6,7 @@ import re
 
 from historico_db import carregar_ultimo_resultado, salvar_ultimo_resultado
 from observador import status_observador
+from wpp_analise import enriquecer_mensagem, formatar_linha_mensagem, montar_contexto_analise
 from wpp_leitor import (
     PERIODO_30D,
     ResultadoColeta,
@@ -70,27 +71,72 @@ def _rotulo_cliente(c: dict) -> str:
 
 
 def _formatar_mensagem(m: dict, idx: int | None = None) -> str:
-    tel = m.get("telefone") or "?"
-    nome = (m.get("nome") or "").strip()
-    rotulo = f"{nome} ({tel})" if nome else tel
-    ts = m.get("ts") or "?"
-    intent = m.get("intencao") or "outro"
-    texto = (m.get("texto") or "").strip()
+    m = enriquecer_mensagem(m)
     prefix = f"{idx}. " if idx is not None else ""
-    return f'{prefix}{rotulo} [{intent}] {ts}\n   "{texto[:300]}"'
+    return prefix + formatar_linha_mensagem(m)
 
 
 def _serializar_mensagens(mensagens: list[dict]) -> list[dict]:
-    return [
-        {
-            "telefone": m.get("telefone"),
-            "nome": m.get("nome"),
-            "texto": m.get("texto"),
-            "intencao": m.get("intencao"),
-            "ts": m.get("ts"),
-        }
-        for m in mensagens
-    ]
+    out = []
+    for raw in mensagens:
+        m = enriquecer_mensagem(raw)
+        out.append(
+            {
+                "telefone": m.get("telefone"),
+                "nome": m.get("nome"),
+                "texto": m.get("texto"),
+                "intencao": m.get("intencao"),
+                "ts": m.get("ts"),
+                "data_hora_br": m.get("data_hora_br"),
+                "direcao": m.get("direcao"),
+                "tom": m.get("tom"),
+                "autor": m.get("autor"),
+            }
+        )
+    return out
+
+
+def _resposta_simples(pergunta: str, coleta: ResultadoColeta, filtro_comercial: bool) -> bool:
+    """Contagem ou lista de clientes — resposta direta sem LLM."""
+    if _pede_contagem_mensagens(pergunta) and not _pede_lista_clientes(pergunta):
+        return True
+    if _pede_lista_clientes(pergunta):
+        return True
+    return False
+
+
+def _deve_usar_llm(pergunta: str, coleta: ResultadoColeta) -> bool:
+    if not coleta.mensagens:
+        return False
+    n = (pergunta or "").lower()
+    if any(
+        k in n
+        for k in (
+            "resumo",
+            "organiz",
+            "correlacion",
+            "relacion",
+            "analise",
+            "análise",
+            "conversa",
+            "emocao",
+            "emoção",
+            "tom",
+            "historico",
+            "histórico",
+            "detalhe",
+            "explica",
+            "contexto",
+            "situacao",
+            "situação",
+            "pedido",
+            "mandou",
+            "escreveu",
+            "disse",
+        )
+    ):
+        return True
+    return len((pergunta or "").split()) >= 5
 
 
 def _salvar_contexto(
@@ -231,42 +277,26 @@ def executar(
     aguardando = coleta.pedir_confirmacao_mes and not coleta.mensagens
     _salvar_contexto(sessao, pergunta, coleta, aguardando_mes=aguardando, filtro_comercial=filtro_comercial)
 
-    resposta = _montar_resposta(pergunta, coleta, filtro_comercial)
+    if _resposta_simples(pergunta, coleta, filtro_comercial) or aguardando or not coleta.mensagens:
+        resposta = _montar_resposta(pergunta, coleta, filtro_comercial)
+    else:
+        texto_factual, facts = montar_contexto_analise(pergunta, coleta)
+        resposta = texto_factual
+        if modelo and _deve_usar_llm(pergunta, coleta):
+            from agentes.interpretador import sintetizar_whatsapp
 
-    usar_llm = (
-        modelo
-        and coleta.mensagens
-        and not _pede_contagem_mensagens(pergunta)
-        and not _pede_lista_clientes(pergunta)
-        and len(pergunta.split()) >= 6
-    )
-
-    if usar_llm:
-        from agente import _request_ollama, resolver_modelo
-
-        nome = resolver_modelo(modelo)
-        if nome:
-            ctx_msgs = "\n".join(_formatar_mensagem(m) for m in coleta.mensagens[:35])
-            prompt = (
-                "Voce e o Agente WPP da Adonay. Responda em portugues usando APENAS as mensagens abaixo. "
-                f"Periodo: {coleta.rotulo}. NUNCA invente clientes ou textos.\n\n"
-                f"PERGUNTA: {pergunta}\n\nMENSAGENS:\n{ctx_msgs}"
+            sintetizada = sintetizar_whatsapp(
+                pergunta,
+                texto_factual,
+                facts=facts,
+                modelo=modelo,
+                forcar_llm=True,
             )
-            try:
-                dados = _request_ollama(
-                    {
-                        "model": nome,
-                        "messages": [{"role": "user", "content": prompt}],
-                        "stream": False,
-                        "options": {"temperature": 0},
-                    },
-                    timeout=90,
-                )
-                txt = dados.get("message", {}).get("content", "").strip()
-                if txt:
-                    resposta = f"{coleta.rotulo} — {len(coleta.clientes)} cliente(s)\n\n{txt}"
-            except Exception:
-                pass
+            if sintetizada and sintetizada.strip():
+                cab = f"WhatsApp — {coleta.rotulo} · {len(coleta.clientes)} contato(s) · {len(coleta.mensagens)} msg(s)\n\n"
+                resposta = cab + sintetizada.strip()
+        elif len(texto_factual) > 12000:
+            resposta = texto_factual[:12000] + "\n\n… (analise truncada; use LLM para resumo completo)"
 
     return {
         "resposta": resposta,
@@ -290,6 +320,7 @@ def executar(
             "expandiu_periodo": coleta.expandiu,
             "aguardando_confirmacao_mes": aguardando,
             "filtro_comercial": filtro_comercial,
+            "llm_analise": bool(modelo and _deve_usar_llm(pergunta, coleta)),
         },
     }
 

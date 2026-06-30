@@ -88,7 +88,8 @@ def classificar_texto_llm(texto: str, modelo: str | None = None) -> dict:
 
     prompt = (
         "Classifique a mensagem de cliente de confeccao. "
-        'Responda SOMENTE JSON: {"intencao":"orcamento|duvida|status_pedido|outro",'
+        'Responda SOMENTE JSON: {"intencao":"orcamento|preco|duvida|status_pedido|outro",'
+        '"tom":"comercial|urgente|reclamacao|cordial|duvida|neutro",'
         '"resumo":"...", "entidades":{}}\n\n'
         f"Mensagem: {texto}"
     )
@@ -113,6 +114,12 @@ def classificar_texto_llm(texto: str, modelo: str | None = None) -> dict:
     return _classificar_heuristica(texto)
 
 
+def inferir_tom_mensagem(texto: str, intencao: str = "") -> str:
+    from wpp_analise import inferir_tom
+
+    return inferir_tom(texto, intencao)
+
+
 def registrar_whatsapp_evento(
     telefone: str,
     texto: str,
@@ -120,25 +127,33 @@ def registrar_whatsapp_evento(
     nome: str | None = None,
     *,
     classificar: bool = True,
+    direcao: str = "entrada",
 ) -> dict:
     if not telefone_valido(telefone):
         return {"ok": False, "erro": "telefone_invalido"}
     if not (texto or "").strip():
         return {"ok": False, "erro": "texto_vazio"}
 
+    d = (direcao or "entrada").strip().lower()
+    if d == "saida":
+        return registrar_whatsapp_saida(telefone, texto, timestamp=timestamp, nome=nome)
+
     salvar_mensagem_cliente(telefone, texto, timestamp=timestamp, nome=nome)
     clf = classificar_texto_llm(texto) if classificar else _classificar_heuristica(texto)
     intencao = clf.get("intencao") or classificar_intencao_mensagem(texto)
+    tom = clf.get("tom") or inferir_tom_mensagem(texto, intencao)
     append_mensagem_global(
         telefone,
         texto,
         timestamp=timestamp,
         nome=nome,
         intencao=intencao,
+        direcao="entrada",
+        tom=tom,
     )
     append_evento(
         "whatsapp_in",
-        {"telefone": telefone, "texto": texto[:300], "nome": nome or "", "intencao": intencao},
+        {"telefone": telefone, "texto": texto[:300], "nome": nome or "", "intencao": intencao, "tom": tom},
     )
 
     ts = timestamp or ""
@@ -156,7 +171,36 @@ def registrar_whatsapp_evento(
         "relevante": True,
     }
     atualizar_conversa_snapshot(conversa)
-    return {"ok": True, "conversa": conversa, "classificacao": clf}
+    return {"ok": True, "conversa": conversa, "classificacao": {**clf, "tom": tom}}
+
+
+def registrar_whatsapp_saida(
+    telefone: str,
+    texto: str,
+    timestamp: str | None = None,
+    nome: str | None = None,
+) -> dict:
+    """Registra mensagem enviada pela equipe/bot."""
+    if not telefone_valido(telefone):
+        return {"ok": False, "erro": "telefone_invalido"}
+    if not (texto or "").strip():
+        return {"ok": False, "erro": "texto_vazio"}
+
+    tom = inferir_tom_mensagem(texto, "resposta_equipe")
+    append_mensagem_global(
+        telefone,
+        texto,
+        timestamp=timestamp,
+        nome=nome,
+        intencao="resposta_equipe",
+        direcao="saida",
+        tom=tom,
+    )
+    append_evento(
+        "whatsapp_out",
+        {"telefone": telefone, "texto": texto[:300], "nome": nome or "", "tom": tom},
+    )
+    return {"ok": True, "direcao": "saida", "tom": tom}
 
 
 def refresh_snapshot_rp() -> dict:
