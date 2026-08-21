@@ -1603,9 +1603,9 @@ function obterConfigCalculoPadraoObjeto() {
       { tamanho: '2', valor: 1 }, { tamanho: '4', valor: 1 }, { tamanho: '6', valor: 1 }, { tamanho: '8', valor: 1 },
       { tamanho: '10', valor: 1 }, { tamanho: '12', valor: 1 }, { tamanho: '14', valor: 1 },
       { tamanho: 'PP', valor: 1 }, { tamanho: 'P', valor: 1 }, { tamanho: 'M', valor: 1 }, { tamanho: 'G', valor: 1 },
-      { tamanho: 'GG', valor: 1 }, { tamanho: 'G1', valor: 1 }, { tamanho: 'G2', valor: 1 }, { tamanho: 'G3', valor: 1 }, { tamanho: 'G4', valor: 1 },
+      { tamanho: 'GG', valor: 1 }, { tamanho: 'G1', valor: 1 }, { tamanho: 'G2', valor: 1 }, { tamanho: 'G3', valor: 1 }, { tamanho: 'G4', valor: 1 }, { tamanho: 'G5', valor: 1 },
       { tamanho: 'PP (BL)', valor: 1 }, { tamanho: 'P (BL)', valor: 1 }, { tamanho: 'M (BL)', valor: 1 }, { tamanho: 'G (BL)', valor: 1 },
-      { tamanho: 'GG (BL)', valor: 1 }, { tamanho: 'G1 (BL)', valor: 1 }, { tamanho: 'G2 (BL)', valor: 1 }, { tamanho: 'G3 (BL)', valor: 1 }, { tamanho: 'G4 (BL)', valor: 1 },
+      { tamanho: 'GG (BL)', valor: 1 }, { tamanho: 'G1 (BL)', valor: 1 }, { tamanho: 'G2 (BL)', valor: 1 }, { tamanho: 'G3 (BL)', valor: 1 }, { tamanho: 'G4 (BL)', valor: 1 }, { tamanho: 'G5 (BL)', valor: 1 },
       { tamanho: 'EG', valor: 1 }
     ],
     geral: {
@@ -2163,10 +2163,12 @@ function normalizarTamanhoParaCalculoTemporario(tamanho) {
     'G2': 'EG',
     'G3': 'EG',
     'G4': 'EG',
+    'G5': 'EG',
     'G1 (BL)': 'EG',
     'G2 (BL)': 'EG',
     'G3 (BL)': 'EG',
-    'G4 (BL)': 'EG'
+    'G4 (BL)': 'EG',
+    'G5 (BL)': 'EG'
   };
   return aliases[valor] || valor;
 }

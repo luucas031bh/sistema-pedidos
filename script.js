@@ -782,10 +782,12 @@ function normalizarTamanhoParaCalculo(tamanho) {
         G2: 'EG',
         G3: 'EG',
         G4: 'EG',
+        G5: 'EG',
         'G1 (BL)': 'EG',
         'G2 (BL)': 'EG',
         'G3 (BL)': 'EG',
-        'G4 (BL)': 'EG'
+        'G4 (BL)': 'EG',
+        'G5 (BL)': 'EG'
     };
     return aliases[tamanho] || tamanho;
 }

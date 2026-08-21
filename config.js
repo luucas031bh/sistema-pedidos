@@ -42,8 +42,8 @@ const CONFIG = {
     // Tamanhos disponíveis
     TAMANHOS: [
         '2', '4', '6', '8', '10', '12', '14',
-        'PP', 'P', 'M', 'G', 'GG', 'G1', 'G2', 'G3', 'G4',
-        'PP (BL)', 'P (BL)', 'M (BL)', 'G (BL)', 'GG (BL)', 'G1 (BL)', 'G2 (BL)', 'G3 (BL)', 'G4 (BL)'
+        'PP', 'P', 'M', 'G', 'GG', 'G1', 'G2', 'G3', 'G4', 'G5',
+        'PP (BL)', 'P (BL)', 'M (BL)', 'G (BL)', 'GG (BL)', 'G1 (BL)', 'G2 (BL)', 'G3 (BL)', 'G4 (BL)', 'G5 (BL)'
     ],
     
     // Tipos de Estampas
