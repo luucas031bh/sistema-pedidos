@@ -1,0 +1,97 @@
+/* Barra fixa de navegação. Não grava dados. */
+:root {
+    --adonay-nav-h: calc(66px + env(safe-area-inset-top, 0px));
+}
+
+body.has-adonay-nav {
+    padding-top: var(--adonay-nav-h);
+}
+
+#adonayNav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 260;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: env(safe-area-inset-top, 0px) 10px 6px;
+    background: #0a0a0a;
+    border-bottom: 2px solid #d4af37;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.adonay-nav-onde {
+    margin: 0;
+    color: #f0d98d;
+    font-size: 0.78rem;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+}
+
+.adonay-nav-onde strong {
+    color: #fff;
+    font-weight: 700;
+}
+
+.adonay-nav-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 6px;
+}
+
+.adonay-nav-links a {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 0 12px;
+    border-radius: 999px;
+    color: #e8e8e8;
+    background: #1c1c1c;
+    text-decoration: none;
+    font-size: 0.92rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.adonay-nav-links a[aria-current="page"] {
+    color: #1a1a1a;
+    background: #d4af37;
+}
+
+.adonay-nav-links a:focus-visible {
+    outline: 2px solid #f0d98d;
+    outline-offset: 2px;
+}
+
+body.has-adonay-nav .btn-voltar-principal {
+    top: calc(var(--adonay-nav-h) + 8px) !important;
+}
+
+body.has-adonay-nav .topbar,
+body.has-adonay-nav .header {
+    top: var(--adonay-nav-h);
+}
+
+body.has-adonay-nav .topbar {
+    padding-top: 12px;
+}
+
+body.imprimindo-doc-os #adonayNav,
+body.imprimindo-doc-gp #adonayNav {
+    display: none !important;
+}
+
+@media print {
+    #adonayNav {
+        display: none !important;
+    }
+
+    body.has-adonay-nav {
+        padding-top: 0 !important;
+    }
+}

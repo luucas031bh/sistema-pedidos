@@ -1,0 +1,27 @@
+---
+description: Mapa do sistema Adonay e da barra de navegação para não perder o caminho
+alwaysApply: true
+---
+
+# Navegação — não perder o caminho
+
+Refinar o sistema atual. Não reescrever. `Code.gs` e o bot Node ficam como estão.
+
+A barra `#adonayNav` (`nav.css`, `nav.js`) fica fixa no topo das telas e só leva a outra página. Ela não grava nem apaga nada.
+
+- Início: `home.html`
+- Pedido: `index.html`
+- Relatórios: `relatorio.html`
+- Malha: `CalculadoraMalha/`
+- Cores: `ROANTONE/`
+- Fornecedores: `fornecedores.html`
+- Lista: `ListaPreencher/lista.html`
+
+Plano de refinamento, nesta ordem, ainda sem executar além da barra:
+
+1. GP em no máximo duas folhas e OS com uma ficha por produto.
+2. Relatório do que mais e menos vende, sem regravar dado antigo.
+3. Receita ROANTONE na OS só quando o código já estiver no pedido.
+4. Ajuste fino do preenchimento no desktop e no iPhone 13.
+
+Orquestrador, pesquisador, construtor, executor, testador e revisor. Tarefa e resultado passam pelo orquestrador.

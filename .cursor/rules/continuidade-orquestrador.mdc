@@ -1,0 +1,15 @@
+---
+description: Mantém o contexto do orquestrador e o aviso de andamento no Windows
+alwaysApply: true
+---
+
+# Continuidade e aviso de andamento
+
+Arquivo vivo, reescrito por completo: `contexto/orquestrador-contexto.md`.
+Status do aviso: `contexto/andamento.json`.
+
+Reescreva o arquivo de contexto ao encerrar a conversa, quando a pessoa disser para parar, fechar o Cursor ou desligar, e quando o contexto da conversa estiver longo. O texto cobre o que foi feito, o que não foi feito, as regras e o próximo passo. Não invente trabalho além do arquivo.
+
+No JSON, `precisaDeVoce` false e `estado` `ok` ou `pausa` deixam o aviso verde. `atencao`, `erro`, `aprovacao` ou `precisaDeVoce` true deixam vermelho. Atualize o JSON quando o estado mudar.
+
+O aviso é a tarefa do Windows `Adonay Andamento`, a cada 15 minutos. O script fecha o aviso anterior, se ainda estiver aberto, e abre o novo. O aviso não grava pedido.

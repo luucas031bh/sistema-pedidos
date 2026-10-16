@@ -133,28 +133,34 @@
         return tipo || det || '—';
     }
 
-    function montarLinhasGpUmProduto(prod) {
-        const linhas = [];
-        const pu = Number(prod.precoUnitario) || 0;
+    function tamanhosComQuantidade(prod) {
         const tams = Array.isArray(prod.tamanhos) ? prod.tamanhos : [];
-        const tipo = resumirTipoPeca(prod.tipoPeca, prod.detalhesPeca);
-        const desc = [prod.tipoMalha, prod.corMalha].filter(Boolean).join(' — ') || '—';
-        if (tams.length === 0) {
-            linhas.push({ q: 0, tam: '—', tipo, desc, un: pu, tot: 0 });
-            return linhas;
-        }
-        tams.forEach((t) => {
-            const q = Number(t.quantidade) || 0;
-            linhas.push({
-                q,
-                tam: t.tamanho || '—',
-                tipo,
-                desc,
-                un: pu,
-                tot: q * pu
-            });
-        });
-        return linhas;
+        return tams.filter((t) => t && (Number(t.quantidade) || 0) > 0);
+    }
+
+    function pecasDoProduto(prod) {
+        return tamanhosComQuantidade(prod).reduce((s, t) => s + (Number(t.quantidade) || 0), 0);
+    }
+
+    function estampasValidas(prod) {
+        const arr = Array.isArray(prod.estampas) ? prod.estampas : [];
+        return arr.filter((e) => e && (e.tipo || e.localidade));
+    }
+
+    function textoGrade(prod) {
+        const partes = tamanhosComQuantidade(prod).map((t) => `${t.tamanho} ${Number(t.quantidade) || 0}`);
+        return partes.length ? partes.join(' · ') : '—';
+    }
+
+    function htmlEstampasCurtas(prod) {
+        const lista = estampasValidas(prod);
+        if (!lista.length) return '—';
+        return lista
+            .map((e) => {
+                const partes = [e.tipo, e.localidade, e.quantidadeCores].filter(Boolean);
+                return escapeHtml(partes.join(' · '));
+            })
+            .join('<br>');
     }
 
     function calcularTotalPecasGp(produtos) {
@@ -168,28 +174,12 @@
         return n;
     }
 
-    function linhasGpParaHtmlTabela(linhas) {
-        return linhas
-            .map(
-                (ln) => `
-            <tr>
-                <td class="gp-num">${ln.q}</td>
-                <td>${escapeHtml(ln.tam)}</td>
-                <td>${escapeHtml(ln.tipo)}</td>
-                <td class="gp-desc">${escapeHtml(ln.desc)}</td>
-                <td class="gp-moeda">${Utils.formatarMoeda(ln.un)}</td>
-                <td class="gp-moeda">${Utils.formatarMoeda(ln.tot)}</td>
-            </tr>`
-            )
-            .join('');
-    }
-
     function listaEstampasProduto(prod) {
-        const arr = Array.isArray(prod.estampas) ? prod.estampas : [];
-        return arr
-            .filter((e) => e && (e.tipo || e.localidade))
-            .map((e) => [e.tipo, e.localidade].filter(Boolean).join(' — '))
-            .join('; ') || '—';
+        const lista = estampasValidas(prod);
+        if (!lista.length) return '—';
+        return lista
+            .map((e) => [e.tipo, e.localidade, e.quantidadeCores].filter(Boolean).join(' · '))
+            .join('; ');
     }
 
     function montarGaleriaArtesHtml(artesSrc) {
@@ -201,20 +191,6 @@
             </div>
         `).join('');
         return `<section class="gp-artes"><h2 class="gp-sec-titulo gp-sec-titulo--sub">Artes / Estampas</h2><div class="gp-artes-grid">${thumbs}</div></section>`;
-    }
-
-    function montarBlocoMockupGp(mockSrc, nomeProduto, idx) {
-        const titulo = escapeHtml(nomeProduto || `Produto ${idx + 1}`);
-        if (!mockSrc) {
-            return `<div class="gp-mockup gp-mockup--prod gp-mockup--vazio"><div class="gp-mockup-leg">${titulo}</div><p>(Sem mockup)</p></div>`;
-        }
-        return `<div class="gp-mockup gp-mockup--prod"><div class="gp-mockup-leg">${titulo}</div><img src="${mockSrc}" alt="Mockup" class="gp-mockup-img" loading="lazy" decoding="async" fetchpriority="high"></div>`;
-    }
-
-    function montarBlocoMockupOs(mockSrc, nomeProduto, idx) {
-        const titulo = escapeHtml(nomeProduto || `Modelo ${idx + 1}`);
-        if (!mockSrc) return '';
-        return `<div class="os-mockup os-mockup--prod"><div class="os-mockup-leg">${titulo}</div><img src="${mockSrc}" alt="Mockup" class="os-mockup-img" loading="lazy" decoding="async" fetchpriority="high"></div>`;
     }
 
     function montarHtmlGp(dados, mockupSrcsPorProduto, artesSrc) {
@@ -236,28 +212,36 @@
         const obsHtml = obs.trim() ? escapeHtml(obs) : '—';
         const mockupsArr = Array.isArray(mockupSrcsPorProduto) ? mockupSrcsPorProduto : [];
 
-        const blocosProduto = produtos
+        const linhasProduto = produtos
             .map((prod, idx) => {
-                const linhas = montarLinhasGpUmProduto(prod);
-                const corpo = linhasGpParaHtmlTabela(linhas);
                 const n = idx + 1;
                 const tituloProd = prod.nomeProduto || `Produto ${n}`;
-                const mockSrc = mockupsArr[idx] || '';
-                const mockHtml = montarBlocoMockupGp(mockSrc, tituloProd, idx);
+                const qtd = pecasDoProduto(prod);
+                const pu = Number(prod.precoUnitario) || 0;
+                const peca = [prod.tipoPeca, prod.detalhesPeca].filter(Boolean).join(' — ');
+                const malha = [prod.tipoMalha, prod.corMalha].filter(Boolean).join(' — ') || '—';
                 return `
-    <section class="gp-produto">
-        <h3 class="gp-produto-tit">${escapeHtml(tituloProd)}</h3>
-        <table class="gp-tabela">
-            <thead>
-                <tr>
-                    <th>Quant.</th><th>Tamanho</th><th>Tipo</th><th>Descrição</th><th>Preç. un.</th><th>Total</th>
-                </tr>
-            </thead>
-            <tbody>${corpo}</tbody>
-        </table>
-        ${mockHtml}
-    </section>`;
+            <tr>
+                <td>${escapeHtml(tituloProd)}</td>
+                <td>${escapeHtml(peca || '—')}</td>
+                <td>${escapeHtml(malha)}</td>
+                <td>${escapeHtml(textoGrade(prod))}</td>
+                <td>${htmlEstampasCurtas(prod)}</td>
+                <td class="gp-num">${qtd}</td>
+                <td class="gp-moeda">${Utils.formatarMoeda(pu)}</td>
+                <td class="gp-moeda">${Utils.formatarMoeda(qtd * pu)}</td>
+            </tr>`;
             })
+            .join('');
+
+        const faixaMock = produtos
+            .map((prod, idx) => {
+                const tituloProd = prod.nomeProduto || `Produto ${idx + 1}`;
+                const src = mockupsArr[idx] || '';
+                if (!src) return '';
+                return `<figure class="gp-faixa-item"><img src="${src}" alt="Mockup" class="gp-faixa-img"><figcaption>${escapeHtml(tituloProd)}</figcaption></figure>`;
+            })
+            .filter(Boolean)
             .join('');
 
         return `
@@ -295,7 +279,15 @@
         <h2 class="gp-sec-titulo gp-sec-titulo--sub">Descrição do pedido</h2>
         <p class="gp-desc-texto">${obsHtml}</p>
     </section>
-    ${blocosProduto}
+    <table class="gp-tabela gp-tabela-unica">
+        <thead>
+            <tr>
+                <th>Produto</th><th>Peça</th><th>Malha e cor</th><th>Grade</th><th>Estampa</th><th>Qtd</th><th>Preço un.</th><th>Total</th>
+            </tr>
+        </thead>
+        <tbody>${linhasProduto || '<tr><td colspan="8">Nenhum produto informado.</td></tr>'}</tbody>
+    </table>
+    ${faixaMock ? `<section class="gp-faixa"><h2 class="gp-sec-titulo gp-sec-titulo--sub">Mockups</h2><div class="gp-faixa-lista">${faixaMock}</div></section>` : ''}
     ${montarGaleriaArtesHtml(artesSrc)}
     <div class="gp-rodape-valores">
         <div class="gp-resumo-financeiro">
@@ -313,7 +305,7 @@
             <p class="gp-assinatura-rotulo">Assinatura do cliente</p>
         </div>
     </div>
-    <div class="gp-rodape">GP</div>
+    <div class="gp-rodape">GP — Guia de Pedido</div>
 </div>`;
     }
 
@@ -326,53 +318,84 @@
         const produtos = Array.isArray(dados.produtos) ? dados.produtos : [];
         const mockupsArr = Array.isArray(mockupSrcsPorProduto) ? mockupSrcsPorProduto : [];
         let totalPecas = 0;
-        const blocosProd = produtos
+        const varios = produtos.length > 1;
+        const indice = produtos
+            .map((prod, idx) => {
+                const qtd = pecasDoProduto(prod);
+                totalPecas += qtd;
+                const tituloProd = prod.nomeProduto || `Produto ${idx + 1}`;
+                const resumoEst = estampasValidas(prod).map((e) => e.tipo).filter(Boolean).join(', ') || 'sem estampa';
+                return `<li><strong>${escapeHtml(tituloProd)}</strong> — ${escapeHtml(prod.tipoMalha || '—')} — ${escapeHtml(prod.corMalha || '—')} — ${qtd} peças — ${escapeHtml(resumoEst)}</li>`;
+            })
+            .join('');
+
+        const fichas = produtos
             .map((prod, idx) => {
                 const n = idx + 1;
-                const tituloProd = prod.nomeProduto || `Modelo ${n}`;
-                const tams = Array.isArray(prod.tamanhos) ? prod.tamanhos : [];
-                let sub = 0;
-                const linhasTam = tams
-                    .map((t) => {
-                        const q = Number(t.quantidade) || 0;
-                        sub += q;
-                        return `<tr><td>${escapeHtml(t.tamanho || '—')}</td><td class="os-num">${q}</td></tr>`;
+                const tituloProd = prod.nomeProduto || `Produto ${n}`;
+                const tams = tamanhosComQuantidade(prod);
+                const cabGrade = tams.map((t) => `<th>${escapeHtml(t.tamanho || '—')}</th>`).join('');
+                const corpoGrade = tams.map((t) => `<td>${Number(t.quantidade) || 0}</td>`).join('');
+                const grade = tams.length
+                    ? `<table class="os-grade"><thead><tr>${cabGrade}</tr></thead><tbody><tr>${corpoGrade}</tr></tbody></table>`
+                    : '<p class="os-sem-grade">Sem grade informada.</p>';
+                const estampas = estampasValidas(prod)
+                    .map((e, i) => {
+                        const cores = e.quantidadeCores
+                            ? `<div><span>Cores de tinta</span> ${escapeHtml(e.quantidadeCores)}</div>`
+                            : '';
+                        return `<article class="os-estampa"><strong>${i + 1}. ${escapeHtml(e.tipo || 'Estampa')}</strong><div><span>Local</span> ${escapeHtml(e.localidade || '—')}</div>${cores}</article>`;
                     })
-                    .join('');
-                totalPecas += sub;
-                const est = listaEstampasProduto(prod);
+                    .join('') || '<p class="os-sem-grade">Sem estampa informada.</p>';
                 const mockSrc = mockupsArr[idx] || '';
-                const mockHtml = montarBlocoMockupOs(mockSrc, tituloProd, idx);
+                const mockHtml = mockSrc
+                    ? `<figure class="os-ficha-mock"><img src="${mockSrc}" alt="Mockup" class="os-ficha-img"><figcaption>${escapeHtml(tituloProd)}</figcaption></figure>`
+                    : '';
+                const quebra = varios ? ' os-ficha--nova' : '';
                 return `
-            <div class="os-modelo">
-                <h3 class="os-modelo-tit">${escapeHtml(tituloProd)}</h3>
-                <table class="os-tab-tam"><thead><tr><th>Tamanho</th><th>Qtd</th></tr></thead><tbody>${linhasTam}</tbody></table>
-                <div class="os-info">
-                    <div><strong>Malha</strong> ${escapeHtml(prod.tipoMalha || '—')}</div>
-                    <div><strong>Cor</strong> ${escapeHtml(prod.corMalha || '—')}</div>
-                    <div><strong>Peça / detalhe</strong> ${escapeHtml(prod.tipoPeca || '')} ${escapeHtml(prod.detalhesPeca || '')}</div>
-                    <div><strong>Estampas</strong> ${escapeHtml(est)}</div>
+            <section class="os-ficha${quebra}">
+                <div class="os-ficha-topo">
+                    <span>OS ${escapeHtml(idC)}</span>
+                    <span>Ficha ${n} de ${produtos.length}</span>
+                    <span>Entrega ${formatarDataBR(dados.datas?.entrega)}</span>
                 </div>
+                <h2 class="os-ficha-tit">${escapeHtml(tituloProd)}</h2>
+                <div class="os-ficha-dados">
+                    <div><span>Peça</span> ${escapeHtml([prod.tipoPeca, prod.detalhesPeca].filter(Boolean).join(' — ') || '—')}</div>
+                    <div><span>Malha</span> ${escapeHtml(prod.tipoMalha || '—')}</div>
+                    <div><span>Cor</span> ${escapeHtml(prod.corMalha || '—')}</div>
+                    <div><span>Peças desta ficha</span> ${pecasDoProduto(prod)}</div>
+                </div>
+                <h3>Grade</h3>
+                ${grade}
+                <h3>Estampas</h3>
+                ${estampas}
                 ${mockHtml}
-            </div>`;
+            </section>`;
             })
             .join('');
 
         return `
 <div class="os-doc">
-    <h1 class="os-titulo">Ordem de serviço — ${escapeHtml(nomeEmp)}</h1>
-    <div class="os-topo">
-        <div><strong>Data</strong> ${formatarDataBR(dados.datas?.pedido)}</div>
-        <div><strong>ID</strong> ${escapeHtml(idC)}</div>
-    </div>
-    <div class="os-cliente">
-        <h2>Dados do cliente</h2>
-        <div><strong>Nome</strong> ${escapeHtml(cli.nome)}</div>
-        <div><strong>Pedido</strong> ${escapeHtml(obs)}</div>
-    </div>
-    ${blocosProd}
-    <div class="os-total-pecas"><strong>Total de peças</strong> ${totalPecas}</div>
-    ${montarGaleriaArtesHtml(artesSrc)}
+    <section class="os-capa">
+        <h1 class="os-titulo">Ordem de serviço — ${escapeHtml(nomeEmp)}</h1>
+        <p class="os-aviso-interno">Documento de produção. Sem valores comerciais.</p>
+        <div class="os-topo">
+            <div><strong>Pedido</strong> ${formatarDataBR(dados.datas?.pedido)}</div>
+            <div><strong>Entrega</strong> ${formatarDataBR(dados.datas?.entrega)}</div>
+            <div><strong>ID</strong> ${escapeHtml(idC)}</div>
+            <div><strong>Peças</strong> ${totalPecas}</div>
+        </div>
+        <div class="os-cliente">
+            <h2>Cliente</h2>
+            <div><strong>Nome</strong> ${escapeHtml(cli.nome || '—')}</div>
+            <div><strong>Observação</strong> ${escapeHtml(obs || '—')}</div>
+        </div>
+        <h2 class="os-indice-tit">${varios ? 'Produtos — uma ficha para cada' : 'Produto'}</h2>
+        <ol class="os-indice">${indice}</ol>
+        ${montarGaleriaArtesHtml(artesSrc)}
+    </section>
+    ${fichas}
 </div>`;
     }
 

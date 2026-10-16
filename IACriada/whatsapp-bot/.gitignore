@@ -1,7 +1,0 @@
-node_modules/
-.env
-auth_info/*
-!auth_info/.gitkeep
-logs/*
-!logs/.gitkeep
-../whatsapp-qr.png

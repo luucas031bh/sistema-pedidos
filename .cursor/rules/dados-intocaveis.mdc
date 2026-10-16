@@ -1,0 +1,22 @@
+---
+description: Proíbe apagar, editar ou modificar qualquer dado já gravado no sistema
+alwaysApply: true
+---
+
+# Dados já registrados são intocáveis
+
+Entrada que já existe no sistema não se apaga, não se edita e não se modifica. Isso vale para pedido, orçamento, cliente, valor, status, produto, imagem, fornecedor e receita já salvos.
+
+Permitido somente:
+
+- Ler: listar, buscar, abrir na tela, imprimir e gerar relatório a partir do que já está gravado.
+- Criar um pedido de teste novo, e só depois de avisar a pessoa. O teste não reaproveita o id de um pedido existente.
+
+Proibido:
+
+- `salvarPedido` ou qualquer gravação em cima de um id que já existe.
+- Apagar linha, arquivo, imagem ou registro.
+- Corrigir, normalizar ou regravar cor, telefone, valor, status ou produto antigo.
+- Botão, script ou migração que reescreva a planilha.
+
+Se a tarefa só termina alterando dado existente, pare e avise. Não contorne a regra.
