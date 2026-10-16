@@ -200,10 +200,16 @@
         const end = emp.endereco || '';
         const idC = idCurtoPedido(dados);
         const fin = dados.financeiro || {};
-        const total = Number(fin.totalPedido) || 0;
-        const entrada = Number(fin.valorEntrada) || 0;
-        const restante = Number(fin.restante) != null ? Number(fin.restante) : total - entrada;
         const produtos = Array.isArray(dados.produtos) ? dados.produtos : [];
+        const totalLinhas = produtos.reduce((soma, prod) => {
+            return soma + pecasDoProduto(prod) * (Number(prod.precoUnitario) || 0);
+        }, 0);
+        const total = Number(fin.totalPedido) || totalLinhas;
+        const entrada = Number(fin.valorEntrada) || 0;
+        const restanteInformado = Number(fin.restante);
+        const restante = Number(fin.totalPedido) > 0 && Number.isFinite(restanteInformado)
+            ? restanteInformado
+            : total - entrada;
         const totalPecasCalc = calcularTotalPecasGp(produtos);
         const totalPecas =
             totalPecasCalc > 0 ? totalPecasCalc : Number(dados.totalPecas) || 0;
@@ -211,28 +217,6 @@
         const obs = dados.observacoes || '';
         const obsHtml = obs.trim() ? escapeHtml(obs) : '—';
         const mockupsArr = Array.isArray(mockupSrcsPorProduto) ? mockupSrcsPorProduto : [];
-
-        const linhasProduto = produtos
-            .map((prod, idx) => {
-                const n = idx + 1;
-                const tituloProd = prod.nomeProduto || `Produto ${n}`;
-                const qtd = pecasDoProduto(prod);
-                const pu = Number(prod.precoUnitario) || 0;
-                const peca = [prod.tipoPeca, prod.detalhesPeca].filter(Boolean).join(' — ');
-                const malha = [prod.tipoMalha, prod.corMalha].filter(Boolean).join(' — ') || '—';
-                return `
-            <tr>
-                <td>${escapeHtml(tituloProd)}</td>
-                <td>${escapeHtml(peca || '—')}</td>
-                <td>${escapeHtml(malha)}</td>
-                <td>${escapeHtml(textoGrade(prod))}</td>
-                <td>${htmlEstampasCurtas(prod)}</td>
-                <td class="gp-num">${qtd}</td>
-                <td class="gp-moeda">${Utils.formatarMoeda(pu)}</td>
-                <td class="gp-moeda">${Utils.formatarMoeda(qtd * pu)}</td>
-            </tr>`;
-            })
-            .join('');
 
         const faixaMock = produtos
             .map((prod, idx) => {
@@ -244,50 +228,35 @@
             .filter(Boolean)
             .join('');
 
+        const blocos = produtos.map((prod, idx) => {
+            const tituloProd = prod.nomeProduto || `Produto ${idx + 1}`;
+            const qtd = pecasDoProduto(prod);
+            const pu = Number(prod.precoUnitario) || 0;
+            const peca = prod.detalhesPeca || prod.tipoPeca || '—';
+            return `<article class="gp-item">
+                <header><strong>${escapeHtml(tituloProd)}</strong><b>${Utils.formatarMoeda(qtd * pu)}</b></header>
+                <p>${escapeHtml(peca)} · ${escapeHtml(prod.corMalha || '—')} · ${escapeHtml(malhaCurta(prod.tipoMalha))}</p>
+                <p>${escapeHtml(textoGrade(prod))} · ${qtd} peças · ${Utils.formatarMoeda(pu)} un.</p>
+                <p class="gp-item-est">${htmlEstampasCurtas(prod)}</p>
+            </article>`;
+        }).join('');
+
         return `
-<div class="gp-doc">
-    <div class="gp-header">
-        <div class="gp-marca">${escapeHtml(nomeEmp)}</div>
-        <div class="gp-meta">
-            <span class="gp-id">ID: ${escapeHtml(idC)}</span>
-            <span>${escapeHtml(tel)}</span>
+<div class="gp-doc gp-doc--limpa">
+    <header class="gp-topo">
+        <div>
+            <strong>${escapeHtml(nomeEmp)}</strong>
+            <span>${escapeHtml(tel)} · ${escapeHtml(end)}</span>
         </div>
-        <div class="gp-endereco">${escapeHtml(end)}</div>
-    </div>
-    <section class="gp-info-cliente">
-        <h2 class="gp-sec-titulo">Cliente e prazos</h2>
-        <div class="gp-info-cliente-grid">
-            <div class="gp-cel">
-                <span class="gp-label">Nome</span>
-                <span class="gp-val">${escapeHtml(cli.nome)}</span>
-            </div>
-            <div class="gp-cel">
-                <span class="gp-label">Telefone</span>
-                <span class="gp-val">${escapeHtml(cli.telefone)}</span>
-            </div>
-            <div class="gp-cel">
-                <span class="gp-label">Data do pedido</span>
-                <span class="gp-val">${formatarDataBR(dados.datas?.pedido)}</span>
-            </div>
-            <div class="gp-cel gp-cel--entrega">
-                <span class="gp-label">Data de entrega</span>
-                <span class="gp-val">${formatarDataBR(dados.datas?.entrega)}</span>
-            </div>
-        </div>
+        <div class="gp-id">ID ${escapeHtml(idC)}</div>
+    </header>
+    <section class="gp-cliente">
+        <div><small>Cliente</small><strong>${escapeHtml(cli.nome || '—')}</strong><span>${escapeHtml(cli.telefone || '')}</span></div>
+        <div><small>Entrega</small><strong>${formatarDataBR(dados.datas?.entrega)}</strong><span>Pedido ${formatarDataBR(dados.datas?.pedido)}</span></div>
     </section>
-    <section class="gp-desc-pedido">
-        <h2 class="gp-sec-titulo gp-sec-titulo--sub">Descrição do pedido</h2>
-        <p class="gp-desc-texto">${obsHtml}</p>
-    </section>
-    <table class="gp-tabela gp-tabela-unica">
-        <thead>
-            <tr>
-                <th>Produto</th><th>Peça</th><th>Malha e cor</th><th>Grade</th><th>Estampa</th><th>Qtd</th><th>Preço un.</th><th>Total</th>
-            </tr>
-        </thead>
-        <tbody>${linhasProduto || '<tr><td colspan="8">Nenhum produto informado.</td></tr>'}</tbody>
-    </table>
-    ${faixaMock ? `<section class="gp-faixa"><h2 class="gp-sec-titulo gp-sec-titulo--sub">Mockups</h2><div class="gp-faixa-lista">${faixaMock}</div></section>` : ''}
+    ${obs.trim() ? `<p class="gp-obs">${obsHtml}</p>` : ''}
+    ${blocos || '<p>Nenhum produto informado.</p>'}
+    ${faixaMock ? `<section class="gp-faixa"><div class="gp-faixa-lista">${faixaMock}</div></section>` : ''}
     ${montarGaleriaArtesHtml(artesSrc)}
     <div class="gp-rodape-valores">
         <div class="gp-resumo-financeiro">
@@ -309,94 +278,135 @@
 </div>`;
     }
 
-    function montarHtmlOs(dados, mockupSrcsPorProduto, artesSrc) {
-        const emp = (typeof CONFIG !== 'undefined' && CONFIG.EMPRESA) ? CONFIG.EMPRESA : {};
-        const nomeEmp = emp.nome || 'ADONAY CONFECÇÃO';
-        const idC = idCurtoPedido(dados);
-        const cli = dados.cliente || {};
-        const obs = dados.observacoes || '';
-        const produtos = Array.isArray(dados.produtos) ? dados.produtos : [];
-        const mockupsArr = Array.isArray(mockupSrcsPorProduto) ? mockupSrcsPorProduto : [];
-        let totalPecas = 0;
-        const varios = produtos.length > 1;
-        const indice = produtos
-            .map((prod, idx) => {
-                const qtd = pecasDoProduto(prod);
-                totalPecas += qtd;
-                const tituloProd = prod.nomeProduto || `Produto ${idx + 1}`;
-                const resumoEst = estampasValidas(prod).map((e) => e.tipo).filter(Boolean).join(', ') || 'sem estampa';
-                return `<li><strong>${escapeHtml(tituloProd)}</strong> — ${escapeHtml(prod.tipoMalha || '—')} — ${escapeHtml(prod.corMalha || '—')} — ${qtd} peças — ${escapeHtml(resumoEst)}</li>`;
+    function malhaCurta(tipo) {
+        const s = String(tipo || '').trim();
+        if (!s) return '—';
+        const i = s.indexOf('(');
+        return (i > 0 ? s.slice(0, i) : s).trim();
+    }
+
+    function tecnicaCurta(tipo) {
+        const s = String(tipo || '').toLowerCase();
+        if (s.includes('silk')) return 'Silk';
+        if (s.includes('dtf')) return 'DTF';
+        if (s.includes('bordado')) return 'Bordado';
+        if (s.includes('full') || s.includes('total')) return 'Full print';
+        if (s.includes('sublim')) return 'Sublimação';
+        return String(tipo || 'Estampa').trim();
+    }
+
+    function zonaEstampa(localidade) {
+        const s = String(localidade || '').toLowerCase();
+        if (s.includes('full') || (s.includes('total') && !s.includes('barra'))) return 'total';
+        if (s.includes('manga') && s.includes('esquer')) return 'manga-e';
+        if (s.includes('manga')) return 'manga-d';
+        if (s.includes('ombro') && s.includes('esquer')) return 'ombro-e';
+        if (s.includes('ombro')) return 'ombro-d';
+        if (s.includes('pesco')) return 'pescoco';
+        if (s.includes('costas')) {
+            if (s.includes('barra')) {
+                if (s.includes('direit')) return 'barra-d';
+                if (s.includes('esquer')) return 'barra-e';
+                return 'barra';
+            }
+            return 'corpo';
+        }
+        if (s.includes('barra')) {
+            if (s.includes('direit')) return 'barra-d';
+            if (s.includes('esquer')) return 'barra-e';
+            return 'barra';
+        }
+        if (s.includes('peito') && s.includes('direit')) return 'peito-d';
+        if (s.includes('peito')) return 'peito-e';
+        if (s.includes('frente') || s.includes('a4') || s.includes('a3')) return 'corpo';
+        return 'corpo';
+    }
+
+    function svgPeca(lado, marcas) {
+        const frente = lado === 'frente';
+        const pontos = frente
+            ? { 'peito-e': [36, 46], 'peito-d': [64, 46], corpo: [50, 58], 'ombro-e': [24, 30], 'ombro-d': [76, 30], barra: [50, 96], 'barra-e': [36, 96], 'barra-d': [64, 96], 'manga-e': [10, 40], 'manga-d': [90, 40] }
+            : { corpo: [50, 50], pescoco: [50, 24], barra: [50, 96], 'barra-e': [36, 96], 'barra-d': [64, 96], 'manga-e': [10, 40], 'manga-d': [90, 40] };
+        const bolhas = marcas
+            .filter((m) => m.zona !== 'total' && pontos[m.zona])
+            .map((m) => {
+                const [x, y] = pontos[m.zona];
+                return `<circle cx="${x}" cy="${y}" r="5.2" fill="#111"/><text x="${x}" y="${y + 1.6}" text-anchor="middle" font-size="6" fill="#fff" font-family="Arial">${m.n}</text>`;
             })
             .join('');
+        const total = marcas.some((m) => m.zona === 'total');
+        return `<svg class="os-silhueta" viewBox="0 0 100 118" aria-hidden="true">
+            <path d="M32 16 L18 28 L6 42 L16 50 L26 40 V108 H74 V40 L84 50 L94 42 L82 28 L68 16 Q50 26 32 16 Z" fill="${total ? '#e5e5e5' : '#fff'}" stroke="#111" stroke-width="1.6"/>
+            ${bolhas}
+        </svg>`;
+    }
+
+    function mapaEstampas(lista) {
+        const marcas = lista.map((e, i) => ({ n: i + 1, zona: zonaEstampa(e.localidade), frente: !/costas|pesco/.test(String(e.localidade || '').toLowerCase()) }));
+        const frente = marcas.filter((m) => m.frente || m.zona === 'total');
+        const costas = marcas.filter((m) => !m.frente || m.zona === 'total');
+        return `<div class="os-mapas">
+            <figure>${svgPeca('frente', frente)}<figcaption>Frente</figcaption></figure>
+            <figure>${svgPeca('costas', costas)}<figcaption>Costas</figcaption></figure>
+        </div>`;
+    }
+
+    function montarHtmlOs(dados, mockupSrcsPorProduto, artesSrc) {
+        const idC = idCurtoPedido(dados);
+        const cli = dados.cliente || {};
+        const obs = String(dados.observacoes || '').trim();
+        const produtos = Array.isArray(dados.produtos) ? dados.produtos : [];
+        const mockupsArr = Array.isArray(mockupSrcsPorProduto) ? mockupSrcsPorProduto : [];
+        const artes = Array.isArray(artesSrc) ? artesSrc.filter(Boolean) : [];
+        const varios = produtos.length > 1;
+        const entrega = formatarDataBR(dados.datas?.entrega);
 
         const fichas = produtos
             .map((prod, idx) => {
                 const n = idx + 1;
                 const tituloProd = prod.nomeProduto || `Produto ${n}`;
+                const qtd = pecasDoProduto(prod);
                 const tams = tamanhosComQuantidade(prod);
-                const cabGrade = tams.map((t) => `<th>${escapeHtml(t.tamanho || '—')}</th>`).join('');
-                const corpoGrade = tams.map((t) => `<td>${Number(t.quantidade) || 0}</td>`).join('');
                 const grade = tams.length
-                    ? `<table class="os-grade"><thead><tr>${cabGrade}</tr></thead><tbody><tr>${corpoGrade}</tr></tbody></table>`
-                    : '<p class="os-sem-grade">Sem grade informada.</p>';
-                const estampas = estampasValidas(prod)
-                    .map((e, i) => {
-                        const cores = e.quantidadeCores
-                            ? `<div><span>Cores de tinta</span> ${escapeHtml(e.quantidadeCores)}</div>`
-                            : '';
-                        return `<article class="os-estampa"><strong>${i + 1}. ${escapeHtml(e.tipo || 'Estampa')}</strong><div><span>Local</span> ${escapeHtml(e.localidade || '—')}</div>${cores}</article>`;
-                    })
-                    .join('') || '<p class="os-sem-grade">Sem estampa informada.</p>';
-                const mockSrc = mockupsArr[idx] || '';
-                const mockHtml = mockSrc
-                    ? `<figure class="os-ficha-mock"><img src="${mockSrc}" alt="Mockup" class="os-ficha-img"><figcaption>${escapeHtml(tituloProd)}</figcaption></figure>`
+                    ? `<table class="os-grade"><thead><tr>${tams.map((t) => `<th>${escapeHtml(t.tamanho || '—')}</th>`).join('')}</tr></thead><tbody><tr>${tams.map((t) => `<td>${Number(t.quantidade) || 0}</td>`).join('')}</tr></tbody></table>`
                     : '';
-                const quebra = varios ? ' os-ficha--nova' : '';
-                return `
-            <section class="os-ficha${quebra}">
-                <div class="os-ficha-topo">
-                    <span>OS ${escapeHtml(idC)}</span>
-                    <span>Ficha ${n} de ${produtos.length}</span>
-                    <span>Entrega ${formatarDataBR(dados.datas?.entrega)}</span>
-                </div>
-                <h2 class="os-ficha-tit">${escapeHtml(tituloProd)}</h2>
-                <div class="os-ficha-dados">
-                    <div><span>Peça</span> ${escapeHtml([prod.tipoPeca, prod.detalhesPeca].filter(Boolean).join(' — ') || '—')}</div>
-                    <div><span>Malha</span> ${escapeHtml(prod.tipoMalha || '—')}</div>
-                    <div><span>Cor</span> ${escapeHtml(prod.corMalha || '—')}</div>
-                    <div><span>Peças desta ficha</span> ${pecasDoProduto(prod)}</div>
-                </div>
-                <h3>Grade</h3>
-                ${grade}
-                <h3>Estampas</h3>
-                ${estampas}
-                ${mockHtml}
-            </section>`;
+                const lista = estampasValidas(prod);
+                const locais = lista.length
+                    ? `<ol class="os-locais">${lista.map((e, i) => `<li><b>${i + 1}</b><em>${escapeHtml(tecnicaCurta(e.tipo))}</em><span>${escapeHtml(e.localidade || '—')}</span>${e.quantidadeCores ? `<strong>${escapeHtml(e.quantidadeCores)}</strong>` : ''}</li>`).join('')}</ol>`
+                    : '';
+                const mockSrc = mockupsArr[idx] || '';
+                const visual = mockSrc
+                    ? `<img src="${mockSrc}" alt="" class="os-prova">`
+                    : mapaEstampas(lista);
+                const artesHtml = idx === 0 && artes.length
+                    ? `<div class="os-artes">${artes.slice(0, 4).map((src) => `<img src="${src}" alt="">`).join('')}</div>`
+                    : '';
+                const quebra = varios ? ' os-folha--nova' : '';
+                return `<article class="os-folha${quebra}">
+                    <header class="os-barra">
+                        <div><small>OS</small><strong>${escapeHtml(idC)}</strong></div>
+                        <div class="os-entrega"><small>Entrega</small><strong>${escapeHtml(entrega)}</strong></div>
+                        <div class="os-pecas"><small>Peças</small><strong>${qtd}</strong></div>
+                    </header>
+                    <p class="os-quem">${escapeHtml(cli.nome || '—')}${varios ? ` · ${n}/${produtos.length}` : ''}</p>
+                    <h1>${escapeHtml(tituloProd)}</h1>
+                    ${obs ? `<p class="os-nota">${escapeHtml(obs)}</p>` : ''}
+                    <div class="os-miolo">
+                        <div>
+                            <p class="os-cor">${escapeHtml(prod.corMalha || '—')}</p>
+                            <p class="os-malha">${escapeHtml(malhaCurta(prod.tipoMalha))}</p>
+                            <p class="os-peca">${escapeHtml(prod.detalhesPeca || prod.tipoPeca || '—')}</p>
+                            ${grade}
+                        </div>
+                        <div class="os-visual">${visual}</div>
+                    </div>
+                    ${locais}
+                    ${artesHtml}
+                </article>`;
             })
             .join('');
 
-        return `
-<div class="os-doc">
-    <section class="os-capa">
-        <h1 class="os-titulo">Ordem de serviço — ${escapeHtml(nomeEmp)}</h1>
-        <p class="os-aviso-interno">Documento de produção. Sem valores comerciais.</p>
-        <div class="os-topo">
-            <div><strong>Pedido</strong> ${formatarDataBR(dados.datas?.pedido)}</div>
-            <div><strong>Entrega</strong> ${formatarDataBR(dados.datas?.entrega)}</div>
-            <div><strong>ID</strong> ${escapeHtml(idC)}</div>
-            <div><strong>Peças</strong> ${totalPecas}</div>
-        </div>
-        <div class="os-cliente">
-            <h2>Cliente</h2>
-            <div><strong>Nome</strong> ${escapeHtml(cli.nome || '—')}</div>
-            <div><strong>Observação</strong> ${escapeHtml(obs || '—')}</div>
-        </div>
-        <h2 class="os-indice-tit">${varios ? 'Produtos — uma ficha para cada' : 'Produto'}</h2>
-        <ol class="os-indice">${indice}</ol>
-        ${montarGaleriaArtesHtml(artesSrc)}
-    </section>
-    ${fichas}
-</div>`;
+        return `<div class="os-doc os-doc--visual">${fichas}</div>`;
     }
 
     function obterDadosImpressao() {
