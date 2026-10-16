@@ -1,8 +1,8 @@
 {
-  "estado": "ok",
+  "estado": "pausa",
   "precisaDeVoce": false,
-  "titulo": "Tudo em andamento",
-  "resumo": "A OS foi redesenhada para a produção: visual, sem preço, uma ficha por produto.",
-  "detalhe": "A GP também ficou mais limpa. Nenhum pedido gravado foi alterado.",
-  "atualizado": "2026-10-16T19:40:00-03:00"
+  "titulo": "Pausa pedida",
+  "resumo": "Trabalho parado por hoje. Amanhã a OS e a GP voltam a ser olhadas.",
+  "detalhe": "Nenhum pedido gravado foi alterado. A OS nova ainda espera o seu olhar.",
+  "atualizado": "2026-10-16T19:56:00-03:00"
 }

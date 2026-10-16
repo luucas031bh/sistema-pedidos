@@ -322,21 +322,45 @@
         return 'corpo';
     }
 
+    function amostraCor(nome) {
+        const s = String(nome || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const pares = [
+            ['pret', '#161616'], ['branc', '#f5f5f5'], ['marinh', '#1b2a6b'], ['royal', '#1d4e9e'],
+            ['azul', '#2458a6'], ['vermelh', '#c0392b'], ['vinho', '#6e2430'], ['bord', '#7a1f2b'],
+            ['verd', '#1e7a45'], ['amarel', '#e2b007'], ['cinza', '#8d939c'], ['rosa', '#e07a9a'],
+            ['laranj', '#e36a12'], ['bege', '#e4d3b4'], ['roxo', '#5c3d8f'], ['lilas', '#a98bc4'],
+            ['dourad', '#c6a15a'], ['prata', '#c5c8ce']
+        ];
+        let hex = '';
+        for (let i = 0; i < pares.length; i++) {
+            if (s.includes(pares[i][0])) { hex = pares[i][1]; break; }
+        }
+        if (!hex) return '<i class="os-amostra os-amostra--vazia"></i>';
+        return `<i class="os-amostra" style="--os-cor:${hex};background:${hex}"></i>`;
+    }
+
     function svgPeca(lado, marcas) {
         const frente = lado === 'frente';
         const pontos = frente
-            ? { 'peito-e': [36, 46], 'peito-d': [64, 46], corpo: [50, 58], 'ombro-e': [24, 30], 'ombro-d': [76, 30], barra: [50, 96], 'barra-e': [36, 96], 'barra-d': [64, 96], 'manga-e': [10, 40], 'manga-d': [90, 40] }
-            : { corpo: [50, 50], pescoco: [50, 24], barra: [50, 96], 'barra-e': [36, 96], 'barra-d': [64, 96], 'manga-e': [10, 40], 'manga-d': [90, 40] };
+            ? { 'peito-e': [38, 52], 'peito-d': [62, 52], corpo: [50, 64], 'ombro-e': [28, 34], 'ombro-d': [72, 34], barra: [50, 100], 'barra-e': [38, 100], 'barra-d': [62, 100], 'manga-e': [14, 42], 'manga-d': [86, 42] }
+            : { corpo: [50, 58], pescoco: [50, 22], barra: [50, 100], 'barra-e': [38, 100], 'barra-d': [62, 100], 'manga-e': [14, 42], 'manga-d': [86, 42] };
         const bolhas = marcas
             .filter((m) => m.zona !== 'total' && pontos[m.zona])
             .map((m) => {
                 const [x, y] = pontos[m.zona];
-                return `<circle cx="${x}" cy="${y}" r="5.2" fill="#111"/><text x="${x}" y="${y + 1.6}" text-anchor="middle" font-size="6" fill="#fff" font-family="Arial">${m.n}</text>`;
+                return `<circle cx="${x}" cy="${y}" r="6.4" fill="#111"/><text x="${x}" y="${y + 2.1}" text-anchor="middle" font-size="7" font-weight="700" fill="#fff" font-family="Arial, sans-serif">${m.n}</text>`;
             })
             .join('');
         const total = marcas.some((m) => m.zona === 'total');
+        const corpo = frente
+            ? 'M34 20 C42 30 58 30 66 20 L78 28 L94 40 L82 50 L74 42 V108 H26 V42 L18 50 L6 40 L22 28 Z'
+            : 'M34 16 C44 22 56 22 66 16 L78 26 L94 40 L82 50 L74 42 V108 H26 V42 L18 50 L6 40 L22 26 Z';
+        const gola = frente
+            ? '<path d="M40 21 C46 28 54 28 60 21" fill="none" stroke="#111" stroke-width="1.4"/>'
+            : '<path d="M42 17 H58" fill="none" stroke="#111" stroke-width="1.4"/>';
         return `<svg class="os-silhueta" viewBox="0 0 100 118" aria-hidden="true">
-            <path d="M32 16 L18 28 L6 42 L16 50 L26 40 V108 H74 V40 L84 50 L94 42 L82 28 L68 16 Q50 26 32 16 Z" fill="${total ? '#e5e5e5' : '#fff'}" stroke="#111" stroke-width="1.6"/>
+            <path d="${corpo}" fill="${total ? '#ececec' : '#fff'}" stroke="#111" stroke-width="1.8" stroke-linejoin="round"/>
+            ${gola}
             ${bolhas}
         </svg>`;
     }
@@ -368,11 +392,11 @@
                 const qtd = pecasDoProduto(prod);
                 const tams = tamanhosComQuantidade(prod);
                 const grade = tams.length
-                    ? `<table class="os-grade"><thead><tr>${tams.map((t) => `<th>${escapeHtml(t.tamanho || '—')}</th>`).join('')}</tr></thead><tbody><tr>${tams.map((t) => `<td>${Number(t.quantidade) || 0}</td>`).join('')}</tr></tbody></table>`
+                    ? `<div class="os-numeros">${tams.map((t) => `<div><b>${Number(t.quantidade) || 0}</b><span>${escapeHtml(t.tamanho || '—')}</span></div>`).join('')}</div>`
                     : '';
                 const lista = estampasValidas(prod);
                 const locais = lista.length
-                    ? `<ol class="os-locais">${lista.map((e, i) => `<li><b>${i + 1}</b><em>${escapeHtml(tecnicaCurta(e.tipo))}</em><span>${escapeHtml(e.localidade || '—')}</span>${e.quantidadeCores ? `<strong>${escapeHtml(e.quantidadeCores)}</strong>` : ''}</li>`).join('')}</ol>`
+                    ? `<ol class="os-locais">${lista.map((e, i) => `<li><b>${i + 1}</b><em>${escapeHtml(tecnicaCurta(e.tipo))}</em><span>${escapeHtml(e.localidade || '—')}</span>${e.quantidadeCores ? `<strong>${escapeHtml(e.quantidadeCores)}</strong>` : '<strong></strong>'}</li>`).join('')}</ol>`
                     : '';
                 const mockSrc = mockupsArr[idx] || '';
                 const visual = mockSrc
@@ -381,25 +405,33 @@
                 const artesHtml = idx === 0 && artes.length
                     ? `<div class="os-artes">${artes.slice(0, 4).map((src) => `<img src="${src}" alt="">`).join('')}</div>`
                     : '';
-                const quebra = varios ? ' os-folha--nova' : '';
+                const quebra = varios && idx > 0 ? ' os-folha--nova' : '';
+                const parte = varios ? ` · ${n}/${produtos.length}` : '';
                 return `<article class="os-folha${quebra}">
-                    <header class="os-barra">
-                        <div><small>OS</small><strong>${escapeHtml(idC)}</strong></div>
-                        <div class="os-entrega"><small>Entrega</small><strong>${escapeHtml(entrega)}</strong></div>
-                        <div class="os-pecas"><small>Peças</small><strong>${qtd}</strong></div>
-                    </header>
-                    <p class="os-quem">${escapeHtml(cli.nome || '—')}${varios ? ` · ${n}/${produtos.length}` : ''}</p>
-                    <h1>${escapeHtml(tituloProd)}</h1>
-                    ${obs ? `<p class="os-nota">${escapeHtml(obs)}</p>` : ''}
-                    <div class="os-miolo">
-                        <div>
-                            <p class="os-cor">${escapeHtml(prod.corMalha || '—')}</p>
-                            <p class="os-malha">${escapeHtml(malhaCurta(prod.tipoMalha))}</p>
-                            <p class="os-peca">${escapeHtml(prod.detalhesPeca || prod.tipoPeca || '—')}</p>
-                            ${grade}
+                    <header class="os-topo">
+                        <div class="os-topo-os"><small>OS</small><strong>${escapeHtml(idC)}</strong></div>
+                        <div class="os-topo-nome">
+                            <strong>${escapeHtml(tituloProd)}</strong>
+                            <span>${escapeHtml(cli.nome || '—')}${parte}</span>
                         </div>
+                        <div class="os-topo-data"><small>Entrega</small><strong>${escapeHtml(entrega)}</strong></div>
+                        <div class="os-topo-qtd"><strong>${qtd}</strong><small>peças</small></div>
+                    </header>
+                    <div class="os-palco">
                         <div class="os-visual">${visual}</div>
+                        <aside>
+                            <div class="os-cor-bloco">
+                                ${amostraCor(prod.corMalha)}
+                                <div>
+                                    <b>${escapeHtml(prod.corMalha || '—')}</b>
+                                    <span>${escapeHtml(malhaCurta(prod.tipoMalha))}</span>
+                                </div>
+                            </div>
+                            <p class="os-modelo">${escapeHtml(prod.detalhesPeca || prod.tipoPeca || '—')}</p>
+                            ${grade}
+                        </aside>
                     </div>
+                    ${obs ? `<p class="os-nota">${escapeHtml(obs)}</p>` : ''}
                     ${locais}
                     ${artesHtml}
                 </article>`;
