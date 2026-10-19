@@ -1,0 +1,152 @@
+{
+  "gerado_em": "2026-06-29T21:55:43-03:00",
+  "repositorio": "C:\\Users\\PC CASA\\Documents\\GitHub\\sistema-pedidos",
+  "github": "https://github.com/luucas031bh/sistema-pedidos",
+  "gas_actions": [
+    "agregarPecasAbertos",
+    "buscarPedido",
+    "buscarPedidos",
+    "contarPorEtapaProducao",
+    "exportarPdfPedido",
+    "getStats",
+    "listarPedidos",
+    "listarPedidosEntregaPeriodo",
+    "obterConfigCalculo",
+    "obterDados",
+    "obterFila",
+    "online",
+    "relatorioPedidos",
+    "salvarConfigCalculo",
+    "salvarPedido",
+    "string",
+    "true"
+  ],
+  "mapa_python_gas": [
+    {
+      "funcao": "listar_pedidos_rp",
+      "gas": "listarPedidos",
+      "descricao": "Lista pedidos da planilha RP"
+    },
+    {
+      "funcao": "estatisticas_rp",
+      "gas": "getStats",
+      "descricao": "Estatisticas compactas (totais, etapas)"
+    },
+    {
+      "funcao": "contar_etapa_producao_rp",
+      "gas": "contarPorEtapaProducao",
+      "descricao": "Contagem por etapa de producao"
+    },
+    {
+      "funcao": "entregas_periodo_rp",
+      "gas": "listarPedidosEntregaPeriodo",
+      "descricao": "Pedidos com entrega no periodo"
+    },
+    {
+      "funcao": "relatorio_periodo_rp",
+      "gas": "relatorioPedidos",
+      "descricao": "Relatorio financeiro por periodo"
+    },
+    {
+      "funcao": "agregar_pecas_abertos_rp",
+      "gas": "agregarPecasAbertos",
+      "descricao": "Pecas em aberto agregadas"
+    },
+    {
+      "funcao": "buscar_pedido_rp",
+      "gas": "buscarPedido",
+      "descricao": "Busca pedido por ID ou nome"
+    },
+    {
+      "funcao": "buscar_pedidos_rp",
+      "gas": "buscarPedidos",
+      "descricao": "Busca lista de pedidos por termo"
+    },
+    {
+      "funcao": "obter_dados_rp",
+      "gas": "obterDados",
+      "descricao": "Snapshot bruto obterDados"
+    },
+    {
+      "funcao": "resumo_financeiro_rp",
+      "gas": null,
+      "descricao": "Resumo financeiro local (Python agrega listarPedidos)"
+    }
+  ],
+  "etapas_producao": [
+    "Pedido em Aberto",
+    "Arte",
+    "Insumos",
+    "Corte",
+    "Estampa",
+    "Costura",
+    "Embalo",
+    "Aguardando retirada"
+  ],
+  "status_operacionais": [
+    "Novo pedido",
+    "Pendente",
+    "Orçamento",
+    "Em produção",
+    "Atrasado",
+    "Cancelado",
+    "Travado",
+    "Finalizado"
+  ],
+  "rotas_adny": {
+    "verificar_atendimentos_ou_orcamentos": {
+      "agente": "sintetizador",
+      "descricao": "Snapshot pedidos.json, atendimentos WhatsApp, orcamentos pendentes, saudacao"
+    },
+    "consultar_mensagens_whatsapp": {
+      "agente": "agente_wpp",
+      "descricao": "Le log WhatsApp com expansao 24h → 7d → oferta 1 mes; lista clientes e mensagens"
+    },
+    "consultar_fila_rp": {
+      "agente": "rp_direto",
+      "descricao": "Consultas factuais a planilha RP (pedidos, etapas, financeiro)"
+    },
+    "atualizar_status_de_producao_na_tela": {
+      "agente": "gerente_fila",
+      "descricao": "Atualiza snapshot da fila RP e resume status de producao"
+    },
+    "calcular_gasto_de_malha_por_pedido": {
+      "agente": "calculadora_malha",
+      "descricao": "Calculo mecanico de malha por pedido (Fase 2 parcial)"
+    },
+    "criar_nova_funcionalidade_no_codigo": {
+      "agente": "developer_local",
+      "descricao": "Consulta codigo do repositorio sistema-pedidos indexado"
+    },
+    "investigar_sistema": {
+      "agente": "investigador",
+      "descricao": "Coleta dados reais de todas as fontes (RP, WhatsApp) e usa LLM para responder perguntas genéricas"
+    },
+    "pesquisar_sistema": {
+      "agente": "leitor",
+      "descricao": "Busca tipo Ctrl+F: ROANTONE, repo, manifesto, WhatsApp log, OneDrive"
+    }
+  },
+  "rotas_validas": [
+    "verificar_atendimentos_ou_orcamentos",
+    "consultar_mensagens_whatsapp",
+    "consultar_fila_rp",
+    "atualizar_status_de_producao_na_tela",
+    "calcular_gasto_de_malha_por_pedido",
+    "criar_nova_funcionalidade_no_codigo",
+    "investigar_sistema",
+    "pesquisar_sistema"
+  ],
+  "paginas_web": [
+    "home.html",
+    "index.html",
+    "relatorio.html",
+    "editar-pedido.html"
+  ],
+  "fontes_dados_vivos": {
+    "rp": "Google Apps Script via consultar_rp.gas_get()",
+    "whatsapp": "observador_store.whatsapp_mensagens.jsonl",
+    "snapshot_local": "observador_store.pedidos.json"
+  },
+  "nota": "Dados vivos NAO estao no HTML estatico do GitHub Pages — use Apps Script ou logs locais."
+}

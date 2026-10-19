@@ -1,0 +1,582 @@
+[2026-06-29T21:05:13.696Z] [INFO] Iniciando bot WhatsApp Adonay {"ia":"http://127.0.0.1:8765/api/chat","observador":"http://127.0.0.1:8765","modo":"both","gatilhos":["ADNY","@IA","Agente","IA"],"admins":1}
+[2026-06-29T21:05:13.698Z] [INFO] Observador: tick RP iniciado {"intervalo_ms":60000}
+[2026-06-29T21:05:16.832Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:05:19.438Z] [WARN] Conexao fechada {"code":401,"loggedOut":true}
+[2026-06-29T21:05:19.439Z] [ERROR] Sessao encerrada. Apague auth_info/ e escaneie o QR novamente.
+[2026-06-29T21:06:13.715Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:07:16.517Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:08:13.719Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:09:16.500Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:10:13.726Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:11:17.026Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:11:50.783Z] [INFO] Iniciando bot WhatsApp Adonay {"ia":"http://127.0.0.1:8765/api/chat","observador":"http://127.0.0.1:8765","modo":"both","gatilhos":["ADNY","@IA","Agente","IA"],"admins":1}
+[2026-06-29T21:11:50.784Z] [INFO] Observador: tick RP iniciado {"intervalo_ms":60000}
+[2026-06-29T21:11:50.830Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:11:51.840Z] [INFO] QR no terminal (DEBUG)
+[2026-06-29T21:11:51.884Z] [INFO] QR Code salvo (abra e escaneie com o celular) {"arquivo":"C:\\Users\\PC CASA\\Documents\\GitHub\\sistema-pedidos\\IACriada\\whatsapp-qr.png"}
+[2026-06-29T21:11:59.613Z] [WARN] Conexao fechada {"code":515,"loggedOut":false}
+[2026-06-29T21:11:59.614Z] [INFO] Reinicio da conexao apos pareamento (codigo 515)…
+[2026-06-29T21:11:59.614Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:12:06.149Z] [INFO] QR Code removido (ja conectado) {"arquivo":"C:\\Users\\PC CASA\\Documents\\GitHub\\sistema-pedidos\\IACriada\\whatsapp-qr.png"}
+[2026-06-29T21:12:06.150Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:12:53.500Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:13:50.803Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:14:47.448Z] [DEBUG] Observador: ignorada (heuristica) {"preview":"Elas arrasam hj"}
+[2026-06-29T21:14:53.433Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:15:50.808Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:16:53.828Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:17:50.809Z] [WARN] Observador API erro {"path":"/api/observador/tick","status":403,"data":{"detail":"Token observador invalido (somente bot WhatsApp local)"}}
+[2026-06-29T21:18:09.751Z] [INFO] Iniciando bot WhatsApp Adonay {"ia":"http://127.0.0.1:8765/api/chat","observador":"http://127.0.0.1:8765","modo":"observador","gatilhos":["ADNY","@IA","Agente","IA"],"admins":1}
+[2026-06-29T21:18:09.752Z] [INFO] Observador: tick RP iniciado {"intervalo_ms":60000}
+[2026-06-29T21:18:10.969Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:18:10.970Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:18:11.589Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:18:12.971Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:18:16.945Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:18:16.946Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:18:17.469Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:18:22.676Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:18:22.677Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:18:22.860Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:18:28.860Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:18:28.861Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:18:29.604Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:18:34.838Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:18:34.840Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:18:35.181Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:18:40.635Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:18:40.636Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:18:40.974Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:18:46.522Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:18:46.523Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:18:46.972Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:18:47.965Z] [DEBUG] Observador: ignorada (heuristica) {"preview":"Oração de Gratidão\nDeus, obrigado por ma"}
+[2026-06-29T21:18:50.816Z] [WARN] Observador API erro {"path":"/api/observador/tick","status":403,"data":{"detail":"Token observador invalido (somente bot WhatsApp local)"}}
+[2026-06-29T21:18:52.300Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:18:52.301Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:18:52.640Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:18:58.404Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:18:58.405Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:18:59.021Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:19:04.147Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:19:04.147Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:19:04.330Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:19:09.756Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:19:09.758Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:19:09.765Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:19:10.021Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:19:15.858Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:19:15.859Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:19:24.110Z] [INFO] Iniciando bot WhatsApp Adonay {"ia":"http://127.0.0.1:8765/api/chat","observador":"http://127.0.0.1:8765","modo":"observador","gatilhos":["ADNY","@IA","Agente","IA"],"admins":1}
+[2026-06-29T21:19:24.111Z] [INFO] Observador: tick RP iniciado {"intervalo_ms":60000}
+[2026-06-29T21:19:24.120Z] [WARN] Observador API falhou {"path":"/api/observador/tick","err":"TypeError: fetch failed"}
+[2026-06-29T21:19:26.003Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:20:26.890Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:20:51.847Z] [DEBUG] Observador: ignorada (heuristica) {"preview":"https://youtu.be/BFpNfgBj2Vc?si=IPMSlfYL"}
+[2026-06-29T21:21:24.126Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:22:27.648Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:23:26.902Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:24:24.150Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:24:31.763Z] [DEBUG] Observador: ignorada (heuristica) {"preview":"oi"}
+[2026-06-29T21:25:27.185Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:26:24.156Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:26:45.165Z] [DEBUG] Observador: ignorada (heuristica) {"preview":"\"Ainda que eu ande pelo vale da sombra d"}
+[2026-06-29T21:27:27.761Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:28:24.166Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:29:27.282Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:30:24.196Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:31:27.267Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:32:24.217Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:33:27.524Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:33:57.096Z] [INFO] Iniciando bot WhatsApp Adonay {"ia":"http://127.0.0.1:8765/api/chat","observador":"http://127.0.0.1:8765","modo":"observador","gatilhos":["ADNY","@IA","Agente","IA"],"admins":1}
+[2026-06-29T21:33:57.098Z] [INFO] Observador: tick RP iniciado {"intervalo_ms":60000}
+[2026-06-29T21:33:57.107Z] [WARN] Observador API falhou {"path":"/api/observador/tick","err":"TypeError: fetch failed"}
+[2026-06-29T21:33:58.574Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:35:00.090Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:35:57.110Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:37:00.463Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:37:57.134Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:38:27.916Z] [WARN] Conexao fechada {"code":503,"loggedOut":false}
+[2026-06-29T21:38:27.917Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:38:34.424Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:39:00.272Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:39:57.142Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:41:00.404Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:41:57.152Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:42:59.992Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:43:57.165Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:45:00.694Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:45:57.168Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:46:59.704Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:47:57.166Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:48:59.875Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:49:39.050Z] [INFO] Iniciando bot WhatsApp Adonay {"ia":"http://127.0.0.1:8765/api/chat","observador":"http://127.0.0.1:8765","modo":"observador","gatilhos":["ADNY","@IA","Agente","IA"],"admins":1}
+[2026-06-29T21:49:39.051Z] [INFO] Observador: tick RP iniciado {"intervalo_ms":60000}
+[2026-06-29T21:49:39.081Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:49:40.410Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:49:40.411Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:49:41.073Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:49:46.159Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:49:46.159Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:49:46.316Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:49:52.045Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:49:52.045Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:49:52.509Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:49:57.173Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:49:57.859Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:49:57.859Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:49:58.157Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:50:02.994Z] [INFO] Iniciando bot WhatsApp Adonay {"ia":"http://127.0.0.1:8765/api/chat","observador":"http://127.0.0.1:8765","modo":"observador","gatilhos":["ADNY","@IA","Agente","IA"],"admins":1}
+[2026-06-29T21:50:02.995Z] [INFO] Observador: tick RP iniciado {"intervalo_ms":60000}
+[2026-06-29T21:50:03.028Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:50:04.769Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:51:06.656Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:52:03.016Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:52:03.534Z] [INFO] Iniciando bot WhatsApp Adonay {"ia":"http://127.0.0.1:8765/api/chat","observador":"http://127.0.0.1:8765","modo":"observador","gatilhos":["ADNY","@IA","Agente","IA"],"admins":1}
+[2026-06-29T21:52:03.535Z] [INFO] Observador: tick RP iniciado {"intervalo_ms":60000}
+[2026-06-29T21:52:03.564Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:52:04.462Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:52:04.462Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:52:10.805Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:53:05.718Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:53:50.160Z] [INFO] Iniciando bot WhatsApp Adonay {"ia":"http://127.0.0.1:8765/api/chat","observador":"http://127.0.0.1:8765","modo":"observador","gatilhos":["ADNY","@IA","Agente","IA"],"admins":1}
+[2026-06-29T21:53:50.161Z] [INFO] Observador: tick RP iniciado {"intervalo_ms":60000}
+[2026-06-29T21:53:50.990Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:53:50.990Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:53:51.194Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:53:53.261Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:53:56.891Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:53:56.891Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:53:57.368Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:54:03.002Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:54:03.003Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:54:03.023Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:54:03.571Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:54:09.254Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:54:09.254Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:54:09.895Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:54:15.280Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:54:15.281Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:54:15.823Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:54:20.996Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:54:20.997Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:54:21.192Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:54:27.223Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:54:27.223Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:54:27.948Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:54:33.255Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:54:33.255Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:54:33.752Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:54:39.073Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:54:39.073Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:54:39.365Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:54:44.835Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:54:44.836Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:54:45.203Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:54:50.173Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:54:51.005Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:54:51.005Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:54:51.595Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:54:56.829Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:54:56.829Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:54:57.099Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:55:02.827Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:55:02.827Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:55:03.029Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:55:03.374Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:55:08.814Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:55:08.815Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:55:09.354Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:55:14.818Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:55:14.819Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:55:15.423Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:55:20.876Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:55:20.877Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:55:21.515Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:55:26.943Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:55:26.944Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:55:27.596Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:55:32.960Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:55:32.962Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:55:33.547Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:55:39.025Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:55:39.026Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:55:39.692Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:55:44.770Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:55:44.771Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:55:44.943Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:55:50.837Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:55:50.837Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:55:51.407Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:55:53.149Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:55:56.650Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:55:56.651Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:55:56.917Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:56:02.364Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:56:02.365Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:56:02.700Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:56:03.025Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:56:08.276Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:56:08.277Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:56:08.729Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:56:14.059Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:56:14.059Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:56:14.360Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:56:19.939Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:56:19.940Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:56:20.404Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:56:25.626Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:56:25.627Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:56:25.839Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:56:31.259Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:56:31.260Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:56:31.524Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:56:36.875Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:56:36.876Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:56:37.136Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:56:42.957Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:56:42.958Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:56:43.591Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:56:48.978Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:56:48.979Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:56:49.508Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:56:50.174Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:56:54.995Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:56:54.996Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:56:55.565Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:57:01.178Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:57:01.179Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:57:01.820Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:57:03.047Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:57:07.049Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:57:07.050Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:57:07.332Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:57:12.814Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:57:12.814Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:57:13.181Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:57:18.601Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:57:18.602Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:57:18.966Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:57:24.622Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:57:24.623Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:57:25.186Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:57:30.625Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:57:30.625Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:57:31.159Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:57:36.601Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:57:36.602Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:57:37.185Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:57:42.422Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:57:42.423Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:57:42.698Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:57:48.660Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:57:48.661Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:57:49.347Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:57:54.196Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:57:54.724Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:57:54.724Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:57:55.259Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:58:00.448Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:58:00.449Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:58:00.628Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:58:03.062Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:58:06.343Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:58:06.343Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:58:06.810Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:58:12.633Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:58:12.633Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:58:13.287Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:58:18.833Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:58:18.834Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:58:19.578Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:58:24.860Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:58:24.861Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:58:25.366Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:58:30.817Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:58:30.817Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:58:31.009Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:58:36.808Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:58:36.809Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:58:37.389Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:58:42.632Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:58:42.633Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:58:42.906Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:58:48.713Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:58:48.714Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:58:49.089Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:58:50.199Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:58:54.451Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:58:54.452Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:58:54.681Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:59:00.229Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:59:00.231Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:59:00.589Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:59:03.068Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:59:05.918Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:59:05.918Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:59:06.140Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:59:12.048Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:59:12.048Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:59:12.672Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:59:17.906Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:59:17.907Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:59:18.188Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:59:24.044Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:59:24.044Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:59:24.494Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:59:29.723Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:59:29.724Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:59:29.927Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:59:35.607Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:59:35.608Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:59:36.074Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:59:41.384Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:59:41.385Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:59:41.670Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:59:47.066Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:59:47.067Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:59:47.318Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:59:52.827Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:59:52.828Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:59:53.044Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T21:59:53.141Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T21:59:59.091Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T21:59:59.091Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T21:59:59.701Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:00:03.065Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:00:04.832Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:00:04.833Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:00:04.991Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:00:11.094Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:00:11.094Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:00:11.818Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:00:17.419Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:00:17.419Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:00:17.781Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:00:23.120Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:00:23.120Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:00:23.330Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:00:28.763Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:00:28.764Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:00:29.007Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:00:34.831Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:00:34.831Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:00:35.456Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:00:40.864Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:00:40.865Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:00:41.223Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:00:46.913Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:00:46.913Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:00:47.443Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:00:50.208Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:00:52.652Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:00:52.653Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:00:52.845Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:00:58.395Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:00:58.395Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:00:58.662Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:01:03.076Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:01:04.145Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:01:04.146Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:01:04.541Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:01:09.821Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:01:09.821Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:01:10.045Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:01:16.026Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:01:16.026Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:01:16.760Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:01:21.797Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:01:21.798Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:01:21.937Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:01:28.221Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:01:28.222Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:01:28.917Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:01:34.423Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:01:34.424Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:01:35.177Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:01:40.411Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:01:40.411Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:01:40.770Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:01:46.560Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:01:46.561Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:01:47.191Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:01:52.607Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:01:52.607Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:01:53.098Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:01:53.119Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:01:58.369Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:01:58.370Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:01:58.579Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:02:03.080Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:02:04.102Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:02:04.103Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:02:04.461Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:02:10.355Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:02:10.355Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:02:11.059Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:02:16.109Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:02:16.109Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:02:16.281Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:02:21.773Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:02:21.774Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:02:22.040Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:02:27.878Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:02:27.879Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:02:28.503Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:02:33.945Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:02:33.946Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:02:34.591Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:02:39.914Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:02:39.914Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:02:40.297Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:02:45.972Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:02:45.972Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:02:46.272Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:02:50.228Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:02:52.000Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:02:52.000Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:02:52.558Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:02:57.889Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:02:57.889Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:02:58.193Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:03:03.087Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:03:03.925Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:03:03.925Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:03:04.397Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:03:10.206Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:03:10.207Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:03:10.863Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:03:16.310Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:03:16.311Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:03:16.930Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:03:22.525Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:03:22.525Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:03:23.229Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:03:28.709Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:03:28.710Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:03:29.428Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:03:34.840Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:03:34.840Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:03:35.461Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:03:40.847Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:03:40.847Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:03:41.235Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:03:46.635Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:03:46.635Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:03:46.848Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:03:52.549Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:03:52.549Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:03:53.128Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:03:53.508Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:03:58.805Z] [WARN] Conexao fechada {"code":440,"loggedOut":false}
+[2026-06-29T22:03:58.806Z] [INFO] Reconectando em 5000ms…
+[2026-06-29T22:13:19.511Z] [INFO] Iniciando bot WhatsApp Adonay {"ia":"http://127.0.0.1:8765/api/chat","observador":"http://127.0.0.1:8765","modo":"observador","gatilhos":["ADNY","@IA","Agente","IA"],"admins":1}
+[2026-06-29T22:13:19.512Z] [INFO] Observador: tick RP iniciado {"intervalo_ms":60000}
+[2026-06-29T22:13:20.747Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:13:23.001Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:14:19.530Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:15:22.844Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:16:19.559Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:17:22.941Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:18:19.566Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:19:22.896Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:20:19.579Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:21:22.364Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:22:19.597Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:23:22.764Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:24:19.604Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:25:22.723Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:26:19.618Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:27:23.327Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:28:19.638Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:29:22.544Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:30:19.651Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:31:22.676Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:32:19.665Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:33:22.642Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:34:19.682Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:35:22.747Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:35:41.267Z] [INFO] Observador: gravando DM no Python {"numero":"227096613912591","preview":"Oi querida \nTa joia???"}
+[2026-06-29T22:36:19.680Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:37:22.666Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:38:19.707Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:39:22.522Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:40:19.727Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:41:23.135Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:42:19.739Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:43:23.150Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:44:19.752Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:45:22.899Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:46:19.771Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:47:22.828Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:48:19.770Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:49:23.109Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:50:19.786Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:51:23.037Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:52:19.816Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:53:23.007Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:54:31.532Z] [INFO] Iniciando bot WhatsApp Adonay {"ia":"http://127.0.0.1:8765/api/chat","observador":"http://127.0.0.1:8765","modo":"observador","gatilhos":["ADNY","@IA","Agente","IA"],"admins":1}
+[2026-06-29T22:54:31.533Z] [INFO] Observador: tick RP iniciado {"intervalo_ms":60000}
+[2026-06-29T22:54:32.948Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T22:54:34.472Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:55:31.551Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:56:34.096Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:57:31.551Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:58:34.564Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T22:59:31.563Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:00:34.653Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:01:31.567Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:02:34.341Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:10:17.813Z] [INFO] Iniciando bot WhatsApp Adonay {"ia":"http://127.0.0.1:8765/api/chat","observador":"http://127.0.0.1:8765","modo":"observador","gatilhos":["ADNY","@IA","Agente","IA"],"admins":1}
+[2026-06-29T23:10:17.815Z] [INFO] Observador: tick RP iniciado {"intervalo_ms":60000}
+[2026-06-29T23:10:20.009Z] [INFO] WhatsApp conectado {"bot":"553139503089:11@s.whatsapp.net","lid":"158411866009818:11@lid","nome":"Adonay Confecção"}
+[2026-06-29T23:10:21.068Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:11:17.837Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:12:20.393Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:13:17.858Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:14:20.826Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:15:17.876Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:16:20.887Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:17:17.879Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:18:20.789Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:19:17.892Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:20:21.472Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:21:17.917Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:22:21.334Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:23:17.929Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:24:20.696Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:25:17.937Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:26:20.526Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:27:17.946Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:28:17.950Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:29:17.951Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:30:21.024Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:31:17.969Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:32:21.515Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:33:17.984Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:34:21.748Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:35:17.992Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:36:21.065Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:37:18.009Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:38:21.484Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:39:18.023Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:40:21.941Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:41:18.032Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:42:20.748Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:43:18.045Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:44:21.089Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:45:18.067Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:46:22.406Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:47:18.079Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:48:21.096Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:49:18.097Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:50:21.172Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:51:18.106Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:52:22.035Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:53:18.116Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:54:21.293Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:55:18.133Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:56:20.804Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:57:18.153Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:58:22.240Z] [DEBUG] Observador: tick RP ok
+[2026-06-29T23:59:18.178Z] [DEBUG] Observador: tick RP ok

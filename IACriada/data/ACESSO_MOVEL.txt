@@ -1,0 +1,10 @@
+URL interface (celular):
+https://luucas031bh.github.io/sistema-pedidos/IACriada/static/index.html
+
+API tunel (atualizada):
+https://career-recommendation-bases-parameters.trycloudflare.com
+
+Token ADNY (cole uma vez no painel lateral):
+mRcceAE1J1Bv9SMxVD8wDbDJeOwXQpeE
+
+Mantenha o PC ligado com servidor + cloudflared.

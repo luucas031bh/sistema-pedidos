@@ -1,0 +1,37 @@
+[2026-05-18T00:56:28.483Z] [INFO] QR Code salvo (abra e escaneie com o celular) {"arquivo":"C:\\Users\\PC CASA\\Desktop\\I.A. Criada\\whatsapp-qr.png"}
+[2026-05-18T00:56:28.501Z] [INFO] QR Code removido (ja conectado) {"arquivo":"C:\\Users\\PC CASA\\Desktop\\I.A. Criada\\whatsapp-qr.png"}
+[2026-05-18T00:56:31.114Z] [WARN] Nao foi possivel abrir o PNG automaticamente {"err":"Error: Command failed: start \"\" \"C:\\Users\\PC CASA\\Desktop\\I.A. Criada\\whatsapp-qr.png\"\nO sistema n�o pode encontrar o arquivo C:\\Users\\PC CASA\\Desktop\\I.A. Criada\\whatsapp-qr.png.\r\n"}
+[2026-05-18T00:58:09.568Z] [INFO] Iniciando bot WhatsApp Adonay {"ia":"http://127.0.0.1:8765/api/chat","gatilhos":["ADNY","@IA","Agente","IA"],"admins":1}
+[2026-05-18T00:58:10.326Z] [INFO] QR no terminal (DEBUG)
+[2026-05-18T00:58:10.373Z] [INFO] QR Code salvo (abra e escaneie com o celular) {"arquivo":"C:\\Users\\PC CASA\\Desktop\\I.A. Criada\\whatsapp-qr.png"}
+[2026-05-18T00:58:30.258Z] [WARN] Conexao fechada {"code":515,"loggedOut":false}
+[2026-05-18T00:58:30.259Z] [INFO] Reconectando em 5000ms…
+[2026-05-18T00:58:37.806Z] [INFO] QR Code removido (ja conectado) {"arquivo":"C:\\Users\\PC CASA\\Desktop\\I.A. Criada\\whatsapp-qr.png"}
+[2026-05-18T00:58:37.807Z] [INFO] WhatsApp conectado {"bot":"553184233709:1@s.whatsapp.net"}
+[2026-05-18T01:00:30.831Z] [DEBUG] Ignorada (sem gatilho) {"jid":"120363409859368422@g.us","preview":"@216119231148122 LA"}
+[2026-05-18T01:00:48.200Z] [DEBUG] Ignorada (sem gatilho) {"jid":"120363409859368422@g.us","preview":"@216119231148122 ola boa noite"}
+[2026-05-18T01:01:26.982Z] [DEBUG] Ignorada (sem gatilho) {"jid":"222062710911135@lid","preview":"oi"}
+[2026-05-18T01:03:24.203Z] [INFO] Iniciando bot WhatsApp Adonay {"ia":"http://127.0.0.1:8765/api/chat","gatilhos":["ADNY","@IA","Agente","IA"],"admins":1}
+[2026-05-18T01:03:25.664Z] [INFO] WhatsApp conectado {"bot":"553184233709:1@s.whatsapp.net","lid":"216119231148122:1@lid","nome":"adny"}
+[2026-05-18T01:05:20.416Z] [INFO] Gatilho detectado {"jid":"120363409859368422@g.us","grupo":true,"numero":"222062710911135","admin":false,"comando":"BOA NOITE"}
+[2026-05-18T01:05:35.874Z] [INFO] Resposta IA recebida {"modelo":"llama3.1:latest","len":96}
+[2026-05-18T01:05:36.292Z] [INFO] Resposta enviada {"jid":"120363409859368422@g.us","ok":true}
+[2026-05-18T01:07:18.309Z] [INFO] Gatilho detectado {"jid":"120363409859368422@g.us","grupo":true,"numero":"222062710911135","admin":false,"comando":"PRECIS QUE FAÇA UM RELATRIOO FINANCEIR DE TODOS S PEDIDOS EM ABERT"}
+[2026-05-18T01:07:31.351Z] [INFO] Resposta IA recebida {"modelo":"llama3.1:latest","len":53}
+[2026-05-18T01:07:31.672Z] [INFO] Resposta enviada {"jid":"120363409859368422@g.us","ok":true}
+[2026-05-18T02:46:30.403Z] [INFO] Iniciando bot WhatsApp Adonay {"ia":"http://127.0.0.1:8765/api/chat","gatilhos":["ADNY","@IA","Agente","IA"],"admins":1}
+[2026-05-18T02:46:31.786Z] [INFO] WhatsApp conectado {"bot":"553184233709:1@s.whatsapp.net","lid":"216119231148122:1@lid","nome":"adny"}
+[2026-05-18T02:46:50.590Z] [INFO] Gatilho detectado {"jid":"120363409859368422@g.us","grupo":true,"numero":"222062710911135","admin":false,"comando":"ola"}
+[2026-05-18T02:46:59.285Z] [ERROR] IA retornou erro {"status":503,"err":"Ollama instalado mas parado. Abra o app Ollama | 1. Abra Ollama 2. ollama pull qwen2.5:7b"}
+[2026-05-18T02:46:59.575Z] [INFO] Resposta enviada {"jid":"120363409859368422@g.us","ok":false}
+[2026-05-18T02:47:20.579Z] [INFO] Gatilho detectado {"jid":"120363409859368422@g.us","grupo":true,"numero":"222062710911135","admin":false,"comando":"pedido FOODS"}
+[2026-05-18T02:47:29.031Z] [ERROR] IA retornou erro {"status":503,"err":"Ollama instalado mas parado. Abra o app Ollama | 1. Abra Ollama 2. ollama pull qwen2.5:7b"}
+[2026-05-18T02:47:29.312Z] [INFO] Resposta enviada {"jid":"120363409859368422@g.us","ok":false}
+[2026-05-18T02:49:41.345Z] [INFO] Gatilho detectado {"jid":"120363409859368422@g.us","grupo":true,"numero":"222062710911135","admin":false,"comando":"pedid foods relatorio"}
+[2026-05-18T02:49:56.272Z] [INFO] Resposta IA recebida {"modelo":"llama3.1:latest","len":664}
+[2026-05-18T02:49:56.553Z] [INFO] Resposta enviada {"jid":"120363409859368422@g.us","ok":true}
+[2026-05-18T02:51:07.641Z] [INFO] Gatilho detectado {"jid":"120363409859368422@g.us","grupo":true,"numero":"222062710911135","admin":false,"comando":"FOODS 0080"}
+[2026-05-18T02:51:24.360Z] [INFO] Resposta IA recebida {"modelo":"llama3.1:latest","len":73}
+[2026-05-18T02:51:24.638Z] [INFO] Resposta enviada {"jid":"120363409859368422@g.us","ok":true}
+[2026-05-18T03:36:25.796Z] [INFO] Iniciando bot WhatsApp Adonay {"ia":"http://127.0.0.1:8765/api/chat","gatilhos":["ADNY","@IA","Agente","IA"],"admins":1}
+[2026-05-18T03:36:27.432Z] [INFO] WhatsApp conectado {"bot":"553184233709:1@s.whatsapp.net","lid":"216119231148122:1@lid","nome":"adny"}
