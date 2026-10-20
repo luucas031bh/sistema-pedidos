@@ -1,0 +1,11 @@
+html:not([data-adonay-auth="ready"]) body > :not(#adonay-auth) { display: none !important; }
+#adonay-auth { position: fixed; inset: 0; z-index: 2147483647; display: grid; place-items: center; padding: 24px; background: #101218; color: #f6f6f6; font: 16px/1.5 Arial, sans-serif; box-sizing: border-box; }
+#adonay-auth .auth-card { width: min(100%, 390px); padding: 36px 28px; border: 1px solid #555045; border-radius: 16px; background: #1b1e26; box-sizing: border-box; text-align: center; }
+#adonay-auth .auth-brand { color: #d4af37; font-size: 13px; letter-spacing: 2px; }
+#adonay-auth h1 { font-size: 26px; margin: 20px 0 12px; color: white; }
+#adonay-auth p { color: #d4d7df; margin: 0 0 24px; }
+#adonay-auth button { width: 100%; padding: 14px 18px; border: none; border-radius: 8px; background: #fff; color: #202124; font: bold 16px Arial, sans-serif; cursor: pointer; }
+#adonay-auth button:disabled { opacity: .65; cursor: wait; }
+#adonay-auth .auth-status { display: block; margin-top: 20px; color: #edcf82; min-height: 24px; }
+#adonay-auth-out { position: fixed; bottom: 16px; right: 16px; z-index: 10000; border: 1px solid #8c7949; border-radius: 8px; padding: 10px 16px; background: #1b1e26; color: white; cursor: pointer; }
+@media print { #adonay-auth-out { display: none; } }

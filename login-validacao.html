@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Validação de acesso — Adonay</title>
+  <link rel="stylesheet" href="auth.css?v=1">
+  <script>window.CONFIG = {APPS_SCRIPT_URL:'https://script.google.com/macros/s/AKfycbzDXwLR5hQMX78yCEOGIBBZWsjgTlTDc5Ilut9l-IuOVTOfKr0P-_p5d6334n2l9hwMPQ/exec'};</script>
+  <script src="auth.js?v=1" defer></script>
+  <style>body{font:18px/1.6 Arial,sans-serif;background:#101218;color:#fff;padding:36px;max-width:700px;margin:auto}h1{color:#d4af37}</style>
+</head>
+<body>
+  <main><h1>Validação de acesso</h1><p id="resultado">Confirmando a sessão…</p><p>Esta página valida o login sem alterar pedidos.</p></main>
+  <script>
+    document.addEventListener('DOMContentLoaded',async()=>{
+      try {
+        const r=await fetch(CONFIG.APPS_SCRIPT_URL+'?action=authCheck');
+        const data=await r.json();
+        document.getElementById('resultado').textContent=data.sucesso?'Entrada autorizada para '+data.email:'Não foi possível validar a sessão.';
+      } catch (_) { document.getElementById('resultado').textContent='Não foi possível validar a sessão.'; }
+    });
+  </script>
+</body>
+</html>
