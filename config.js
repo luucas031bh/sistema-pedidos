@@ -19,7 +19,7 @@ const CONFIG = {
     // 2. Após o PASSO 5 (Deploy), copie a URL do aplicativo da Web
     // 3. Cole a URL completa aqui (deve terminar com /exec)
     // 4. Exemplo: 'https://script.google.com/macros/s/AKfycby.../exec'
-    APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycby9LFyzYkXW_Zo9i_u3jdGfRweu5UaDvf4PsGWyTh8UB0hXGEls2l_oELjJSDkpZwDoAQ/exec',
+    APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzDXwLR5hQMX78yCEOGIBBZWsjgTlTDc5Ilut9l-IuOVTOfKr0P-_p5d6334n2l9hwMPQ/exec',
     
     // Informações da Empresa
     EMPRESA: {

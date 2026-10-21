@@ -235,20 +235,10 @@ function doGet(e) {
   try {
     const acao = (e && e.parameter && (e.parameter.action || e.parameter.acao)) || 'online';
 
-    if (acao === 'online') return resposta({ status: 'online' });
-    if (acao === 'buscarPedido') return resposta(buscarPedido((e.parameter && e.parameter.termo) || ''));
-    if (acao === 'buscarPedidos') return resposta(buscarPedidos((e.parameter && e.parameter.termo) || ''));
-    if (acao === 'obterDados') return resposta(obterDados());
-    if (acao === 'obterConfigCalculo') return resposta(obterConfigCalculo());
-    if (acao === 'listarPedidos' || acao === 'obterFila') return resposta(listarPedidos((e.parameter && e.parameter.filtro) || ''));
-    if (acao === 'getStats') return resposta({ sucesso: true, stats: getStats() });
-    if (acao === 'relatorioPedidos') return resposta(relatorioPedidosFromParams(e.parameter || {}));
-    if (acao === 'contarPorEtapaProducao') return resposta(contarPorEtapaProducao(e.parameter || {}));
-    if (acao === 'listarPedidosEntregaPeriodo') return resposta(listarPedidosEntregaPeriodo(e.parameter || {}));
-    if (acao === 'agregarPecasAbertos') return resposta(agregarPecasPedidosAbertos(e.parameter || {}));
-    if (acao === 'exportarPdfPedido') return resposta(exportarPdfPedido(e.parameter || {}));
+    if (acao === 'online') return resposta({ status: 'online', autenticacaoObrigatoria: true });
+    // Tokens de sessão nunca são aceitos na URL. Dados somente por POST autenticado.
+    return resposta(authFail_('AUTH_REQUIRED', 'Entre com uma conta autorizada.'));
 
-    return resposta({ sucesso: false, erro: 'Ação inválida: ' + acao });
   } catch (erro) {
     return resposta({ sucesso: false, erro: erro.toString() });
   }
@@ -283,6 +273,7 @@ function doPost(e) {
     var modoEdParam = null;
     var idEdParam = null;
     var imagensPayload = null;
+    var authToken = '';
 
     // Corpo JSON (ex.: edição com Content-Type text/plain): ler primeiro — payload grande fica íntegro em postData.contents.
     if (e && e.postData && e.postData.contents) {
@@ -295,6 +286,7 @@ function doPost(e) {
       if (jsonSlice.charAt(0) === '{') {
         try {
           var payload = JSON.parse(jsonSlice);
+          authToken = typeof payload.authSession === 'string' ? payload.authSession : '';
           acao = payload.action || payload.acao || '';
           if (payload.dados !== undefined && payload.dados !== null) {
             dados = payload.dados;
@@ -341,6 +333,19 @@ function doPost(e) {
     }
 
     dados = normalizarDadosObjeto(dados);
+
+    if (acao === 'authStart') return resposta(authStart_(dados));
+    if (acao === 'authExchange') return resposta(authExchange_(dados));
+    var authUser = authSession_(authToken);
+    if (!authUser) return resposta(authFail_('AUTH_REQUIRED', 'Entre com uma conta autorizada.'));
+    if (acao === 'authCheck') return resposta({ sucesso: true, email: authUser.email, expiresAt: authUser.expiresAt });
+    if (acao === 'authLogout') return resposta(authLogout_(authToken));
+    if (acao === 'online') return resposta({ sucesso: true, status: 'online', autenticacaoObrigatoria: true });
+    if (acao === 'getStats') return resposta({ sucesso: true, stats: getStats() });
+    if (acao === 'contarPorEtapaProducao') return resposta(contarPorEtapaProducao(dados));
+    if (acao === 'listarPedidosEntregaPeriodo') return resposta(listarPedidosEntregaPeriodo(dados));
+    if (acao === 'agregarPecasAbertos') return resposta(agregarPecasPedidosAbertos(dados));
+    if (acao === 'exportarPdfPedido') return resposta(exportarPdfPedido(dados));
 
     if (modoEdParam === 'true' || modoEdParam === true) {
       dados.atualizacao = true;
