@@ -1,7 +1,8 @@
 (function () {
     'use strict';
     const nativeFetch = window.fetch.bind(window);
-    const storageKey = 'adonay.session.v1';
+    // Isola a sessão de homologação da sessão do sistema publicado.
+    const storageKey = window.ADONAY_AUTH_STORAGE_KEY || 'adonay.session.v1';
     let session = '';
     let loginState = null;
     let resolveReady;
