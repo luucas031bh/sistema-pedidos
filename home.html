@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
-<head>
+<html lang="pt-BR"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="Fila visual - Adonay Confecção">
@@ -9,19 +8,18 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Pedidos">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
     <title>HOME - Fila visual | Adonay Confecção</title>
     <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👕</text></svg>">
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="styles.css?v=7">
     <link rel="stylesheet" href="nav.css?v=3">
-    <script src="nav.js?v=2" defer></script>
+    <script src="nav.js?v=4" defer=""></script>
     <link rel="stylesheet" href="auth.css?v=1">
-    <script src="auth.js?v=1" defer></script>
-</head>
-<body class="page-home">
-    <header class="header header--home">
+    <script src="auth.js?v=1" defer=""></script>
+<link rel="stylesheet" href="ui.css?v=2"><script src="ui-calendar.js?v=1" defer=""></script></head>
+<body class="page-home ui-shell"><div class="shell"><aside class="side" aria-label="Navegação e ferramentas"><div class="side-brand">ADONAY<small>CONFECÇÃO</small></div><div id="uiNavSlot"></div><div class="home-tools"><a href="CalculadoraMalha/" class="btn btn-secondary">✂ Calculadora Malha</a><a href="ROANTONE/" class="btn btn-secondary">🎨 ROANTONE</a><a href="relatorio.html" class="btn btn-secondary">Relatórios</a><a href="IACriada/static/index.html" class="btn btn-secondary">◇ Assistente ADNY</a><a href="https://luucas031bh.github.io/Despesas/index.html" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">Despesas</a></div></aside><div class="workspace"><header class="header header--home">
         <div class="header-content">
             <h1 class="empresa-nome">ADONAY CONFECÇÃO</h1>
             <div class="empresa-info">
@@ -35,42 +33,30 @@
             </div>
             <div class="relogio" id="relogio">Carregando...</div>
         </div>
-    </header>
-
-    <main class="container container--home">
-        <section class="card">
+    </header><main class="container container--home">
+        <section class="card home-intro">
             <div class="flex-between flex-wrap gap-1">
-                <h2 class="card-title">Fila visual — pedidos em aberto</h2>
-                <div class="btn-group flex-wrap">
+                <div class="home-heading"><p class="home-eyebrow">Visão geral / produção</p><h2 class="card-title">Central de pedidos</h2><p class="home-description">Sua produção organizada. Suas entregas à vista.</p></div>
+                <div class="home-main-actions">
                     <button type="button" id="btnAtualizarHome" class="btn btn-info">Atualizar</button>
                     <a href="index.html" class="btn btn-primary">Novo pedido</a>
-                    <a href="CalculadoraMalha/" class="btn btn-secondary">✂ Calculadora Malha</a>
-                    <a href="ROANTONE/" class="btn btn-secondary">🎨 ROANTONE</a>
-                    <a href="relatorio.html" class="btn btn-secondary">Relatórios</a>
-                    <a href="IACriada/static/index.html" class="btn btn-secondary">◇ Assistente ADNY</a>
-                    <a href="https://luucas031bh.github.io/Despesas/index.html" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">Despesas</a>
+
+
+
+
+
                 </div>
             </div>
         </section>
 
-        <section class="card home-busca-pedido">
-            <h2 class="card-title">Buscar pedido salvo</h2>
-            <p class="home-busca-ajuda">Use os <strong>últimos 4 dígitos</strong> do telefone, nome ou ID do pedido. Você pode colar o número completo — extraímos os 4 finais. Digite <strong>orçamento</strong> para listar todos os orçamentos do sistema (incluindo os que saíram da fila após 10 dias).</p>
-            <div class="form-row home-busca-linha">
-                <div class="form-group flex-grow">
-                    <label class="form-label" for="inputBuscaIdBusca">Busca (telefone, nome, ID ou orçamento)</label>
-                    <input type="text" id="inputBuscaIdBusca" class="form-input" maxlength="64" placeholder="Ex.: 2490, nome do cliente, orçamento" autocomplete="off">
-                </div>
-                <div class="form-group home-busca-acoes">
-                    <span class="form-label home-busca-label-spacer">&nbsp;</span>
-                    <button type="button" id="btnBuscarPedidoHome" class="btn btn-secondary">Buscar pedido</button>
-                </div>
-            </div>
-            <p id="homeBuscaMensagem" class="home-busca-msg hidden" role="status"></p>
-            <div id="homeBuscaResultados" class="home-busca-resultados hidden"></div>
-        </section>
 
-        <section class="card">
+
+
+
+
+
+
+    <section class="card home-indicators">
             <div class="flex-between flex-wrap gap-1">
                 <h2 class="card-title">Indicadores (pedidos em aberto)</h2>
                 <button type="button" id="btnToggleKpis" class="btn btn-secondary btn-kpi-olho" aria-pressed="true" title="Ocultar valores dos indicadores">
@@ -105,11 +91,24 @@
                     <div class="kpi-label">Valor total</div>
                 </div>
             </div>
-            <div class="home-chart-container" id="homeGraficoEtapas"></div>
-        </section>
 
-        <section class="card home-filtro-entrega">
-            <h2 class="card-title">Filtro por data de entrega</h2>
+        </section><section class="card home-busca-pedido">
+            <h2 class="card-title">Buscar pedido salvo</h2>
+            <p class="home-busca-ajuda">Use os <strong>últimos 4 dígitos</strong> do telefone, nome ou ID do pedido. Você pode colar o número completo — extraímos os 4 finais. Digite <strong>orçamento</strong> para listar todos os orçamentos do sistema (incluindo os que saíram da fila após 10 dias).</p>
+            <div class="form-row home-busca-linha">
+                <div class="form-group flex-grow">
+                    <label class="form-label" for="inputBuscaIdBusca">Busca (telefone, nome, ID ou orçamento)</label>
+                    <input type="text" id="inputBuscaIdBusca" class="form-input" maxlength="64" placeholder="Ex.: 2490, nome do cliente, orçamento" autocomplete="off">
+                </div>
+                <div class="form-group home-busca-acoes">
+                    <span class="form-label home-busca-label-spacer">&nbsp;</span>
+                    <button type="button" id="btnBuscarPedidoHome" class="btn btn-secondary">Buscar pedido</button>
+                </div>
+            </div>
+            <p id="homeBuscaMensagem" class="home-busca-msg hidden" role="status"></p>
+            <div id="homeBuscaResultados" class="home-busca-resultados hidden"></div>
+        </section><div class="production-layout"><div class="production-main"><section class="card home-filtro-entrega">
+            <h2 class="card-title">Calendário de entregas</h2>
             <p class="home-filtro-ajuda">Filtra a fila abaixo pela <strong>data de entrega</strong> do pedido. A semana começa na segunda-feira e termina no domingo.</p>
             <div class="home-filtro-botoes btn-group flex-wrap">
                 <button type="button" class="btn btn-secondary" data-filtro-entrega="semana">Entregas para essa semana</button>
@@ -118,10 +117,8 @@
                 <button type="button" class="btn btn-secondary" data-filtro-entrega="todos">Todos os pedidos</button>
             </div>
             <p id="homeFiltroEntregaInfo" class="home-filtro-info hidden" role="status"></p>
-        </section>
-
-        <section class="card">
-            <h2 class="card-title">Fila <span id="homeFilaContagem" class="home-fila-contagem"></span></h2>
+        </section><section class="calendar-view" id="homeDeliveryCalendar" aria-label="Calendário de entregas"></section></div><aside class="stages-panel" aria-label="Pedidos por etapa de produção"><div class="home-chart-container" id="homeGraficoEtapas"></div></aside></div><section class="card home-queue">
+            <h2 class="card-title">Fila de produção <span id="homeFilaContagem" class="home-fila-contagem"></span></h2>
             <div class="tabela-dinamica tabela-home-fila">
                 <table>
                     <thead>
@@ -144,11 +141,14 @@
                 </table>
             </div>
             <div id="homeFilaCards" class="home-fila-cards-mobile"></div>
-        </section>
-    </main>
+        </section></main></div></div>
+
+
+
 
     <script src="config.js?v=6"></script>
     <script src="utils.js"></script>
     <script src="home.js?v=5"></script>
-</body>
-</html>
+
+
+</body></html>

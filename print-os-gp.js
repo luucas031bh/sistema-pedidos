@@ -193,6 +193,17 @@
         return `<section class="gp-artes"><h2 class="gp-sec-titulo gp-sec-titulo--sub">Artes / Estampas</h2><div class="gp-artes-grid">${thumbs}</div></section>`;
     }
 
+    function detalhesVisuaisGp(prod) {
+        const partes = String(prod.detalhesPeca || '').split(' - ');
+        const campos = partes.length >= 3
+            ? [['Gola',partes[0]],['Manga',partes[1]],['Acabamento',partes.slice(2).join(' - ')]]
+            : [['Peça',prod.tipoPeca || '—'],['Modelo / acabamento',prod.detalhesPeca || '—']];
+        const cor = typeof AdonayMockups !== 'undefined' ? AdonayMockups.color(prod.corMalha) : {hex:'#e8e8e5',known:false};
+        const grade = tamanhosComQuantidade(prod).map(t => `<span class="gp-grade-token"><span class="gp-grade-size">${escapeHtml(t.tamanho)}</span><span class="gp-grade-count">${Number(t.quantidade)||0} un.</span></span>`).join('');
+        const estampas = estampasValidas(prod).map((e,i) => `<li class="gp-application-row"><span class="gp-application-number">${i+1}</span><span class="gp-application-method">${escapeHtml(e.tipo)}</span><span class="gp-application-location">${escapeHtml(e.localidade||'—')}</span>${e.quantidadeCores?`<span class="gp-application-color">${escapeHtml(e.quantidadeCores)}</span>`:''}</li>`).join('');
+        return `<div class="gp-product-details"><div class="gp-detail-model">${campos.map(([label,value])=>`<div><span class="gp-detail-label">${escapeHtml(label)}</span><span class="gp-detail-value">${escapeHtml(value)}</span></div>`).join('')}</div><div class="gp-materials"><div class="gp-material-field"><span class="gp-color-dot" style="--fabric-color:${cor.hex}" aria-hidden="true"></span><span class="gp-inline-label">Cor</span><span>${escapeHtml(prod.corMalha||'—')}</span></div><div class="gp-material-field"><span class="gp-inline-label">Malha</span><span>${escapeHtml(malhaCurta(prod.tipoMalha))}</span></div></div><div class="gp-order-quantities"><div><span class="gp-detail-label">Grade</span><div class="gp-grade-tokens">${grade||'—'}</div></div><div><span class="gp-detail-label">Quantidade</span><div class="gp-quantity-main">${pecasDoProduto(prod)} <small>peças</small></div></div><div><span class="gp-detail-label">Valor unitário</span><div class="gp-unit-amount">${Utils.formatarMoeda(Number(prod.precoUnitario)||0)}</div></div></div>${estampas?`<ol class="gp-application-list" aria-label="Aplicações do produto">${estampas}</ol>`:''}</div>`;
+    }
+
     function montarHtmlGp(dados, mockupSrcsPorProduto, artesSrc) {
         const emp = (typeof CONFIG !== 'undefined' && CONFIG.EMPRESA) ? CONFIG.EMPRESA : {};
         const nomeEmp = emp.nome || 'ADONAY CONFECÇÃO';
@@ -211,72 +222,18 @@
             ? restanteInformado
             : total - entrada;
         const totalPecasCalc = calcularTotalPecasGp(produtos);
-        const totalPecas =
-            totalPecasCalc > 0 ? totalPecasCalc : Number(dados.totalPecas) || 0;
+        const totalPecas = totalPecasCalc > 0 ? totalPecasCalc : Number(dados.totalPecas) || 0;
         const cli = dados.cliente || {};
         const obs = dados.observacoes || '';
-        const obsHtml = obs.trim() ? escapeHtml(obs) : '—';
         const mockupsArr = Array.isArray(mockupSrcsPorProduto) ? mockupSrcsPorProduto : [];
-
-        const faixaMock = produtos
-            .map((prod, idx) => {
-                const tituloProd = prod.nomeProduto || `Produto ${idx + 1}`;
-                const src = mockupsArr[idx] || '';
-                if (!src) return '';
-                return `<figure class="gp-faixa-item"><img src="${src}" alt="Mockup" class="gp-faixa-img"><figcaption>${escapeHtml(tituloProd)}</figcaption></figure>`;
-            })
-            .filter(Boolean)
-            .join('');
-
-        const blocos = produtos.map((prod, idx) => {
-            const tituloProd = prod.nomeProduto || `Produto ${idx + 1}`;
-            const qtd = pecasDoProduto(prod);
-            const pu = Number(prod.precoUnitario) || 0;
-            const peca = prod.detalhesPeca || prod.tipoPeca || '—';
-            return `<article class="gp-item">
-                <header><strong>${escapeHtml(tituloProd)}</strong><b>${Utils.formatarMoeda(qtd * pu)}</b></header>
-                <p>${escapeHtml(peca)} · ${escapeHtml(prod.corMalha || '—')} · ${escapeHtml(malhaCurta(prod.tipoMalha))}</p>
-                <p>${escapeHtml(textoGrade(prod))} · ${qtd} peças · ${Utils.formatarMoeda(pu)} un.</p>
-                <p class="gp-item-est">${htmlEstampasCurtas(prod)}</p>
-            </article>`;
-        }).join('');
-
-        return `
-<div class="gp-doc gp-doc--limpa">
-    <header class="gp-topo">
-        <div>
-            <strong>${escapeHtml(nomeEmp)}</strong>
-            <span>${escapeHtml(tel)} · ${escapeHtml(end)}</span>
-        </div>
-        <div class="gp-id">ID ${escapeHtml(idC)}</div>
-    </header>
-    <section class="gp-cliente">
-        <div><small>Cliente</small><strong>${escapeHtml(cli.nome || '—')}</strong><span>${escapeHtml(cli.telefone || '')}</span></div>
-        <div><small>Entrega</small><strong>${formatarDataBR(dados.datas?.entrega)}</strong><span>Pedido ${formatarDataBR(dados.datas?.pedido)}</span></div>
-    </section>
-    ${obs.trim() ? `<p class="gp-obs">${obsHtml}</p>` : ''}
-    ${blocos || '<p>Nenhum produto informado.</p>'}
-    ${faixaMock ? `<section class="gp-faixa"><div class="gp-faixa-lista">${faixaMock}</div></section>` : ''}
-    ${montarGaleriaArtesHtml(artesSrc)}
-    <div class="gp-rodape-valores">
-        <div class="gp-resumo-financeiro">
-            <h2 class="gp-sec-titulo gp-sec-titulo--sub">Resumo financeiro</h2>
-            <dl class="gp-resumo-lista">
-                <div class="gp-resumo-linha"><dt>Total de peças</dt><dd>${totalPecas}</dd></div>
-                <div class="gp-resumo-linha"><dt>Valor total do pedido</dt><dd>${Utils.formatarMoeda(total)}</dd></div>
-                <div class="gp-resumo-linha"><dt>Valor da entrada</dt><dd>${entrada > 0 ? Utils.formatarMoeda(entrada) : '—'}</dd></div>
-                <div class="gp-resumo-linha"><dt>Valor restante</dt><dd>${Utils.formatarMoeda(restante)}</dd></div>
-            </dl>
-        </div>
-        <div class="gp-assinatura">
-            <p class="gp-assinatura-texto">Declaro ter lido e estar de acordo com o descrito nesta guia.</p>
-            <div class="gp-linha-assinatura"></div>
-            <p class="gp-assinatura-rotulo">Assinatura do cliente</p>
-        </div>
-    </div>
-    <div class="gp-rodape">GP — Guia de Pedido</div>
-</div>`;
+        const faixaMock = produtos.map((prod,idx) => {
+            const src=mockupsArr[idx]||'';
+            return src?`<figure class="gp-faixa-item"><img src="${src}" alt="Mockup do produto ${idx+1}" class="gp-faixa-img"><figcaption>${escapeHtml(prod.nomeProduto||`Produto ${idx+1}`)}</figcaption></figure>`:'';
+        }).filter(Boolean).join('');
+        const blocos = produtos.map((prod,idx) => `<article class="gp-item"><header><strong>${escapeHtml(prod.nomeProduto||`Produto ${idx+1}`)}</strong><b>${Utils.formatarMoeda(pecasDoProduto(prod)*(Number(prod.precoUnitario)||0))}</b></header>${detalhesVisuaisGp(prod)}</article>`).join('');
+        return `<div class="gp-doc gp-doc--limpa"><header class="gp-topo"><div><strong>${escapeHtml(nomeEmp)}</strong><span>${escapeHtml(tel)} · ${escapeHtml(end)}</span></div><div class="gp-id"><small>Pedido</small>${escapeHtml(idC)}</div></header><div class="gp-title-line"><h1>Guia de Pedido</h1><span>Resumo do pedido e conferência</span></div><section class="gp-cliente"><div><small>Cliente</small><strong>${escapeHtml(cli.nome||'—')}</strong><span>${escapeHtml(cli.telefone||'')}</span></div><div><small>Entrega</small><strong>${formatarDataBR(dados.datas?.entrega)}</strong><span>Pedido ${formatarDataBR(dados.datas?.pedido)}</span></div></section><h2 class="gp-section-title">Produtos do pedido</h2>${blocos||'<p>Nenhum produto informado.</p>'}${String(obs).trim()?`<h2 class="gp-section-title">Observações</h2><p class="gp-obs">${escapeHtml(obs)}</p>`:''}${faixaMock?`<section class="gp-faixa"><h2 class="gp-sec-titulo">Mockups dos produtos</h2><div class="gp-faixa-lista">${faixaMock}</div></section>`:''}${montarGaleriaArtesHtml(artesSrc)}<div class="gp-rodape-valores"><div class="gp-resumo-financeiro"><h2 class="gp-sec-titulo gp-sec-titulo--sub">Resumo financeiro</h2><dl class="gp-resumo-lista"><div class="gp-resumo-linha"><dt>Total de peças</dt><dd>${totalPecas}</dd></div><div class="gp-resumo-linha"><dt>Valor total do pedido</dt><dd>${Utils.formatarMoeda(total)}</dd></div><div class="gp-resumo-linha"><dt>Valor da entrada</dt><dd>${entrada>0?Utils.formatarMoeda(entrada):'—'}</dd></div><div class="gp-resumo-linha"><dt>Valor restante</dt><dd>${Utils.formatarMoeda(restante)}</dd></div></dl></div><div class="gp-assinatura"><p class="gp-assinatura-texto">Declaro ter lido e estar de acordo com o descrito nesta guia.</p><div class="gp-linha-assinatura"></div><p class="gp-assinatura-rotulo">Assinatura do cliente</p></div></div><div class="gp-rodape">GP — Guia de Pedido</div></div>`;
     }
+
 
     function malhaCurta(tipo) {
         const s = String(tipo || '').trim();
@@ -323,6 +280,10 @@
     }
 
     function amostraCor(nome) {
+        if (typeof AdonayMockups !== 'undefined') {
+            const cor = AdonayMockups.color(nome);
+            return cor.known ? `<i class="os-amostra" style="--os-cor:${cor.hex};background:${cor.hex}"></i>` : '<i class="os-amostra os-amostra--vazia"></i>';
+        }
         const s = String(nome || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         const pares = [
             ['pret', '#161616'], ['branc', '#f5f5f5'], ['marinh', '#1b2a6b'], ['royal', '#1d4e9e'],
@@ -376,68 +337,24 @@
     }
 
     function montarHtmlOs(dados, mockupSrcsPorProduto, artesSrc) {
-        const idC = idCurtoPedido(dados);
-        const cli = dados.cliente || {};
-        const obs = String(dados.observacoes || '').trim();
-        const produtos = Array.isArray(dados.produtos) ? dados.produtos : [];
-        const mockupsArr = Array.isArray(mockupSrcsPorProduto) ? mockupSrcsPorProduto : [];
-        const artes = Array.isArray(artesSrc) ? artesSrc.filter(Boolean) : [];
-        const varios = produtos.length > 1;
-        const entrega = formatarDataBR(dados.datas?.entrega);
-
-        const fichas = produtos
-            .map((prod, idx) => {
-                const n = idx + 1;
-                const tituloProd = prod.nomeProduto || `Produto ${n}`;
-                const qtd = pecasDoProduto(prod);
-                const tams = tamanhosComQuantidade(prod);
-                const grade = tams.length
-                    ? `<div class="os-numeros">${tams.map((t) => `<div><b>${Number(t.quantidade) || 0}</b><span>${escapeHtml(t.tamanho || '—')}</span></div>`).join('')}</div>`
-                    : '';
-                const lista = estampasValidas(prod);
-                const locais = lista.length
-                    ? `<ol class="os-locais">${lista.map((e, i) => `<li><b>${i + 1}</b><em>${escapeHtml(tecnicaCurta(e.tipo))}</em><span>${escapeHtml(e.localidade || '—')}</span>${e.quantidadeCores ? `<strong>${escapeHtml(e.quantidadeCores)}</strong>` : '<strong></strong>'}</li>`).join('')}</ol>`
-                    : '';
-                const mockSrc = mockupsArr[idx] || '';
-                const visual = mockSrc
-                    ? `<img src="${mockSrc}" alt="" class="os-prova">`
-                    : mapaEstampas(lista);
-                const artesHtml = idx === 0 && artes.length
-                    ? `<div class="os-artes">${artes.slice(0, 4).map((src) => `<img src="${src}" alt="">`).join('')}</div>`
-                    : '';
-                const quebra = varios && idx > 0 ? ' os-folha--nova' : '';
-                const parte = varios ? ` · ${n}/${produtos.length}` : '';
-                return `<article class="os-folha${quebra}">
-                    <header class="os-topo">
-                        <div class="os-topo-os"><small>OS</small><strong>${escapeHtml(idC)}</strong></div>
-                        <div class="os-topo-nome">
-                            <strong>${escapeHtml(tituloProd)}</strong>
-                            <span>${escapeHtml(cli.nome || '—')}${parte}</span>
-                        </div>
-                        <div class="os-topo-data"><small>Entrega</small><strong>${escapeHtml(entrega)}</strong></div>
-                        <div class="os-topo-qtd"><strong>${qtd}</strong><small>peças</small></div>
-                    </header>
-                    <div class="os-palco">
-                        <div class="os-visual">${visual}</div>
-                        <aside>
-                            <div class="os-cor-bloco">
-                                ${amostraCor(prod.corMalha)}
-                                <div>
-                                    <b>${escapeHtml(prod.corMalha || '—')}</b>
-                                    <span>${escapeHtml(malhaCurta(prod.tipoMalha))}</span>
-                                </div>
-                            </div>
-                            <p class="os-modelo">${escapeHtml(prod.detalhesPeca || prod.tipoPeca || '—')}</p>
-                            ${grade}
-                        </aside>
-                    </div>
-                    ${obs ? `<p class="os-nota">${escapeHtml(obs)}</p>` : ''}
-                    ${locais}
-                    ${artesHtml}
-                </article>`;
-            })
-            .join('');
-
+        const idC=idCurtoPedido(dados), cli=dados.cliente||{},obs=String(dados.observacoes||'').trim();
+        const produtos=Array.isArray(dados.produtos)?dados.produtos:[],mockups=Array.isArray(mockupSrcsPorProduto)?mockupSrcsPorProduto:[],artes=Array.isArray(artesSrc)?artesSrc.filter(Boolean):[];
+        const emp=(typeof CONFIG!=='undefined'&&CONFIG.EMPRESA)?CONFIG.EMPRESA:{};
+        const fichas=produtos.map((prod,idx)=>{
+            const lista=estampasValidas(prod),tams=tamanhosComQuantidade(prod);
+            const marks=[];
+            lista.forEach((e,i)=>{
+                const local=String(e.localidade||'').toLowerCase(),zone=zonaEstampa(e.localidade);
+                if(zone==='total'){marks.push({side:'frente',zone,number:i+1},{side:'costas',zone,number:i+1});}
+                else if(local.includes('costas')||local.includes('pescoço')||local.includes('pescoco'))marks.push({side:'costas',zone,number:i+1});
+                else marks.push({side:'frente',zone,number:i+1});
+            });
+            const visual=mockups[idx]?`<img src="${mockups[idx]}" alt="Mockup anexado ao produto ${idx+1}" class="os-prova">`:(typeof AdonayMockups!=='undefined'?AdonayMockups.render(prod,produtos.length===1?obs:'',marks):mapaEstampas(lista));
+            const grade=tams.length?`<div class="os-numeros">${tams.map(t=>`<div><span>${escapeHtml(t.tamanho||'—')}</span><b>${Number(t.quantidade)||0}</b></div>`).join('')}</div>`:'<p class="os-nota">Grade não informada.</p>';
+            const locais=lista.length?`<table class="os-table"><thead><tr><th>Aplic.</th><th>Técnica</th><th>Local / tamanho</th><th>Cores</th></tr></thead><tbody>${lista.map((e,i)=>`<tr><td><span class="os-location-mark">${i+1}</span></td><td>${escapeHtml(e.tipo||'—')}</td><td>${escapeHtml(e.localidade||'—')}</td><td>${escapeHtml(e.quantidadeCores||'Não informado')}</td></tr>`).join('')}</tbody></table>`:'<p class="os-nota">Nenhuma aplicação cadastrada.</p>';
+            const anexos=idx===0&&artes.length?`<section class="os-reference-section"><h2 class="os-section-heading">Referências anexadas ao pedido</h2><div class="os-artes">${artes.slice(0,4).map((src,i)=>`<img src="${src}" alt="Referência anexada ${i+1}">`).join('')}</div></section>`:'';
+            return `<article class="os-folha os-paper${idx?' os-folha--nova':''}"><header class="os-brand-header"><div class="os-brand">${escapeHtml(emp.nome||'ADONAY CONFECÇÃO')}</div><div class="os-doc-title"><h1>Ordem de serviço</h1><span>Ficha de produção por produto</span></div></header><section class="os-data-strip"><div class="os-data-cell"><small>OS / ID Busca</small><strong>${escapeHtml(idC)}</strong></div><div class="os-data-cell"><small>Entrega</small><strong>${escapeHtml(formatarDataBR(dados.datas?.entrega))}</strong></div><div class="os-data-cell"><small>Peças deste produto</small><strong>${pecasDoProduto(prod)}</strong></div><div class="os-data-cell"><small>Produto</small><strong>${String(idx+1).padStart(2,'0')} / ${String(produtos.length).padStart(2,'0')}</strong></div></section><section class="os-identification"><p class="os-section-label">Produto / cliente</p><h2 class="os-product-name">${escapeHtml(prod.nomeProduto||`Produto ${idx+1}`)}</h2><p class="os-client-name">${escapeHtml(cli.nome||'—')}</p></section><section class="os-specifications"><div><small>Cor da malha</small><div class="os-color-label">${amostraCor(prod.corMalha)}${escapeHtml(prod.corMalha||'—')}</div></div><div><small>Malha</small><p class="os-fabric-value">${escapeHtml(prod.tipoMalha||'—')}</p></div><div><small>Modelo / acabamento</small><p class="os-model-value">${escapeHtml(prod.detalhesPeca||prod.tipoPeca||'—')}</p></div></section><section class="os-technical"><div class="os-technical-heading"><h2 class="os-section-heading">Mockup de produção</h2><span class="os-caption">Posições conforme cadastro</span></div><div class="os-visual">${visual}</div></section><section class="os-grade-section"><h2 class="os-section-heading">Grade de produção</h2>${grade}</section><section class="os-print-section"><h2 class="os-section-heading">Estampas e localizações</h2>${locais}</section>${obs?`<section class="os-note-section"><h2>Observações do pedido</h2><p class="os-nota">${escapeHtml(obs)}</p></section>`:''}${anexos}<footer class="os-paper-footer"><span>${escapeHtml(emp.nome||'ADONAY CONFECÇÃO')} · uso interno na produção</span><span>Produto ${String(idx+1).padStart(2,'0')} de ${String(produtos.length).padStart(2,'0')}</span></footer></article>`;
+        }).join('');
         return `<div class="os-doc os-doc--visual">${fichas}</div>`;
     }
 

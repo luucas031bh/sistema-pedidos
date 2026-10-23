@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
-<head>
+<html lang="pt-BR"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="Sistema de Pedidos Adonay Confecção">
@@ -10,189 +9,155 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Pedidos">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+
     <title>Adonay Confecção - Sistema de Pedidos</title>
-    
+
     <!-- Favicons -->
     <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👕</text></svg>">
-    
+
     <!-- Stylesheets -->
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="styles.css?v=7">
     <link rel="stylesheet" href="print.css?v=10">
     <link rel="stylesheet" href="nav.css?v=3">
-    <script src="nav.js?v=2" defer></script>
-    
+    <script src="nav.js?v=4" defer=""></script>
+
     <!-- Preload Scripts -->
     <link rel="preload" href="config.js?v=6" as="script">
     <link rel="preload" href="utils.js?v=2" as="script">
     <link rel="preload" href="script.js?v=5" as="script">
     <link rel="stylesheet" href="auth.css?v=1">
-    <script src="auth.js?v=1" defer></script>
-</head>
-<body>
-    <div id="faixaSomenteLeitura" class="faixa-somente-leitura hidden" role="status">
-        Pedido encerrado (entregue ou cancelado) — apenas visualização. Impressão disponível abaixo.
-    </div>
-    <a href="home.html" id="btnVoltarPrincipal" class="btn-voltar-principal hidden" title="Voltar à fila (HOME)">Voltar à HOME</a>
-    <!-- ========== CABEÇALHO ========== -->
-    <header class="header">
+    <script src="auth.js?v=1" defer=""></script>
+<link rel="stylesheet" href="ui.css?v=2"><link rel="stylesheet" href="ui-print.css?v=2"></head>
+<body class="page-order ui-shell"><div class="shell"><aside class="side" aria-label="Navegação e ferramentas"><div class="side-brand">ADONAY<small>CONFECÇÃO</small></div><div id="uiNavSlot"></div></aside><div class="workspace"><header class="header">
         <div class="header-content">
             <h1 class="empresa-nome">ADONAY CONFECÇÃO</h1>
-            
+
             <div class="empresa-info">
                 <p>CNPJ: 42.522.845/0001-97</p>
                 <p>Rua Geraldo Teixeira da Costa, São Benedito, Santa Luzia - MG</p>
             </div>
-            
+
             <div class="empresa-contatos">
                 <span class="contato-item">💬 (31) 3950-3089</span>
                 <span class="contato-item">📷 @adonayconfeccao</span>
                 <span class="contato-item">☎ (31) 3950-3089</span>
             </div>
-            
+
             <div class="relogio" id="relogio">
                 <span>Carregando...</span>
             </div>
         </div>
-    </header>
-    
-    <!-- ========== CONTAINER PRINCIPAL ========== -->
-    <main class="container">
-        <section class="card">
-            <div class="flex-between flex-wrap gap-1">
-                <h2 class="card-title" id="tituloPrincipalIndex">🏠 Cadastro de Pedidos</h2>
-                <div class="flex flex-wrap gap-1 top-actions-index">
+    </header><main class="container">
+        <section class="card ord-intro"><div class="ord-hero"><div><p class="ord-kicker">Pedidos / formulário</p><h2 class="card-title" id="tituloPrincipalIndex">🏠 Cadastro de Pedidos</h2><p class="ord-subtitle">Cliente, produtos e produção em um só lugar.</p></div><button type="button" id="btnSalvarFlutuante" class="btn btn-success btn-salvar-flutuante">
+        💾 Salvar
+    </button></div><div class="flex flex-wrap gap-1 top-actions-index">
                     <a class="btn btn-info" href="home.html">Fila visual (HOME)</a>
                     <a class="btn btn-secondary" href="relatorio.html">Relatórios</a>
-                </div>
-            </div>
-        </section>
+                <a href="home.html" id="btnVoltarPrincipal" class="btn-voltar-principal hidden" title="Voltar à fila (HOME)">Voltar à HOME</a></div></section>
 
         <!-- ========== FORMULÁRIO DE PEDIDO ========== -->
         <form id="formPedido" onsubmit="event.preventDefault();">
-            
+
             <!-- DADOS DO CLIENTE -->
-            <section class="card">
-                <h2 class="card-title">👤 Dados do Cliente</h2>
-                
+
+
+            <!-- DATAS -->
+
+
+            <!-- PRODUTOS -->
+
+
+            <!-- IMAGENS DO PEDIDO -->
+
+
+            <!-- LISTA DE PERSONALIZAÇÃO DE CAMISAS (OPCIONAL) -->
+
+
+            <!-- OBSERVAÇÕES -->
+
+
+            <!-- OPERAÇÃO E VALIDAÇÕES -->
+
+
+            <!-- Status operacional / produção (visível só em modo edição) -->
+
+
+            <!-- Total de peças (todos os produtos) -->
+
+
+            <!-- RESUMO FINANCEIRO -->
+
+
+            <!-- BOTÕES DE AÇÃO -->
+
+
+        <div class="ord-main-column"><section class="card">
+                <h2 class="card-title" data-step="01">👤 Dados do Cliente</h2>
+
                 <div class="form-row">
                     <div class="form-group">
                         <label for="nomeCliente" class="form-label required">Nome do Cliente</label>
-                        <input 
-                            type="text" 
-                            id="nomeCliente" 
-                            class="form-input" 
-                            placeholder="Digite o nome completo"
-                            required
-                        >
+                        <input type="text" id="nomeCliente" class="form-input" placeholder="Digite o nome completo" required="">
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="telefone" class="form-label required">Telefone</label>
-                        <input 
-                            type="tel" 
-                            id="telefone" 
-                            class="form-input" 
-                            placeholder="(XX) X XXXX-XXXX"
-                            maxlength="16"
-                            required
-                        >
+                        <input type="tel" id="telefone" class="form-input" placeholder="(XX) X XXXX-XXXX" maxlength="16" required="">
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="idPedido" class="form-label">ID do Pedido</label>
-                        <input 
-                            type="text" 
-                            id="idPedido" 
-                            class="form-input" 
-                            placeholder="Gerado automaticamente"
-                            disabled
-                        >
+                        <input type="text" id="idPedido" class="form-input" placeholder="Gerado automaticamente" disabled="">
                     </div>
                     <div class="form-group">
                         <label for="idBusca" class="form-label">ID Busca</label>
-                        <input 
-                            type="text" 
-                            id="idBusca" 
-                            class="form-input" 
-                            placeholder="4 últimos dígitos do telefone"
-                            maxlength="4"
-                            disabled
-                        >
+                        <input type="text" id="idBusca" class="form-input" placeholder="4 últimos dígitos do telefone" maxlength="4" disabled="">
                     </div>
                 </div>
-            </section>
-            
-            <!-- DATAS -->
-            <section class="card">
-                <h2 class="card-title">📅 Datas</h2>
-                
+            </section><section class="card ord-dates">
+                <h2 class="card-title" data-step="02">📅 Datas</h2>
+
                 <div class="form-row">
                     <div class="form-group">
                         <label for="dataPedido" class="form-label required">Data do Pedido</label>
-                        <input 
-                            type="date" 
-                            id="dataPedido" 
-                            class="form-input"
-                            required
-                        >
+                        <input type="date" id="dataPedido" class="form-input" required="">
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="dataEntrega" class="form-label required">Data de Entrega</label>
-                        <input 
-                            type="date" 
-                            id="dataEntrega" 
-                            class="form-input"
-                            required
-                        >
+                        <input type="date" id="dataEntrega" class="form-input" required="">
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="totalPecas" class="form-label">Total de Peças</label>
-                        <input 
-                            type="number" 
-                            id="totalPecas" 
-                            class="form-input" 
-                            value="0"
-                            disabled
-                        >
+                        <input type="number" id="totalPecas" class="form-input" value="0" disabled="">
                     </div>
                 </div>
-            </section>
-            
-            <!-- PRODUTOS -->
-            <section class="card">
+            </section><section class="card">
                 <div class="flex-between mb-2">
-                    <h2 class="card-title">📦 Produtos</h2>
+                    <h2 class="card-title" data-step="03">📦 Produtos</h2>
                     <button type="button" id="btnAdicionarProduto" class="btn btn-primary">
                         ➕ Adicionar Produto
                     </button>
                 </div>
-                
+
                 <div id="produtosContainer">
                     <!-- Os produtos serão adicionados dinamicamente aqui -->
                 </div>
-            </section>
-            
-            <!-- IMAGENS DO PEDIDO -->
-            <section class="card" id="secaoImagens">
-                <h2 class="card-title">🖼️ Imagens do Pedido</h2>
+            </section><section class="card" id="secaoImagens">
+                <h2 class="card-title" data-step="04">🖼️ Imagens do Pedido</h2>
                 <p class="impressao-ajuda">Mockup de cada produto fica na seção do produto. Artes/estampas aqui são do pedido inteiro. Imagens no Google Drive (Ano/Mês). Nenhuma obrigatória.</p>
 
                 <!-- Artes -->
                 <div class="card-subtitle mt-2">Artes / Estampas <span class="lista-badge-opcional">(Opcional — até 10)</span></div>
                 <div id="containerArtes"></div>
                 <button type="button" id="btnAdicionarArte" class="btn btn-secondary mt-1">➕ Adicionar Arte</button>
-            </section>
-
-            <!-- LISTA DE PERSONALIZAÇÃO DE CAMISAS (OPCIONAL) -->
-            <section class="card lista-personalizacao-section">
+            </section><section class="card lista-personalizacao-section">
                 <div class="flex-between mb-2">
-                    <h2 class="card-title">
+                    <h2 class="card-title" data-step="05">
                         📋 Lista de Personalização de Camisas
                         <span class="lista-badge-opcional">(Opcional)</span>
                     </h2>
@@ -220,25 +185,38 @@
                 <button type="button" class="btn btn-primary lista-btn-add" onclick="listaAdicionarLinha()">
                     ➕ Adicionar Linha
                 </button>
-            </section>
+            </section><section class="card">
+                <h2 class="card-title" data-step="06">📝 Observações</h2>
 
-            <!-- OBSERVAÇÕES -->
-            <section class="card">
-                <h2 class="card-title">📝 Observações</h2>
-                
                 <div class="form-group">
                     <label for="observacoes" class="form-label">Observações Gerais do Pedido</label>
-                    <textarea 
-                        id="observacoes" 
-                        class="form-textarea" 
-                        placeholder="Digite observações sobre o pedido, especificações especiais, prazo diferenciado, etc."
-                        rows="4"
-                    ></textarea>
+                    <textarea id="observacoes" class="form-textarea" placeholder="Digite observações sobre o pedido, especificações especiais, prazo diferenciado, etc." rows="4"></textarea>
                 </div>
-            </section>
+            </section></div><aside class="ord-summary-column" aria-label="Resumo e acompanhamento do pedido"><section class="card resumo-financeiro">
+                <h2 class="card-title">💰 Resumo Financeiro</h2>
 
-            <!-- OPERAÇÃO E VALIDAÇÕES -->
-            <section class="card">
+
+                <div class="resumo-total" id="resumoTotalPedidoDestaque">
+                    <div>💵 TOTAL: <span id="resumoTotalPedido">R$ 0,00</span></div>
+                </div>
+
+                <div class="form-row mt-2">
+                    <div class="form-group">
+                        <label for="valorEntrada" class="form-label">💵 Valor da Entrada (R$)</label>
+                        <input type="number" id="valorEntrada" class="form-input" placeholder="0.00" min="0" step="0.01" onchange="calcularResumoFinanceiro()">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">📋 Restante a Pagar</label>
+                        <div class="form-input" style="background-color: var(--cor-terciaria); font-weight: bold; color: var(--dourado-secundario);">
+                            <span id="resumoRestante">R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+            </section><section class="card resumo-pecas-pedido" id="secaoResumoPecasPedido">
+                <h2 class="card-title">📊 Peças no pedido</h2>
+                <p class="resumo-pecas-pedido-valor" id="resumoTotalPecasPedido">Total no pedido: 0 peças (somando 0 produtos)</p>
+            </section><section class="card">
                 <h2 class="card-title">🧭 Operação e Validações</h2>
 
                 <div class="form-row">
@@ -256,10 +234,7 @@
                         </select>
                     </div>
                 </div>
-            </section>
-
-            <!-- Status operacional / produção (visível só em modo edição) -->
-            <section class="card hidden" id="secaoStatusEdicao">
+            </section><section class="card hidden" id="secaoStatusEdicao">
                 <h2 class="card-title">📋 Status do pedido</h2>
                 <div class="form-row">
                     <div class="form-group">
@@ -273,48 +248,7 @@
                     <select class="form-select" id="etapaProducaoAtual" name="etapaProducaoAtual"></select>
                     <span id="badgeStatusProducaoIndex" class="status-badge status-badge--producao">Pedido em Aberto</span>
                 </div>
-            </section>
-
-            <!-- Total de peças (todos os produtos) -->
-            <section class="card resumo-pecas-pedido" id="secaoResumoPecasPedido">
-                <h2 class="card-title">📊 Peças no pedido</h2>
-                <p class="resumo-pecas-pedido-valor" id="resumoTotalPecasPedido">Total no pedido: 0 peças (somando 0 produtos)</p>
-            </section>
-            
-            <!-- RESUMO FINANCEIRO -->
-            <section class="card resumo-financeiro">
-                <h2 class="card-title">💰 Resumo Financeiro</h2>
-                
-                
-                <div class="resumo-total" id="resumoTotalPedidoDestaque">
-                    <div>💵 TOTAL: <span id="resumoTotalPedido">R$ 0,00</span></div>
-                </div>
-                
-                <div class="form-row mt-2">
-                    <div class="form-group">
-                        <label for="valorEntrada" class="form-label">💵 Valor da Entrada (R$)</label>
-                        <input 
-                            type="number" 
-                            id="valorEntrada" 
-                            class="form-input" 
-                            placeholder="0.00"
-                            min="0"
-                            step="0.01"
-                            onchange="calcularResumoFinanceiro()"
-                        >
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">📋 Restante a Pagar</label>
-                        <div class="form-input" style="background-color: var(--cor-terciaria); font-weight: bold; color: var(--dourado-secundario);">
-                            <span id="resumoRestante">R$ 0,00</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            
-            <!-- BOTÕES DE AÇÃO -->
-            <section class="card">
+            </section><section class="card ord-actions">
                 <div class="btn-group">
                     <div id="botoesImpressaoRodape" class="btn-group hidden" style="margin-top:0;">
                         <button type="button" id="btnImprimirOs" class="btn btn-secondary">🖨️ IMPRIMIR OS</button>
@@ -324,11 +258,18 @@
                         💾 Salvar Pedido
                     </button>
                 </div>
-            </section>
-            
-        </form>
-    </main>
-    
+            </section></aside></form>
+    </main></div></div>
+    <div id="faixaSomenteLeitura" class="faixa-somente-leitura hidden" role="status">
+        Pedido encerrado (entregue ou cancelado) — apenas visualização. Impressão disponível abaixo.
+    </div>
+
+    <!-- ========== CABEÇALHO ========== -->
+
+
+    <!-- ========== CONTAINER PRINCIPAL ========== -->
+
+
     <!-- ========== RODAPÉ (para impressão) ========== -->
     <footer class="print-footer hidden">
         <p>Adonay Confecção - CNPJ: 42.522.845/0001-97 - (31) 3950-3089</p>
@@ -337,19 +278,17 @@
             <p class="label-assinatura">Assinatura do Cliente</p>
         </div>
     </footer>
-    
+
     <!-- ========== SCRIPTS ========== -->
     <div id="printOsMount" class="print-doc-root" aria-hidden="true"></div>
     <div id="printGpMount" class="print-doc-root" aria-hidden="true"></div>
 
-    <button type="button" id="btnSalvarFlutuante" class="btn btn-success btn-salvar-flutuante">
-        💾 Salvar
-    </button>
+
 
     <script src="config.js?v=6"></script>
     <script src="utils.js?v=2"></script>
     <script src="script.js?v=5"></script>
-    <script src="print-os-gp.js?v=12"></script>
+    <script src="garment-mockups.js?v=1"></script><script src="print-os-gp.js?v=13"></script>
     <script>
         (function () {
             var flutuante = document.getElementById('btnSalvarFlutuante');
@@ -368,6 +307,7 @@
             }
         })();
     </script>
-</body>
-</html>
 
+
+
+</body></html>
