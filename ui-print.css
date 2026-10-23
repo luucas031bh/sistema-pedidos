@@ -255,3 +255,67 @@ body #printGpMount .gp-doc--limpa .gp-application-color{font-size:11px;color:#77
  #printGpMount .gp-order-quantities,#printGpMount .gp-resumo-financeiro{background:#f5f5f2!important;}
  #printOsMount *,#printGpMount *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 }
+
+/* Mobile reading layout is screen-only; paper keeps the A4 document layout. */
+@media screen and (max-width:600px){
+ #printOsMount,#printGpMount{width:100%;max-width:100%;min-width:0;box-sizing:border-box;}
+ body #printOsMount .os-doc--visual .os-paper,#printGpMount .gp-doc--limpa{width:auto;max-width:100%;min-height:0;padding:18px 14px;}
+ body #printOsMount .os-doc--visual .os-brand-header{gap:12px;flex-wrap:wrap;}
+ body #printOsMount .os-doc--visual .os-brand{font-size:15px;max-width:100%;overflow-wrap:anywhere;}
+ body #printOsMount .os-doc--visual .os-doc-title{text-align:left;}
+ body #printOsMount .os-doc--visual .os-data-strip{grid-template-columns:1fr 1fr;gap:14px 0;}
+ body #printOsMount .os-doc--visual .os-data-cell:nth-child(odd){padding-left:0;}
+ body #printOsMount .os-doc--visual .os-data-cell:nth-child(even){border:0;text-align:right;padding-right:0;}
+ body #printOsMount .os-doc--visual .os-data-cell strong{font-size:18px;}
+ body #printOsMount .os-doc--visual .os-data-cell small{font-size:11px;letter-spacing:.4px;}
+ body #printOsMount .os-doc--visual .os-specifications{grid-template-columns:1fr;gap:13px;}
+ body #printOsMount .os-doc--visual .os-specifications>div:last-child{grid-column:auto;}
+ body #printOsMount .os-doc--visual .os-fabric-value,body #printOsMount .os-doc--visual .os-model-value{font-size:12px;overflow-wrap:anywhere;}
+ body #printOsMount .os-doc--visual .os-product-name{font-size:18px;overflow-wrap:anywhere;}
+ body #printOsMount .os-doc--visual .os-technical-heading{flex-wrap:wrap;gap:5px;}
+ body #printOsMount .os-doc--visual .os-caption{max-width:none;text-align:left;}
+ body #printOsMount .os-doc--visual .os-mockup-marker text{font-size:20px;}
+ body #printOsMount .os-doc--visual .os-mockup-marker circle{r:15px;}
+ body #printOsMount .os-doc--visual .os-paper .os-numeros{grid-template-columns:repeat(auto-fit,minmax(70px,1fr));}
+ body #printOsMount .os-doc--visual .os-paper .os-table{display:block;max-width:100%;}
+ body #printOsMount .os-doc--visual .os-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;}
+ body #printOsMount .os-doc--visual .os-table tbody{display:flex;flex-direction:column;gap:10px;}
+ body #printOsMount .os-doc--visual .os-table tr{display:grid;grid-template-columns:30px minmax(0,1fr);gap:8px 10px;border:1px solid #d8d8d2;border-radius:4px;padding:11px;}
+ body #printOsMount .os-doc--visual .os-table td{padding:0;border:0;min-width:0;width:auto;font-size:12px;overflow-wrap:anywhere;}
+ body #printOsMount .os-doc--visual .os-table td:first-child{grid-column:1;grid-row:1/4;}
+ body #printOsMount .os-doc--visual .os-table td:not(:first-child){grid-column:2;}
+ body #printOsMount .os-doc--visual .os-table td:not(:first-child)::before{display:block;color:#70706b;font-size:11px;margin-bottom:2px;}
+ body #printOsMount .os-doc--visual .os-table td:nth-child(2)::before{content:'Técnica';}
+ body #printOsMount .os-doc--visual .os-table td:nth-child(3)::before{content:'Local / tamanho';}
+ body #printOsMount .os-doc--visual .os-table td:nth-child(4)::before{content:'Cores';}
+ body #printOsMount .os-doc--visual .os-paper-footer{flex-wrap:wrap;gap:6px;font-size:11px;}
+ body #printGpMount .gp-doc--limpa .gp-topo{align-items:flex-start;gap:12px;}
+ body #printGpMount .gp-doc--limpa .gp-topo>div:first-child{max-width:67%;}
+ body #printGpMount .gp-doc--limpa .gp-topo strong{font-size:15px;overflow-wrap:anywhere;}
+ body #printGpMount .gp-doc--limpa .gp-topo span{overflow-wrap:anywhere;}
+ body #printGpMount .gp-doc--limpa .gp-id{font-size:21px;}
+ body #printGpMount .gp-doc--limpa .gp-title-line{flex-wrap:wrap;gap:4px;}
+ body #printGpMount .gp-doc--limpa .gp-cliente{gap:12px;padding:12px;}
+ body #printGpMount .gp-doc--limpa .gp-cliente strong{font-size:17px;overflow-wrap:anywhere;}
+ body #printGpMount .gp-doc--limpa .gp-cliente span{font-size:11px;overflow-wrap:anywhere;}
+ body #printGpMount .gp-doc--limpa .gp-item header{flex-wrap:wrap;gap:8px;}
+ body #printGpMount .gp-doc--limpa .gp-item header strong{max-width:100%;overflow-wrap:anywhere;}
+ body #printGpMount .gp-doc--limpa .gp-detail-model{grid-template-columns:1fr 1fr;gap:12px;}
+ body #printGpMount .gp-doc--limpa .gp-detail-model>div:last-child{grid-column:1/-1;}
+ body #printGpMount .gp-doc--limpa .gp-detail-value{overflow-wrap:anywhere;}
+ body #printGpMount .gp-doc--limpa .gp-order-quantities{grid-template-columns:1fr 1fr;gap:12px;}
+ body #printGpMount .gp-doc--limpa .gp-order-quantities>div:last-child{grid-column:1/-1;}
+ body #printGpMount .gp-doc--limpa .gp-rodape-valores{grid-template-columns:1fr;gap:20px;}
+ body #printGpMount .gp-doc--limpa .gp-artes-grid,body #printGpMount .gp-doc--limpa .gp-faixa-lista{grid-template-columns:1fr;}
+ body #printGpMount .gp-doc--limpa .gp-arte-img,body #printGpMount .gp-doc--limpa .gp-faixa-img{width:100%;max-height:none;}
+ body #printGpMount .gp-doc--limpa .gp-application-row{flex-wrap:wrap;gap:7px;}
+ body #printGpMount .gp-doc--limpa .gp-application-location{min-width:100px;flex:1;overflow-wrap:anywhere;}
+ body #printGpMount .gp-doc--limpa .gp-resumo-linha{gap:10px;}
+}
+@media screen and (max-width:420px){
+ body #printOsMount .os-doc--visual .os-paper .os-mapas{flex-direction:column;align-items:center;gap:18px;}
+ body #printOsMount .os-doc--visual .os-paper .os-mapas figure{width:100%;max-width:260px;}
+ body #printOsMount .os-doc--visual .os-paper .os-garment{max-height:290px;}
+}
+
+@media screen and (max-width:600px){body #printOsMount .os-doc--visual .os-table td:first-child{width:auto;}}

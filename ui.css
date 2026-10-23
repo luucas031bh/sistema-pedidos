@@ -550,3 +550,57 @@ body.ui-shell .relogio{border:0;margin:0;padding:0;}
 @media(min-width:1200px){body.ui-shell .shell{grid-template-columns:190px minmax(0,1fr);}body.ui-shell.page-order #formPedido{grid-template-columns:minmax(0,1fr) 270px;}}
 @media(max-width:600px){body.ui-shell .side{position:static;min-height:0;}body.ui-shell .workspace{padding-inline:14px;}body.ui-shell .form-input,body.ui-shell .form-select,body.ui-shell .form-textarea{font-size:16px;}body.ui-shell #adonayNav .adonay-nav-links{flex-wrap:wrap;overflow:visible;}body.ui-shell #adonayNav .adonay-nav-links a{flex:1 0 auto;}body.ui-shell .home-tools{flex-wrap:wrap;}}
 @media print{body.ui-shell{color-scheme:light;}body.ui-shell>.shell,body.ui-shell>#adonay-auth-out{display:none!important;}}
+
+/* Compact navigation: the only new button is the authorized menu toggle. */
+body.ui-shell .ui-mobile-menu-bar{display:block;}
+body.ui-shell .ui-mobile-menu-panel{display:flex;flex-direction:column;gap:24px;}
+body.ui-shell .ui-mobile-menu-panel[hidden],body.ui-shell .ui-mobile-menu-toggle[hidden]{display:none!important;}
+body.ui-shell .ui-mobile-menu-toggle{display:none;}
+@media(max-width:1024px){
+ body.ui-shell .shell{display:flex;flex-direction:column;}
+ body.ui-shell .shell>.side{display:flex;flex-direction:column;align-self:stretch;position:static;width:100%;min-height:0;gap:0;padding:0;border-right:0;border-bottom:1px solid #303033;background:#151516;}
+ body.ui-shell .ui-mobile-menu-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 18px;}
+ body.ui-shell .ui-mobile-menu-bar .side-brand{padding:0;background:none;font-size:16px;letter-spacing:2px;}
+ body.ui-shell .ui-mobile-menu-bar .side-brand small{font-size:11px;letter-spacing:2px;margin-top:4px;}
+ body.ui-shell .ui-mobile-menu-toggle{display:inline-flex;align-items:center;justify-content:center;gap:9px;flex:none;min-width:91px;min-height:44px;padding:10px 12px;font:12px/1.4 Inter,Arial,sans-serif;background:#242426;border:1px solid #4a463c;border-radius:6px;color:#e5c98d;}
+ body.ui-shell .ui-menu-lines{display:flex;flex-direction:column;justify-content:center;gap:4px;width:16px;}
+ body.ui-shell .ui-menu-lines>span{display:block;width:16px;height:1.5px;background:currentColor;border-radius:2px;}
+ body.ui-shell .ui-mobile-menu-panel{gap:14px;padding:0 14px 16px;}
+ body.ui-shell #uiNavSlot{min-width:0;}
+ body.ui-shell .ui-mobile-menu-panel #adonayNav{padding:0;border:0;}
+ body.ui-shell .ui-mobile-menu-panel .adonay-nav-onde{margin:0 3px 8px;padding:0;font-size:11px;}
+ body.ui-shell .ui-mobile-menu-panel .adonay-nav-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;overflow:visible;}
+ body.ui-shell .ui-mobile-menu-panel .adonay-nav-links a{display:flex;justify-content:flex-start;align-items:center;min-height:44px;padding:10px 12px;font-size:12px;}
+ body.ui-shell .ui-mobile-menu-panel .home-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:12px 0 0;border-top:1px solid #303033;background:none;}
+ body.ui-shell .ui-mobile-menu-panel .home-tools::before{grid-column:1/-1;padding:0 3px;}
+ body.ui-shell .ui-mobile-menu-panel .home-tools .btn{min-height:44px;border:1px solid #333337;white-space:normal;}
+ body.ui-shell .workspace{width:100%;min-width:0;order:2;padding-inline:16px;}
+ body.ui-shell.page-order #formPedido{grid-template-columns:minmax(0,1fr);}
+ body.ui-shell.page-order .ord-summary-column{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+ body.ui-shell.page-order .ord-summary-column .resumo-financeiro,body.ui-shell.page-order .ord-summary-column .ord-actions{grid-column:1/-1;}
+ body.ui-shell .modal-content{width:calc(100% - 24px);max-width:640px;max-height:calc(100dvh - 32px);overflow-y:auto;}
+}
+@media(max-width:600px){
+ body.ui-shell .workspace{padding-inline:12px;}
+ body.ui-shell .container{min-width:0;}
+ body.ui-shell .empresa-info,body.ui-shell .empresa-contatos{overflow-wrap:anywhere;}
+ body.ui-shell .form-input,body.ui-shell .form-select,body.ui-shell .form-textarea{font-size:16px;min-height:48px;}
+ body.ui-shell .btn{min-height:44px;white-space:normal;}
+ body.ui-shell.page-order .ord-summary-column{display:flex;flex-direction:column;}
+ body.ui-shell.page-order .ord-summary-column>.card{width:100%;min-width:0;}
+ body.ui-shell.page-order .produto-header{align-items:flex-start;gap:8px;}
+ body.ui-shell.page-order .produto-header-titulo{min-width:0;overflow-wrap:anywhere;}
+ body.ui-shell.page-order .produto-container .form-row{grid-template-columns:1fr;}
+ body.ui-shell.page-order .tabela-dinamica table:has(tbody[id^="estampasBody-"]){display:block;}
+ body.ui-shell.page-order tbody[id^="estampasBody-"]{display:flex;flex-direction:column;gap:10px;}
+ body.ui-shell.page-order tbody[id^="estampasBody-"] tr{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:7px;}
+ body.ui-shell.page-order tbody[id^="estampasBody-"] td{min-width:0;padding:0;}
+ body.ui-shell.page-order tbody[id^="estampasBody-"] td:nth-child(1),body.ui-shell.page-order tbody[id^="estampasBody-"] td:nth-child(2),body.ui-shell.page-order tbody[id^="estampasBody-"] td:nth-child(3){grid-column:1;}
+ body.ui-shell.page-order tbody[id^="estampasBody-"] td:last-child{grid-column:2;grid-row:1/4;align-self:center;}
+ body.ui-shell .lista-table-wrap{max-width:100%;overflow-x:auto;overscroll-behavior-inline:contain;}
+ body.ui-shell.page-home .home-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+ body.ui-shell.page-home .home-kpi-grid>.kpi-card:last-child{grid-column:1/-1;}
+}
+@media print{body.ui-shell .ui-mobile-menu-bar,body.ui-shell .ui-mobile-menu-panel{display:none!important;}}
+
+@media(max-width:1024px){body.ui-shell.page-home .shell,body.ui-shell.page-order .shell{display:flex;flex-direction:column;}}

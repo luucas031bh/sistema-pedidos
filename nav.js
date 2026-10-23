@@ -37,8 +37,71 @@
         return "inicio";
     }
 
+    function menuCompacto() {
+        var slot = document.getElementById('uiNavSlot');
+        var side = slot && slot.closest('.side');
+        if (!side || document.getElementById('uiMobileMenuToggle')) return;
+        var brand = side.querySelector('.side-brand');
+        var tools = side.querySelector('.home-tools');
+        var bar = document.createElement('div');
+        bar.className = 'ui-mobile-menu-bar';
+        var toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.id = 'uiMobileMenuToggle';
+        toggle.className = 'ui-mobile-menu-toggle';
+        toggle.setAttribute('aria-controls', 'uiMobileMenuPanel');
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.setAttribute('aria-label', 'Abrir menu de navegação');
+        var icon = document.createElement('span');
+        icon.className = 'ui-menu-lines';
+        icon.setAttribute('aria-hidden', 'true');
+        for (var i = 0; i < 3; i++) icon.appendChild(document.createElement('span'));
+        var label = document.createElement('span');
+        label.textContent = 'Menu';
+        toggle.appendChild(icon);
+        toggle.appendChild(label);
+        if (brand) bar.appendChild(brand);
+        bar.appendChild(toggle);
+        var panel = document.createElement('div');
+        panel.id = 'uiMobileMenuPanel';
+        panel.className = 'ui-mobile-menu-panel';
+        panel.appendChild(slot);
+        if (tools) panel.appendChild(tools);
+        side.appendChild(bar);
+        side.appendChild(panel);
+        var media = window.matchMedia('(max-width: 1024px)');
+        var expanded = false;
+        function show(open, restoreFocus) {
+            expanded = media.matches && open;
+            panel.hidden = media.matches && !expanded;
+            toggle.hidden = !media.matches;
+            toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            toggle.setAttribute('aria-label', expanded ? 'Fechar menu de navegação' : 'Abrir menu de navegação');
+            label.textContent = expanded ? 'Fechar' : 'Menu';
+            side.classList.toggle('ui-menu-open', expanded);
+            if (restoreFocus) toggle.focus();
+            encaixar();
+        }
+        toggle.addEventListener('click', function () { show(!expanded, false); });
+        panel.addEventListener('click', function (event) {
+            if (event.target.closest('a') && media.matches) show(false, false);
+        });
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && expanded) show(false, true);
+        });
+        document.addEventListener('pointerdown', function (event) {
+            if (expanded && !side.contains(event.target)) show(false, false);
+        });
+        if (media.addEventListener) media.addEventListener('change', function () { show(false, false); });
+        else media.addListener(function () { show(false, false); });
+        show(false, false);
+    }
+
     function montar() {
-        if (document.getElementById("adonayNav")) return;
+        if (document.getElementById("adonayNav")) {
+            menuCompacto();
+            return;
+        }
         var atual = secaoAtual();
         var base = prefixo();
         var nomeAtual = "Início";
@@ -71,6 +134,7 @@
         document.body.classList.add("has-adonay-nav");
         var destino = document.getElementById("uiNavSlot") || document.body;
         destino.insertBefore(nav, destino.firstChild);
+        menuCompacto();
         encaixar();
         window.addEventListener("resize", encaixar);
 
