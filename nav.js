@@ -69,7 +69,8 @@
         nav.appendChild(onde);
         nav.appendChild(links);
         document.body.classList.add("has-adonay-nav");
-        document.body.insertBefore(nav, document.body.firstChild);
+        var destino = document.getElementById("uiNavSlot") || document.body;
+        destino.insertBefore(nav, destino.firstChild);
         encaixar();
         window.addEventListener("resize", encaixar);
 
