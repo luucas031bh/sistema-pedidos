@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="theme-color" content="#15171c"/>
+  <title>ADONAY 2.0 · Homologação</title>
+  <link rel="stylesheet" href="../auth.css"/>
+  <link rel="stylesheet" href="app.css"/>
+  <script>window.CONFIG={APPS_SCRIPT_URL:'CONFIGURAR_URL_DO_NOVO_APPS_SCRIPT'};</script>
+  <script defer src="../auth.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand"><span class="brand-mark">A</span><div>ADONAY <small>CONFECÇÃO · 2.0</small></div></div>
+      <nav aria-label="Seções">
+        <button class="nav-link active" data-view="home">⌂ <span>Início</span></button>
+        <button class="nav-link" data-view="orders">▤ <span>Pedidos</span></button>
+        <button class="nav-link" data-view="production">▦ <span>Produção</span></button>
+      </nav>
+      <p class="sidebar-foot">Ambiente de homologação<br/>Dados históricos importados da cópia</p>
+    </aside>
+    <div class="main-column">
+      <header class="topbar">
+        <button id="menu-toggle" aria-controls="sidebar" aria-expanded="false" aria-label="Abrir menu">☰</button>
+        <div class="breadcrumb">ADONAY <span>/</span> <strong id="page-name">Início</strong></div>
+        <span class="environment">HOMOLOGAÇÃO</span>
+      </header>
+      <main id="main-content">
+        <div class="heading"><div><p class="eyebrow">CENTRAL OPERACIONAL</p><h1 id="page-title">Visão geral</h1><p id="subtitle">Acompanhe os pedidos e a produção.</p></div><button class="secondary" id="refresh">Atualizar</button></div>
+        <div class="notice" id="notice" role="status" aria-live="polite">Aguardando autenticação…</div>
+        <section class="metrics" aria-label="Indicadores">
+          <article><span>Pedidos listados</span><strong id="metric-orders">—</strong></article>
+          <article><span>Peças</span><strong id="metric-pieces">—</strong></article>
+          <article><span>Valor dos pedidos</span><strong id="metric-total">—</strong></article>
+          <article><span>Saldo informado</span><strong id="metric-balance">—</strong></article>
+        </section>
+        <section class="panel" id="orders-panel">
+          <div class="panel-head"><div><h2>Pedidos</h2><p>Consulte por cliente, telefone ou ID completo.</p></div><input id="search" type="search" placeholder="Buscar pedidos" aria-label="Buscar pedidos"/></div>
+          <div class="table-scroll"><table><thead><tr><th>Cliente / Pedido</th><th>Entrega</th><th>Etapa</th><th>Peças</th><th>Valor</th><th></th></tr></thead><tbody id="orders-list"></tbody></table></div>
+          <div class="pagination"><span id="page-summary"></span><button id="load-more" class="secondary">Carregar mais</button></div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <div class="modal-backdrop" id="modal" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-top"><div><p class="eyebrow">FICHA DO PEDIDO</p><h2 id="modal-title">Pedido</h2></div><button id="close-modal" class="icon-btn" aria-label="Fechar">✕</button></div>
+      <div id="order-detail"></div>
+    </section>
+  </div>
+</body>
+</html>
