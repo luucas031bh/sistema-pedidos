@@ -1,0 +1,21 @@
+.panel-filters {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.panel-filters select {
+  font: inherit;
+  color: #424852;
+  background: #fff;
+  border: 1px solid #dfe2e8;
+  border-radius: 9px;
+  padding: 12px 15px;
+  min-width: 180px;
+  max-width: 100%;
+}
+@media (max-width: 720px) {
+  .panel-filters, .panel-filters select, .panel-filters input {
+    width: 100%;
+  }
+}

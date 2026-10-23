@@ -7,7 +7,8 @@
   <title>ADONAY 2.0 · Homologação</title>
   <link rel="stylesheet" href="../auth.css"/>
   <link rel="stylesheet" href="app.css"/>
-  <script>window.CONFIG={APPS_SCRIPT_URL:'CONFIGURAR_URL_DO_NOVO_APPS_SCRIPT'};</script>
+  <link rel="stylesheet" href="filters.css"/>
+  <script>window.CONFIG={APPS_SCRIPT_URL:'CONFIGURAR_URL_DO_NOVO_APPS_SCRIPT'};window.ADONAY_AUTH_STORAGE_KEY='adonay.session.v2.homologacao';</script>
   <script defer src="../auth.js"></script>
   <script defer src="app.js"></script>
 </head>
@@ -38,7 +39,7 @@
           <article><span>Saldo informado</span><strong id="metric-balance">—</strong></article>
         </section>
         <section class="panel" id="orders-panel">
-          <div class="panel-head"><div><h2>Pedidos</h2><p>Consulte por cliente, telefone ou ID completo.</p></div><input id="search" type="search" placeholder="Buscar pedidos" aria-label="Buscar pedidos"/></div>
+          <div class="panel-head"><div><h2 id="orders-heading">Pedidos</h2><p id="orders-caption">Consulte por cliente, telefone ou ID completo.</p></div><div class="panel-filters"><select id="stage-filter" aria-label="Filtrar por etapa"><option value="">Todas as etapas</option><option>Pedido em Aberto</option><option>Arte</option><option>Insumos</option><option>Corte</option><option>Estampa</option><option>Costura</option><option>Embalo</option><option>Aguardando retirada</option></select><input id="search" type="search" placeholder="Buscar pedidos" aria-label="Buscar pedidos"/></div></div>
           <div class="table-scroll"><table><thead><tr><th>Cliente / Pedido</th><th>Entrega</th><th>Etapa</th><th>Peças</th><th>Valor</th><th></th></tr></thead><tbody id="orders-list"></tbody></table></div>
           <div class="pagination"><span id="page-summary"></span><button id="load-more" class="secondary">Carregar mais</button></div>
         </section>

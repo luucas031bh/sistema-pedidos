@@ -48,10 +48,12 @@ function adny2ToObject_(headers, row) {
 function adny2ListOrders_(request) {
   const table = adny2Table_('V2_PEDIDOS');
   const term = String(request.term || '').trim().toLocaleLowerCase('pt-BR');
+  const stage = String(request.etapa || '').trim();
   const limit = Math.max(1, Math.min(100, Number(request.limit) || 40));
   const offset = Math.max(0, Number(request.offset) || 0);
   const items = table.rows.map(row => adny2ToObject_(table.headers, row)).filter(order =>
-    !term || [order.idLegado, order.clienteNomeHistorico, order.telefoneHistorico].some(value => String(value).toLocaleLowerCase('pt-BR').includes(term))
+    (!stage || String(order.etapa) === stage) &&
+    (!term || [order.idLegado, order.clienteNomeHistorico, order.telefoneHistorico].some(value => String(value).toLocaleLowerCase('pt-BR').includes(term)))
   ).sort((a, b) => String(a.dataEntrega).localeCompare(String(b.dataEntrega)));
   return {sucesso: true, total: items.length, pedidos: items.slice(offset, offset + limit)};
 }

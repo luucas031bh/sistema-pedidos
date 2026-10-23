@@ -47,7 +47,13 @@ function adny2PrepareSchema() {
 }
 
 function adny2Money_(amount) {
-  const value = typeof amount === 'number' ? amount : Number(String(amount || '0').replace(',', '.'));
+  let value;
+  if (typeof amount === 'number') value = amount;
+  else {
+    const raw = String(amount == null ? '0' : amount).trim().replace(/\s|R\$/g, '');
+    const decimal = raw.includes(',') ? raw.replace(/\./g, '').replace(',', '.') : raw;
+    value = Number(decimal || '0');
+  }
   if (!Number.isFinite(value)) throw new Error('INVALID_MONEY');
   return Math.round((value + Number.EPSILON) * 100);
 }

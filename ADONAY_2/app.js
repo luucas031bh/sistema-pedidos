@@ -4,7 +4,7 @@
   const money = cents => (Number(cents || 0) / 100).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
   const number = n => Number(n || 0).toLocaleString('pt-BR');
   const stages = ['Pedido em Aberto', 'Arte', 'Insumos', 'Corte', 'Estampa', 'Costura', 'Embalo', 'Aguardando retirada'];
-  let allOrders = [], filtered = [], visible = 30, selected = null;
+  let allOrders = [], filtered = [], visible = 30, selected = null, currentView = 'home';
 
   function message(text, kind = '') {
     $('notice').textContent = text;
@@ -37,7 +37,12 @@
   }
   function applySearch() {
     const term = $('search').value.trim().toLocaleLowerCase('pt-BR');
-    filtered = allOrders.filter(p => [p.idLegado, p.clienteNomeHistorico, p.telefoneHistorico].some(v => String(v).toLocaleLowerCase('pt-BR').includes(term)));
+    const stage = $('stage-filter').value;
+    filtered = allOrders.filter(p =>
+      (!stage || String(p.etapa) === stage) &&
+      (currentView !== 'production' || !['Cancelado', 'Finalizado', 'Entregue'].includes(String(p.status))) &&
+      [p.idLegado, p.clienteNomeHistorico, p.telefoneHistorico].some(v => String(v).toLocaleLowerCase('pt-BR').includes(term))
+    );
     $('metric-orders').textContent = number(filtered.length);
     $('metric-pieces').textContent = number(filtered.reduce((sum, p) => sum + Number(p.totalPecas || 0), 0));
     $('metric-total').textContent = money(filtered.reduce((sum, p) => sum + Number(p.totalCentavos || 0), 0));
@@ -127,14 +132,20 @@
     } catch (error) { $('order-detail').replaceChildren(); text($('order-detail'), 'p', error.message); }
   }
   function setView(view) {
+    currentView = view;
     document.querySelectorAll('.nav-link').forEach(button => button.classList.toggle('active', button.dataset.view === view));
     const labels = {home: ['Início', 'Visão geral'], orders: ['Pedidos', 'Consulta de pedidos'], production: ['Produção', 'Controle de etapas']};
     $('page-name').textContent = labels[view][0]; $('page-title').textContent = labels[view][1];
+    $('orders-heading').textContent = view === 'production' ? 'Fila de produção' : 'Pedidos';
+    $('orders-caption').textContent = view === 'production' ? 'Pedidos em andamento por etapa produtiva.' : 'Consulte por cliente, telefone ou ID completo.';
+    visible = 30;
+    applySearch();
     $('sidebar').classList.remove('open'); $('menu-toggle').setAttribute('aria-expanded', 'false');
   }
   document.addEventListener('DOMContentLoaded', () => {
     $('refresh').addEventListener('click', loadOrders);
     $('search').addEventListener('input', () => {visible = 30; applySearch();});
+    $('stage-filter').addEventListener('change', () => {visible = 30; applySearch();});
     $('load-more').addEventListener('click', () => {visible += 30; renderRows();});
     $('close-modal').addEventListener('click', () => {$('modal').hidden = true; selected = null;});
     $('modal').addEventListener('click', e => {if (e.target === $('modal')) $('close-modal').click();});

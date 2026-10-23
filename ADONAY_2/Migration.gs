@@ -13,6 +13,7 @@ function adny2ImportHistoricalOrders() {
     const ss = adny2Spreadsheet_();
     const source = adny2ReadLegacy_();
     const projection = adny2Project_(source);
+    if (!projection.report.pedidos) throw new Error('EMPTY_LEGACY_SOURCE');
     const existing = ss.getSheetByName('V2_MIGRACAO');
     if (existing.getLastRow() > 1) throw new Error('MIGRATION_ALREADY_RUN: review before retry');
     Object.keys(projection.tables).forEach(name => {
@@ -24,10 +25,22 @@ function adny2ImportHistoricalOrders() {
       const width = ADNY2.tables[name].length;
       if (rows.some(row => row.length !== width)) throw new Error('ROW_WIDTH: ' + name);
     });
+    const projected = projection.tables.V2_PEDIDOS;
+    if (projected.length !== projection.report.pedidos ||
+        projected.reduce((n, row) => n + Number(row[14]), 0) !== projection.report.pecas ||
+        projected.reduce((n, row) => n + Number(row[15]), 0) !== projection.report.totalCentavos) {
+      throw new Error('PREWRITE_VALIDATION_FAILED');
+    }
     Object.entries(projection.tables).forEach(([name, rows]) => {
       if (rows.length) ss.getSheetByName(name).getRange(2, 1, rows.length, ADNY2.tables[name].length).setValues(rows);
     });
-    return projection.report;
+    const persisted = ss.getSheetByName('V2_PEDIDOS').getRange(2, 1, projected.length, ADNY2.tables.V2_PEDIDOS.length).getValues();
+    if (persisted.length !== projected.length ||
+        persisted.reduce((n, row) => n + Number(row[14]), 0) !== projection.report.pecas ||
+        persisted.reduce((n, row) => n + Number(row[15]), 0) !== projection.report.totalCentavos) {
+      throw new Error('POSTWRITE_VALIDATION_FAILED: do not retry automatically');
+    }
+    return Object.assign({}, projection.report, {status: 'importado_e_conferido'});
   } finally {
     lock.releaseLock();
   }
@@ -42,6 +55,24 @@ function adny2ReadLegacy_() {
   const required = ['ID', 'Nome Cliente', 'Telefone', 'Data Pedido', 'Data Entrega', 'Total Peças', 'Produtos', 'Observações', 'Valor Total', 'Entrada', 'Restante', 'Status'];
   required.forEach(name => { if (!headers.includes(name)) throw new Error('LEGACY_COLUMN_MISSING: ' + name); });
   return {headers, rows: rows.slice(1).filter(row => String(row[0] || '').trim() !== '')};
+}
+
+function adny2LegacyStage_(column, row, parsed) {
+  const valid = ['Pedido em Aberto', 'Arte', 'Insumos', 'Corte', 'Estampa', 'Costura', 'Embalo', 'Aguardando retirada'];
+  const embedded = String(parsed.etapaProducaoAtual || '').trim();
+  const exact = valid.find(stage => stage.toLowerCase() === embedded.toLowerCase());
+  if (exact) return exact;
+  const flagged = value => value === true || value === 1 || ['TRUE', 'VERDADEIRO', 'SIM', '1'].includes(String(value || '').trim().toUpperCase());
+  const milestones = [
+    ['PRONTO PARA ENVIO', 'Aguardando retirada'],
+    ['COSTURA', 'Costura'],
+    ['ESTAMPA PRODUÇÃO', 'Estampa'],
+    ['CORTE', 'Corte'],
+    ['OS', 'Insumos'],
+    ['ARTE', 'Arte']
+  ];
+  const reached = milestones.find(([name]) => flagged(column(row, name)));
+  return reached ? reached[1] : 'Pedido em Aberto';
 }
 
 function adny2Project_(source) {
@@ -76,7 +107,7 @@ function adny2Project_(source) {
     if (itemPieces !== rowPieces || Math.abs(itemTotal - rowTotal) > 1) throw new Error('TOTAL_MISMATCH: ' + legacyId);
     pieces += rowPieces; products += items.length; cents += rowTotal;
     tables.V2_CLIENTES.push([clienteId, String(column(row, 'Nome Cliente') || ''), String(column(row, 'Telefone') || ''), now]);
-    tables.V2_PEDIDOS.push([pedidoId, legacyId, clienteId, String(column(row, 'Nome Cliente') || ''), String(column(row, 'Telefone') || ''), adny2Date_(column(row, 'Data Pedido')), adny2Date_(column(row, 'Data Entrega')), column(row, 'Data Criação') || '', column(row, 'Data Modificação') || '', column(row, 'Vendedor') || '', column(row, 'Tag Pedido') || '', column(row, 'Status') || '', parsed.etapaProducaoAtual || '', column(row, 'Observações') || '', rowPieces, rowTotal, rowEntrance, rowBalance, 1]);
+    tables.V2_PEDIDOS.push([pedidoId, legacyId, clienteId, String(column(row, 'Nome Cliente') || ''), String(column(row, 'Telefone') || ''), adny2Date_(column(row, 'Data Pedido')), adny2Date_(column(row, 'Data Entrega')), column(row, 'Data Criação') || '', column(row, 'Data Modificação') || '', column(row, 'Vendedor') || '', column(row, 'Tag Pedido') || '', column(row, 'Status') || '', adny2LegacyStage_(column, row, parsed), column(row, 'Observações') || '', rowPieces, rowTotal, rowEntrance, rowBalance, 1]);
     items.forEach((item, index) => {
       const produtoId = pedidoId + '-I' + (index + 1);
       const sizes = item.tamanhos || [];
