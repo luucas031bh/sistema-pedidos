@@ -9,8 +9,7 @@
         { id: "relatorio", rotulo: "Relatórios", arquivo: "relatorio.html" },
         { id: "malha", rotulo: "Malha", arquivo: "CalculadoraMalha/" },
         { id: "cores", rotulo: "Cores", arquivo: "ROANTONE/" },
-        { id: "fornecedores", rotulo: "Fornecedores", arquivo: "fornecedores.html" },
-        { id: "lista", rotulo: "Lista", arquivo: "ListaPreencher/lista.html" }
+        { id: "fornecedores", rotulo: "Fornecedores", arquivo: "fornecedores.html" }
     ];
 
     function caminho() {
